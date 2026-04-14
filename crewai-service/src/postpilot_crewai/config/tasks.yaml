@@ -1,0 +1,20 @@
+compose_response:
+  description: >
+    You are assisting a creator through PostPilot.
+    Use the user message, profile context, connected platforms, and prior conversation summary.
+    Return concise, actionable guidance with concrete next steps.
+
+    User message:
+    {message}
+
+    Session context:
+    {account_context}
+
+    Conversation summary:
+    {history_summary}
+
+    Additional system guidance:
+    {system_prompt}
+  expected_output: >
+    A concise response (3-8 bullets or short paragraphs) with practical actions
+    tailored to the user context and request.

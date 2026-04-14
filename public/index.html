@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PostPilot - AI Coach</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="language-switch">
+      <label id="languageLabel" for="languageSelect">Language</label>
+      <select id="languageSelect" aria-label="Select site language">
+        <option value="en">English</option>
+        <option value="ro">Romanian</option>
+        <option value="it">Italian</option>
+        <option value="de">German</option>
+        <option value="fr">French</option>
+      </select>
+    </div>
+
+    <main id="authGate">
+      <section class="hero section">
+        <div class="container hero-layout">
+          <div class="hero-copy">
+            <img src="/logo.png" alt="PostPilot logo" class="hero-logo" />
+            <p class="badge" id="heroBadge">Early Access - Limited Time Offer</p>
+            <h1>
+              <span id="heroTitleMain">Grow Your Following.</span>
+              <span id="heroTitleAccent">With Your Own AI Coach.</span>
+            </h1>
+            <p class="muted" id="heroSubtitle">
+              Get personalized viral idea a day - and the confidence to post it.
+            </p>
+            <div class="hero-signals">
+              <span class="hero-signal" id="signal1">Daily custom prompts</span>
+              <span class="hero-signal" id="signal2">Voice-aware feedback</span>
+              <span class="hero-signal" id="signal3">No fluff. Just clarity.</span>
+            </div>
+          </div>
+
+          <form class="signup-card" id="signupForm">
+            <h2 id="signupTitle">Start Your Free Trial</h2>
+            <button type="button" class="google-btn" id="googleSignupBtn">Continue with Google</button>
+            <div class="divider">or</div>
+            <label>
+              <span id="signupFullNameLabel">Full name</span>
+              <input id="signupFullName" type="text" placeholder="" required />
+            </label>
+            <label>
+              <span id="signupEmailLabel">Email address</span>
+              <input id="signupEmail" type="email" placeholder="" required />
+            </label>
+            <label>
+              <span id="signupPasswordLabel">Password</span>
+              <input id="signupPassword" type="password" placeholder="" minlength="6" required />
+            </label>
+            <label class="checkbox-row">
+              <input id="tipsOptIn" type="checkbox" />
+              <span id="tipsOptInLabel">Send me Creator tips and other opportunities</span>
+            </label>
+            <button type="submit" class="cta-btn" id="signupSubmitBtn">Create account</button>
+            <p class="small form-feedback" id="signupFeedback"></p>
+            <p class="small muted" id="signupGuarantee1">30-day money-back guarantee</p>
+            <p class="small muted" id="signupGuarantee2">Cancel anytime - No questions asked</p>
+            <p class="small"><span id="alreadyAccountText">Already have an account?</span> <a href="#" id="openSignin">Sign in</a></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title" id="socialProofTitle">Creators Love PostPilot</h2>
+          <p class="section-subtitle" id="socialProofSubtitle">Join thousands who've found their creative confidence</p>
+          <div class="testimonials">
+            <article class="card">
+              <p id="testimonial1Quote">"It's actually looked at my Instagram and told me what my audience was seeing."</p>
+              <div class="person">
+                <div class="avatar">S</div>
+                <div>
+                  <strong>Shannon Sheridan</strong>
+                  <p id="testimonial1Role">Freedom &amp; Purpose Coach</p>
+                </div>
+              </div>
+            </article>
+            <article class="card">
+              <p id="testimonial2Quote">"It gave me confidence in my voice again - like I finally knew what to say."</p>
+              <div class="person">
+                <div class="avatar">K</div>
+                <div>
+                  <strong>Kristen Hayes</strong>
+                  <p id="testimonial2Role">Life &amp; Fitness Glow-Up Coach</p>
+                </div>
+              </div>
+            </article>
+            <article class="card">
+              <p id="testimonial3Quote">"It told me the truth - no fluff, no fake praise. Exactly what I needed."</p>
+              <div class="person">
+                <div class="avatar">M</div>
+                <div>
+                  <strong>Mel Williams</strong>
+                  <p id="testimonial3Role">Health &amp; Wellness Coach</p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title" id="achieveTitle">What You'll Achieve</h2>
+          <p class="section-subtitle" id="achieveSubtitle">PostPilot doesn't just give you ideas. It transforms how you create.</p>
+          <div class="achieve-grid">
+            <article class="card feature-card">
+              <h3 id="feature1Title">Build your audience faster</h3>
+              <p class="muted" id="feature1Text">Consistent, quality content that resonates with your ideal followers</p>
+            </article>
+            <article class="card feature-card">
+              <h3 id="feature2Title">Find your creative rhythm</h3>
+              <p class="muted" id="feature2Text">Discover what works for you and turn it into your signature style</p>
+            </article>
+            <article class="card feature-card">
+              <h3 id="feature3Title">Show up confidently, every day</h3>
+              <p class="muted" id="feature3Text">No more overthinking or second-guessing your content</p>
+            </article>
+            <article class="card feature-card highlight">
+              <h3 id="feature4Title">Turn posting from a chore to a habit</h3>
+              <p class="muted" id="feature4Text">Make content creation feel natural, not forced</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <p class="badge centered" id="comingSoonBadge">Coming Soon</p>
+          <h2 class="section-title" id="comingSoonTitle">This Is Just the Beginning</h2>
+          <p class="section-subtitle" id="comingSoonSubtitle">We have new and exciting features on the way.</p>
+          <div class="chips">
+            <span class="chip" id="chip1">AI powered video editor</span>
+            <span class="chip" id="chip2">Analytics dashboard</span>
+            <span class="chip" id="chip3">Carousel generator</span>
+            <span class="chip" id="chip4">Daily content scheduler</span>
+            <span class="chip" id="chip5">Content idea bank</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section final-cta">
+        <div class="container centered-block">
+          <h2 class="section-title" id="finalCtaTitle">You don't need another content tool.</h2>
+          <p class="section-subtitle" id="finalCtaSubtitle">You need a coach who helps you believe in your ideas.</p>
+          <p class="closing" id="finalCtaClosing">That's PostPilot.</p>
+          <button class="cta-btn big" id="openTrialBtn">Start Your Free Trial</button>
+          <p class="small muted" id="finalCtaGuarantee">Cancel anytime - 100% money-back guarantee</p>
+          <p class="small muted legal-note" id="finalLegalNote">PostPilot Labs 2026 - Built for independent creators.</p>
+        </div>
+      </section>
+    </main>
+
+    <div id="signinModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="signinTitle">
+      <div class="modal-card auth-modal-card">
+        <button class="modal-close" id="closeSignin" type="button" aria-label="Close sign in form">x</button>
+        <h2 id="signinTitle">Sign In to PostPilot</h2>
+        <button type="button" class="google-btn" id="googleSigninBtn">Continue with Google</button>
+        <div class="divider">or</div>
+        <form id="signinForm">
+          <label>
+            <span id="signinEmailLabelText">Email address</span>
+            <input id="signinEmail" type="email" placeholder="" required />
+          </label>
+          <label>
+            <span id="signinPasswordLabelText">Password</span>
+            <input id="signinPassword" type="password" placeholder="" required />
+          </label>
+          <button type="submit" class="cta-btn" id="signinSubmitBtn">Sign in</button>
+          <p class="small form-feedback" id="signinFeedback"></p>
+        </form>
+      </div>
+    </div>
+
+    <div id="authToast" class="toast hidden" aria-live="polite"></div>
+
+    <div class="app-shell hidden" id="chatApp">
+      <aside class="sidebar">
+        <button id="newChatBtn" class="secondary">+ New chat</button>
+        <button id="settingsBtn" class="secondary">Settings</button>
+        <button id="disconnectBtn" class="secondary disconnect-btn">Disconnect</button>
+      </aside>
+
+      <main class="chat-layout">
+        <header class="chat-header">
+          <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span>Agent</span></h1>
+          <p id="chatHeaderSubtitle">Your creator growth assistant</p>
+        </header>
+
+        <section id="messages" class="messages"></section>
+
+        <div class="prompt-row">
+          <button class="prompt-chip" data-prompt="Analyze my latest performance and tell me what to improve">
+            Analyze performance
+          </button>
+          <button class="prompt-chip" data-prompt="Write a LinkedIn post about creator monetization psychology">
+            Generate post draft
+          </button>
+          <button class="prompt-chip" data-prompt="Create my weekly content plan">
+            Make weekly plan
+          </button>
+        </div>
+
+        <form id="composer" class="composer">
+          <input id="messageInput" placeholder="Message PostPilot Agent" />
+          <button type="submit" id="sendBtn">Send</button>
+        </form>
+      </main>
+    </div>
+
+    <div id="onboardingModal" class="modal hidden">
+      <div class="modal-card">
+        <button class="modal-close" id="closeOnboarding" type="button" aria-label="Close onboarding form">×</button>
+        <div class="onboarding-head">
+          <p class="onboarding-kicker" id="onboardingKicker">Get Started</p>
+          <h2 id="onboardingTitle">Create your account</h2>
+          <p id="onboardingSubtitle">Set up your creator profile to unlock your AI agent.</p>
+        </div>
+        <div class="onboarding-progress" aria-hidden="true">
+          <span class="step-dot"></span>
+          <span class="step-dot"></span>
+          <span class="step-dot"></span>
+        </div>
+        <div id="onboardingExplainer" class="onboarding-explainer">
+          <h3 id="onboardingExplainerTitle">What PostPilot does</h3>
+          <p id="onboardingExplainerBody">Analyzes your content, identifies growth patterns, and gives practical weekly actions, drafts, and feedback.</p>
+        </div>
+
+        <form id="accountForm">
+          <div class="field">
+            <label for="accountName"><span id="accountFormNameLabel">Name</span></label>
+            <input id="accountName" placeholder="" />
+          </div>
+          <div class="field">
+            <label for="accountEmail"><span id="accountFormEmailLabel">Email</span></label>
+            <input id="accountEmail" placeholder="" />
+          </div>
+          <button type="submit" id="accountFormSubmitBtn">Create account</button>
+        </form>
+
+        <form id="onboardingForm" class="hidden">
+          <div class="field">
+            <label for="onboardNiche"><span id="onboardNicheLabel">Niche</span></label>
+            <input id="onboardNiche" placeholder="" required />
+          </div>
+          <div class="field">
+            <label for="onboardObjective"><span id="onboardObjectiveLabel">Main objective</span></label>
+            <input id="onboardObjective" placeholder="" required />
+          </div>
+          <div class="field">
+            <label for="onboardLinkedin"><span id="onboardLinkedinLabel">LinkedIn username</span></label>
+            <input id="onboardLinkedin" placeholder="" />
+          </div>
+          <div class="field">
+            <label for="onboardInstagram"><span id="onboardInstagramLabel">Instagram username</span></label>
+            <input id="onboardInstagram" placeholder="" />
+          </div>
+          <button type="submit" id="onboardingFormSubmitBtn">Complete onboarding</button>
+        </form>
+
+        <form id="paymentForm" class="hidden">
+          <div class="payment-box">
+            <p class="payment-label" id="paymentPlanLabel">PostPilot Pro</p>
+            <h3 id="paymentActivateTitle">Activate your subscription</h3>
+            <p class="payment-price"><strong>EUR 30</strong><span id="paymentPriceSuffix"> / month</span></p>
+            <ul>
+              <li id="paymentFeature1">Full AI coaching chat access</li>
+              <li id="paymentFeature2">Content strategy and draft generation</li>
+              <li id="paymentFeature3">Weekly planning and performance insights</li>
+            </ul>
+            <label class="checkbox-row payment-confirm-row">
+              <input id="paymentConfirm" type="checkbox" />
+              <span id="paymentAgreeText">I agree to start a monthly EUR 30 subscription.</span>
+            </label>
+          </div>
+          <button type="submit" id="paymentSubmitBtn">Complete payment</button>
+        </form>
+
+        <p id="onboardingError" class="form-error"></p>
+      </div>
+    </div>
+
+    <div id="settingsModal" class="modal hidden">
+      <div class="modal-card settings-card">
+        <div class="modal-head">
+          <h2 id="settingsModalTitle">Settings</h2>
+          <button id="closeSettingsBtn" class="ghost-icon" aria-label="Close settings">×</button>
+        </div>
+        <div class="settings-layout">
+          <aside class="settings-nav">
+            <button class="settings-nav-btn active" data-tab="general" id="settingsNavGeneral">General</button>
+            <button class="settings-nav-btn" data-tab="account" id="settingsNavAccount">Account</button>
+            <button class="settings-nav-btn" data-tab="connections" id="settingsNavConnections">Connections</button>
+          </aside>
+
+          <form id="settingsForm" class="settings-main">
+            <section class="settings-panel active" data-panel="general">
+              <h3 id="settingsPanelGeneralTitle">General</h3>
+              <div class="setting-row">
+                <div>
+                  <p class="setting-title" id="settingsNicheTitle">Niche</p>
+                  <p class="setting-hint" id="settingsNicheHint">Your core content angle and audience.</p>
+                </div>
+                <input id="settingsNiche" />
+              </div>
+              <div class="setting-row">
+                <div>
+                  <p class="setting-title" id="settingsObjectiveTitle">Objective</p>
+                  <p class="setting-hint" id="settingsObjectiveHint">Main growth outcome for this quarter.</p>
+                </div>
+                <input id="settingsObjective" />
+              </div>
+            </section>
+
+            <section class="settings-panel" data-panel="account">
+              <h3 id="settingsPanelAccountTitle">Account</h3>
+              <div class="setting-row">
+                <div>
+                  <p class="setting-title" id="settingsNameTitle">Name</p>
+                </div>
+                <input id="settingsName" />
+              </div>
+              <div class="setting-row">
+                <div>
+                  <p class="setting-title" id="settingsEmailTitle">Email</p>
+                </div>
+                <input id="settingsEmail" />
+              </div>
+              <div class="setting-row billing-row">
+                <div>
+                  <p class="setting-title">Subscription</p>
+                  <p class="setting-hint" id="billingStatusText">Status: Not active</p>
+                </div>
+                <div class="billing-actions">
+                  <button type="button" id="manageBillingBtn" class="secondary">Manage billing</button>
+                  <button type="button" id="cancelSubscriptionBtn" class="secondary danger-btn">Cancel plan</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-panel" data-panel="connections">
+              <h3 id="settingsPanelConnectionsTitle">Connections</h3>
+              <div class="setting-row">
+                <div>
+                  <p class="setting-title" id="settingsLinkedinTitle">LinkedIn username</p>
+                  <p class="setting-hint" id="settingsLinkedinStatus">Not connected</p>
+                </div>
+                <div class="connection-field">
+                  <input id="settingsLinkedin" />
+                  <button type="button" id="connectLinkedinBtn" class="secondary connection-btn">Connect account</button>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <p class="setting-title" id="settingsInstagramTitle">Instagram username</p>
+                  <p class="setting-hint" id="settingsInstagramStatus">Not connected</p>
+                </div>
+                <div class="connection-field">
+                  <input id="settingsInstagram" />
+                  <button type="button" id="connectInstagramBtn" class="secondary connection-btn">Connect account</button>
+                </div>
+              </div>
+            </section>
+
+            <div class="settings-actions">
+              <button type="submit" id="settingsSaveBtn">Save settings</button>
+              <p id="settingsStatus" class="settings-status-text"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

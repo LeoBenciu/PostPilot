@@ -1,0 +1,1482 @@
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const { URL } = require("url");
+const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
+const Stripe = require("stripe");
+require("dotenv").config();
+const {
+  ensureAppState,
+  createUserWithPassword,
+  findUserByEmail,
+  findUserById,
+  createOrLinkGoogleUser,
+  updateUserProfile,
+  getStateForUser,
+  saveStateForUser,
+  createSession,
+  getSessionUser,
+  revokeSession,
+  createOAuthState,
+  consumeOAuthState,
+  closeDb,
+} = require("./dbState");
+const { generateAgentReply } = require("./aiClient");
+const {
+  normalizePlatform,
+  buildAuthUrl,
+  exchangeCodeForToken,
+  fetchPlatformProfile,
+  fetchPlatformPostsAndAnalytics,
+} = require("./socialIntegrations");
+
+const PORT = process.env.PORT || 3000;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
+const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "postpilot_session";
+const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 14);
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
+const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID || "";
+const STRIPE_MONTHLY_EUR_CENTS = Number(process.env.STRIPE_MONTHLY_EUR_CENTS || 3000);
+const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
+
+function sendJson(res, statusCode, payload) {
+  res.writeHead(statusCode, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(payload));
+}
+
+function sendRedirect(res, location) {
+  res.writeHead(302, { Location: location });
+  res.end();
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (chunk) => {
+      data += chunk.toString();
+    });
+    req.on("end", () => {
+      if (!data) return resolve({});
+      try {
+        resolve(JSON.parse(data));
+      } catch (err) {
+        reject(new Error("Invalid JSON body"));
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
+function readRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
+}
+
+function buildVoiceProfile(posts) {
+  const clean = posts.map((p) => (p.text || "").trim()).filter(Boolean);
+  if (!clean.length) {
+    return {
+      tone: "direct",
+      avgSentenceLength: 14,
+      favoredOpeners: ["Quick lesson:"],
+      ctaStyle: "single clear action",
+      signatureWords: ["creator", "growth", "system"],
+    };
+  }
+
+  const words = clean
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const freq = {};
+  for (const w of words) {
+    if (w.length < 4) continue;
+    freq[w] = (freq[w] || 0) + 1;
+  }
+
+  const signatureWords = Object.entries(freq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([w]) => w);
+
+  const sentences = clean
+    .flatMap((p) => p.split(/[.!?]/))
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const avgSentenceLength = Math.round(
+    sentences.reduce((acc, s) => acc + s.split(/\s+/).length, 0) /
+      Math.max(sentences.length, 1)
+  );
+
+  const favoredOpeners = clean
+    .map((p) => p.split(/\s+/).slice(0, 3).join(" "))
+    .slice(0, 3);
+
+  const ctaStyle = clean.some((p) =>
+    /comment|dm|save|follow|share|reply/i.test(p)
+  )
+    ? "engagement prompt"
+    : "thought-provoking close";
+
+  return {
+    tone: avgSentenceLength > 18 ? "story-driven" : "concise and punchy",
+    avgSentenceLength,
+    favoredOpeners,
+    ctaStyle,
+    signatureWords,
+  };
+}
+
+function generateDraft({ topic, platform, goal, voiceProfile }) {
+  const opener = voiceProfile?.favoredOpeners?.[0] || "Most creators miss this:";
+  const words = voiceProfile?.signatureWords?.slice(0, 3).join(", ") || "growth, clarity, consistency";
+  const cta =
+    goal === "leads"
+      ? "If you want the framework, comment 'guide' and I will send it."
+      : goal === "authority"
+      ? "What would you add from your experience?"
+      : "Save this for your next content sprint.";
+
+  const formatHint =
+    platform === "instagram"
+      ? "Use short lines and spacing for mobile readability."
+      : "Keep this scannable with clear line breaks.";
+
+  return `${opener}
+
+${topic} is easier when you stop chasing hacks and start building repeatable systems.
+
+3 practical moves:
+1) Pick one audience pain and repeat it across formats.
+2) Turn expertise into a weekly publishing rhythm.
+3) Track what drives real conversation, not vanity metrics.
+
+Your voice markers: ${words}.
+
+${formatHint}
+${cta}`;
+}
+
+function summarizeAnalytics(posts) {
+  const byPlatform = posts.reduce((acc, post) => {
+    if (!acc[post.platform]) {
+      acc[post.platform] = { posts: 0, likes: 0, comments: 0, impressions: 0 };
+    }
+    acc[post.platform].posts += 1;
+    acc[post.platform].likes += post.likes || 0;
+    acc[post.platform].comments += post.comments || 0;
+    acc[post.platform].impressions += post.impressions || 0;
+    return acc;
+  }, {});
+
+  const totals = posts.reduce(
+    (acc, p) => {
+      acc.likes += p.likes || 0;
+      acc.comments += p.comments || 0;
+      acc.impressions += p.impressions || 0;
+      return acc;
+    },
+    { likes: 0, comments: 0, impressions: 0 }
+  );
+
+  const topPost = [...posts].sort(
+    (a, b) => (b.likes + b.comments) - (a.likes + a.comments)
+  )[0];
+
+  return {
+    totals,
+    byPlatform,
+    topPost,
+    recommendations: [
+      "Post educational breakdowns twice weekly on LinkedIn.",
+      "Use one direct CTA per post to increase conversion intent.",
+      "Publish Instagram posts between 3pm and 6pm for stronger reach.",
+    ],
+  };
+}
+
+function generateWeeklyPlan({ goal, postsPerWeek, focus }) {
+  const count = Number(postsPerWeek) || 4;
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const formats = ["Story post", "How-to post", "Contrarian take", "Case study", "Carousel"];
+  const plan = [];
+
+  for (let i = 0; i < count; i += 1) {
+    plan.push({
+      day: days[i % days.length],
+      format: formats[i % formats.length],
+      prompt: `Create a ${formats[i % formats.length].toLowerCase()} about ${focus || "creator growth"} tied to ${goal || "audience growth"}.`,
+      reminder: `Draft by ${days[i % days.length]} 10:00 AM, publish by 1:00 PM.`,
+    });
+  }
+
+  return plan;
+}
+
+function repurpose({ sourceText, target }) {
+  const base = (sourceText || "").trim();
+  if (!base) return "";
+  if (target === "newsletter") {
+    return `Subject: A quick content system that compounds\n\n${base}\n\nAction step: apply this to one post this week and measure replies.`;
+  }
+  if (target === "video") {
+    return `Video script hook: "Most creators are one system away from consistent growth."\n\nMain points:\n- ${base}\n- Add one example from your recent post performance\n- End with a single CTA`;
+  }
+  return `${base}\n\nRepurposed version:\n- Stronger hook\n- Shorter body\n- One CTA for engagement`;
+}
+
+function serveStatic(req, res, pathname) {
+  const publicDir = path.join(__dirname, "public");
+  const cleanPath = pathname === "/" ? "/index.html" : pathname;
+  const filePath = path.join(publicDir, cleanPath);
+
+  if (!filePath.startsWith(publicDir)) {
+    sendJson(res, 403, { error: "Forbidden" });
+    return;
+  }
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      sendJson(res, 404, { error: "Not found" });
+      return;
+    }
+
+    const ext = path.extname(filePath).toLowerCase();
+    const map = {
+      ".html": "text/html",
+      ".css": "text/css",
+      ".js": "application/javascript",
+      ".json": "application/json",
+    };
+    res.writeHead(200, { "Content-Type": map[ext] || "application/octet-stream" });
+    res.end(data);
+  });
+}
+
+function getConversation(state, sessionId) {
+  if (!state.conversations[sessionId]) {
+    state.conversations[sessionId] = [];
+  }
+  return state.conversations[sessionId];
+}
+
+function generateToken() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function parseCookies(req) {
+  const cookieHeader = req.headers.cookie || "";
+  const out = {};
+  for (const piece of cookieHeader.split(";")) {
+    const [rawKey, ...rawValue] = piece.trim().split("=");
+    if (!rawKey) continue;
+    out[rawKey] = decodeURIComponent(rawValue.join("=") || "");
+  }
+  return out;
+}
+
+function isSecureRequest(req) {
+  if (req.headers["x-forwarded-proto"]) {
+    return String(req.headers["x-forwarded-proto"]).split(",")[0].trim() === "https";
+  }
+  return req.socket?.encrypted === true;
+}
+
+function setSessionCookie(req, res, token, expiresAt) {
+  const secure = isSecureRequest(req);
+  const cookie = [
+    `${SESSION_COOKIE_NAME}=${encodeURIComponent(token)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    `Expires=${new Date(expiresAt).toUTCString()}`,
+  ];
+  if (secure) cookie.push("Secure");
+  res.setHeader("Set-Cookie", cookie.join("; "));
+}
+
+function clearSessionCookie(req, res) {
+  const secure = isSecureRequest(req);
+  const cookie = [
+    `${SESSION_COOKIE_NAME}=`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+  ];
+  if (secure) cookie.push("Secure");
+  res.setHeader("Set-Cookie", cookie.join("; "));
+}
+
+async function getAuthedUser(req) {
+  const cookies = parseCookies(req);
+  const sessionToken = cookies[SESSION_COOKIE_NAME];
+  if (!sessionToken) return null;
+  const user = await getSessionUser(sessionToken);
+  return user || null;
+}
+
+async function requireAuth(req, res) {
+  const user = await getAuthedUser(req);
+  if (!user) {
+    sendJson(res, 401, { error: "Authentication required" });
+    return null;
+  }
+  return user;
+}
+
+function authRedirectUrl(source, authError, authDetail) {
+  const q = new URLSearchParams({
+    source: source === "signin" ? "signin" : "signup",
+    authError: authError || "unknown_oauth_error",
+  });
+  if (authDetail) q.set("authDetail", authDetail);
+  return `/?${q.toString()}`;
+}
+
+function integrationRedirectUrl(platform, ok, error, detail) {
+  const q = new URLSearchParams({ integration: platform || "unknown" });
+  if (ok) q.set("integrationAuth", "success");
+  if (error) q.set("integrationError", error);
+  if (detail) q.set("integrationDetail", detail);
+  return `/?${q.toString()}`;
+}
+
+function requestOrigin(req) {
+  const proto = isSecureRequest(req) ? "https" : "http";
+  return `${proto}://${req.headers.host}`;
+}
+
+async function resolveUserIdFromStripeEventObject(obj) {
+  const fromMeta = Number(obj?.metadata?.userId || 0);
+  if (fromMeta) return fromMeta;
+  const subscriptionId =
+    typeof obj?.subscription === "string" ? obj.subscription : obj?.id?.startsWith("sub_") ? obj.id : "";
+  if (!subscriptionId || !stripe) return 0;
+  try {
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    return Number(sub?.metadata?.userId || 0);
+  } catch (_error) {
+    return 0;
+  }
+}
+
+function onboardingMissingFields(state) {
+  const missing = [];
+  if (!state.user.niche || !state.user.niche.trim()) missing.push("niche");
+  if (!state.user.objective || !state.user.objective.trim()) missing.push("objective");
+  const hasHandle =
+    Boolean(state.integrations.linkedin.username) || Boolean(state.integrations.instagram.username);
+  if (!hasHandle) missing.push("at least one social handle");
+  return missing;
+}
+
+function isPaymentComplete(state) {
+  return state.user?.billing?.status === "paid";
+}
+
+function markBillingPaid(state, payload = {}) {
+  state.user.billing.status = "paid";
+  state.user.billing.plan = "monthly";
+  state.user.billing.amountEur = 30;
+  state.user.billing.currency = "EUR";
+  state.user.billing.interval = "month";
+  state.user.billing.paidAt = nowIso();
+  if (payload.customerId) state.user.billing.stripeCustomerId = payload.customerId;
+  if (payload.subscriptionId) state.user.billing.stripeSubscriptionId = payload.subscriptionId;
+  if (payload.checkoutSessionId) state.user.billing.stripeCheckoutSessionId = payload.checkoutSessionId;
+}
+
+function markBillingUnpaid(state, payload = {}) {
+  state.user.billing.status = "unpaid";
+  if (payload.reason) state.user.billing.lastFailureReason = payload.reason;
+  if (payload.customerId) state.user.billing.stripeCustomerId = payload.customerId;
+  if (payload.subscriptionId) state.user.billing.stripeSubscriptionId = payload.subscriptionId;
+}
+
+function updateOnboardingCompletion(state) {
+  state.user.onboardingCompleted = onboardingMissingFields(state).length === 0;
+}
+
+function accountSummary(state) {
+  return {
+    user: state.user,
+    integrations: state.integrations,
+    onboarding: {
+      completed: state.user.onboardingCompleted,
+      missing: onboardingMissingFields(state),
+    },
+    payment: {
+      required: true,
+      completed: isPaymentComplete(state),
+      details: state.user.billing,
+    },
+  };
+}
+
+function bindStateToUser(state, user) {
+  state.user.createdAt = state.user.createdAt || user.createdAt.toISOString();
+  state.user.name = user.fullName || state.user.name || "";
+  state.user.email = user.email || state.user.email || "";
+  if (!state.syncJobs || !Array.isArray(state.syncJobs)) state.syncJobs = [];
+  if (!state.integrations?.linkedin) state.integrations.linkedin = { connected: false, username: null, token: null, lastSyncAt: null };
+  if (!state.integrations?.instagram) state.integrations.instagram = { connected: false, username: null, token: null, lastSyncAt: null };
+  return state;
+}
+
+function upsertPosts(state, newPosts) {
+  const seen = new Set(state.posts.map((p) => `${p.platform}:${p.postedAt}:${p.text}`));
+  for (const post of newPosts) {
+    const key = `${post.platform}:${post.postedAt}:${post.text}`;
+    if (!seen.has(key)) {
+      state.posts.push(post);
+      seen.add(key);
+    }
+  }
+  state.posts.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
+}
+
+async function syncPlatform(state, platform) {
+  const integration = state.integrations[platform];
+  if (!integration || !integration.connected || !integration.token) {
+    throw new Error(`${platform} is not connected`);
+  }
+  const profile = await fetchPlatformProfile({ platform, accessToken: integration.token });
+  const fetched = await fetchPlatformPostsAndAnalytics({
+    platform,
+    accessToken: integration.token,
+    profile,
+  });
+  upsertPosts(state, fetched);
+  integration.username = profile.username || integration.username || null;
+  integration.lastSyncAt = nowIso();
+  state.voiceProfile = buildVoiceProfile(state.posts);
+  return fetched.length;
+}
+
+function createSyncJob(state, platform) {
+  if (!Array.isArray(state.syncJobs)) state.syncJobs = [];
+  const job = {
+    id: crypto.randomBytes(8).toString("hex"),
+    platform,
+    status: "queued",
+    attempts: 0,
+    maxAttempts: 3,
+    recordsSynced: 0,
+    error: null,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  state.syncJobs.unshift(job);
+  state.syncJobs = state.syncJobs.slice(0, 100);
+  return job;
+}
+
+async function runSyncJob(state, platform) {
+  const job = createSyncJob(state, platform);
+  const integration = state.integrations[platform];
+  if (!integration.sync) integration.sync = {};
+  integration.sync.status = "queued";
+  integration.sync.lastJobId = job.id;
+  integration.sync.lastError = null;
+  integration.sync.lastAttemptAt = nowIso();
+
+  while (job.attempts < job.maxAttempts) {
+    try {
+      job.status = "running";
+      job.updatedAt = nowIso();
+      job.attempts += 1;
+      integration.sync.status = "running";
+      integration.sync.lastAttemptAt = nowIso();
+      const count = await syncPlatform(state, platform);
+      job.status = "success";
+      job.recordsSynced = count;
+      job.updatedAt = nowIso();
+      integration.sync.status = "success";
+      integration.sync.lastError = null;
+      integration.sync.retryCount = job.attempts - 1;
+      return job;
+    } catch (error) {
+      job.error = error.message;
+      job.updatedAt = nowIso();
+      integration.sync.lastError = error.message;
+      integration.sync.retryCount = job.attempts;
+      if (job.attempts >= job.maxAttempts) {
+        job.status = "failed";
+        integration.sync.status = "failed";
+        return job;
+      }
+    }
+  }
+  return job;
+}
+
+function activePlatforms(state) {
+  return Object.entries(state.integrations)
+    .filter(([, value]) => value.connected)
+    .map(([key]) => key);
+}
+
+function parseIntent(message) {
+  const text = (message || "").toLowerCase();
+  if (/plan|calendar|week|schedule/.test(text)) return "plan";
+  if (/repurpose|newsletter|thread|carousel|video/.test(text)) return "repurpose";
+  if (/analytics|performance|insight|metric|stats/.test(text)) return "analytics";
+  if (/generate|draft|write|post|caption|hook/.test(text)) return "draft";
+  if (/connect|integration|sync|refresh|import/.test(text)) return "sync";
+  return "coach";
+}
+
+function extractPlatform(message) {
+  const text = (message || "").toLowerCase();
+  if (text.includes("instagram")) return "instagram";
+  if (text.includes("linkedin")) return "linkedin";
+  return "linkedin";
+}
+
+function extractGoal(message) {
+  const text = (message || "").toLowerCase();
+  if (text.includes("lead")) return "leads";
+  if (text.includes("authority")) return "authority";
+  return "engagement";
+}
+
+function extractTopic(message) {
+  const text = (message || "").trim();
+  if (!text) return "content strategy";
+  const cleaned = text.replace(/write|generate|post|caption|about/gi, "").trim();
+  return cleaned || "content strategy";
+}
+
+function latestPostText(state) {
+  return state.posts[0] ? state.posts[0].text : "";
+}
+
+async function agentRespond(state, { message, userId, sessionId }) {
+  if (!state.user.createdAt) {
+    return {
+      role: "assistant",
+      content: "Create your account first to start using the content agent.",
+      action: "account_required",
+    };
+  }
+  if (!state.user.onboardingCompleted) {
+    return {
+      role: "assistant",
+      content: "Complete onboarding in Settings so I can personalize your strategy and voice.",
+      action: "onboarding_required",
+    };
+  }
+  if (!isPaymentComplete(state)) {
+    return {
+      role: "assistant",
+      content: "Payment is required before using the AI coach. Please complete your EUR 30/month subscription.",
+      action: "payment_required",
+    };
+  }
+
+  const connected = activePlatforms(state);
+  if (!connected.length) {
+    return {
+      role: "assistant",
+      content:
+        "Connect LinkedIn or Instagram first. I need account data to learn your voice and analyze performance.",
+      action: "connect_required",
+    };
+  }
+
+  const voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
+  state.voiceProfile = voiceProfile;
+  const history = getConversation(state, sessionId);
+
+  try {
+    const response = await generateAgentReply({
+      message,
+      history,
+      state,
+      userId,
+      sessionId,
+    });
+    return {
+      role: "assistant",
+      content: response.content,
+      action: response.action || "ai_reply",
+      payload: { provider: response.provider || "unknown" },
+    };
+  } catch (error) {
+    return {
+      role: "assistant",
+      content:
+        "I could not reach the AI provider right now. Please verify AI_PROVIDER and provider credentials in .env, then try again.",
+      action: "provider_error",
+      payload: { reason: error.message },
+    };
+  }
+}
+
+const server = http.createServer(async (req, res) => {
+  const parsed = new URL(req.url, `http://${req.headers.host}`);
+  const { pathname } = parsed;
+
+  if (req.method === "GET" && pathname === "/api/health") {
+    sendJson(res, 200, { ok: true, app: "PostPilot Agent" });
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/auth/session") {
+    try {
+      const user = await getAuthedUser(req);
+      if (!user) {
+        sendJson(res, 200, { authenticated: false });
+        return;
+      }
+      sendJson(res, 200, {
+        authenticated: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          authProvider: user.authProvider,
+          createdAt: user.createdAt,
+        },
+      });
+    } catch (err) {
+      sendJson(res, 500, { error: `session_check_failed: ${err.message}` });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/auth/signup") {
+    try {
+      const body = await readBody(req);
+      const fullName = String(body.fullName || "").trim();
+      const email = String(body.email || "").trim().toLowerCase();
+      const password = String(body.password || "");
+      if (!fullName || !email || !password) {
+        sendJson(res, 400, { error: "Full name, email, and password are required" });
+        return;
+      }
+      if (password.length < 8) {
+        sendJson(res, 400, { error: "Password must be at least 8 characters" });
+        return;
+      }
+
+      const existing = await findUserByEmail(email);
+      if (existing) {
+        sendJson(res, 409, { error: "Account already exists. Please sign in." });
+        return;
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+      const user = await createUserWithPassword({ fullName, email, passwordHash });
+      const session = await createSession(user.id, SESSION_TTL_DAYS);
+      setSessionCookie(req, res, session.token, session.expiresAt);
+      sendJson(res, 201, {
+        ok: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          authProvider: user.authProvider,
+        },
+      });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/auth/signin") {
+    try {
+      const body = await readBody(req);
+      const email = String(body.email || "").trim().toLowerCase();
+      const password = String(body.password || "");
+      if (!email || !password) {
+        sendJson(res, 400, { error: "Email and password are required" });
+        return;
+      }
+
+      const user = await findUserByEmail(email);
+      if (!user) {
+        sendJson(res, 401, { error: "Invalid email or password" });
+        return;
+      }
+      if (!user.passwordHash) {
+        sendJson(res, 401, { error: "This account uses Google sign-in. Continue with Google." });
+        return;
+      }
+      const ok = await bcrypt.compare(password, user.passwordHash);
+      if (!ok) {
+        sendJson(res, 401, { error: "Invalid email or password" });
+        return;
+      }
+
+      const session = await createSession(user.id, SESSION_TTL_DAYS);
+      setSessionCookie(req, res, session.token, session.expiresAt);
+      sendJson(res, 200, {
+        ok: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          authProvider: user.authProvider,
+        },
+      });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/auth/signout") {
+    try {
+      const sessionToken = parseCookies(req)[SESSION_COOKIE_NAME];
+      await revokeSession(sessionToken);
+      clearSessionCookie(req, res);
+      sendJson(res, 200, { ok: true });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/auth/google") {
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+      sendRedirect(res, authRedirectUrl("signup", "google_oauth_not_configured", "missing_client_config"));
+      return;
+    }
+
+    const source = parsed.searchParams.get("source") === "signin" ? "signin" : "signup";
+    const redirectTo = "/";
+    const stateParam = await createOAuthState({ source, redirectTo });
+    const proto = isSecureRequest(req) ? "https" : "http";
+    const redirectUri = `${proto}://${req.headers.host}/auth/google/callback`;
+    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    authUrl.searchParams.set("client_id", GOOGLE_CLIENT_ID);
+    authUrl.searchParams.set("redirect_uri", redirectUri);
+    authUrl.searchParams.set("response_type", "code");
+    authUrl.searchParams.set("scope", "openid email profile");
+    authUrl.searchParams.set("state", stateParam);
+    authUrl.searchParams.set("access_type", "offline");
+    authUrl.searchParams.set("prompt", "select_account");
+    sendRedirect(res, authUrl.toString());
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/auth/google/callback") {
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+      sendRedirect(res, authRedirectUrl("signup", "google_oauth_not_configured", "missing_client_config"));
+      return;
+    }
+
+    const code = parsed.searchParams.get("code");
+    const oauthError = parsed.searchParams.get("error");
+    const consumed = await consumeOAuthState(parsed.searchParams.get("state"));
+    const source = consumed.ok && consumed.value.source === "signin" ? "signin" : "signup";
+    if (!consumed.ok) {
+      sendRedirect(res, authRedirectUrl(source, "invalid_oauth_state", consumed.reason));
+      return;
+    }
+
+    if (oauthError) {
+      sendRedirect(res, authRedirectUrl(source, "oauth_provider_error", oauthError));
+      return;
+    }
+
+    if (!code) {
+      sendRedirect(res, authRedirectUrl(source, "missing_code", "oauth_code_missing"));
+      return;
+    }
+
+    try {
+      const proto = isSecureRequest(req) ? "https" : "http";
+      const redirectUri = `${proto}://${req.headers.host}/auth/google/callback`;
+      const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code,
+          client_id: GOOGLE_CLIENT_ID,
+          client_secret: GOOGLE_CLIENT_SECRET,
+          redirect_uri: redirectUri,
+          grant_type: "authorization_code",
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        sendRedirect(res, authRedirectUrl(source, "token_exchange_failed", `status_${tokenResponse.status}`));
+        return;
+      }
+
+      const tokenData = await tokenResponse.json();
+      const accessToken = tokenData.access_token;
+      if (!accessToken) {
+        sendRedirect(res, authRedirectUrl(source, "missing_access_token", "token_response_missing_access_token"));
+        return;
+      }
+
+      const profileResponse = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!profileResponse.ok) {
+        sendRedirect(res, authRedirectUrl(source, "profile_fetch_failed", `status_${profileResponse.status}`));
+        return;
+      }
+
+      const profile = await profileResponse.json();
+      const googleSub = String(profile.sub || "").trim();
+      const email = String(profile.email || "").trim().toLowerCase();
+      const fullName = String(profile.name || "").trim() || email.split("@")[0] || "Creator";
+
+      if (!googleSub || !email) {
+        sendRedirect(res, authRedirectUrl(source, "google_profile_missing_fields", "missing_sub_or_email"));
+        return;
+      }
+
+      const user = await createOrLinkGoogleUser({ googleSub, email, fullName });
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      updateOnboardingCompletion(state);
+      await saveStateForUser(user.id, state);
+      const session = await createSession(user.id, SESSION_TTL_DAYS);
+      setSessionCookie(req, res, session.token, session.expiresAt);
+      sendRedirect(res, `/?googleAuth=success&source=${source}`);
+    } catch (err) {
+      console.error("Google callback failed", err);
+      sendRedirect(res, authRedirectUrl(source, "google_callback_failed", "unexpected_server_error"));
+    }
+    return;
+  }
+
+  if (req.method === "GET" && (pathname === "/auth/linkedin" || pathname === "/auth/instagram")) {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const platform = pathname.endsWith("linkedin") ? "linkedin" : "instagram";
+      const stateToken = await createOAuthState({
+        source: `social:${platform}:${user.id}`,
+        redirectTo: "/",
+      });
+      const redirectUri = `${requestOrigin(req)}/auth/${platform}/callback`;
+      const authUrl = buildAuthUrl({ platform, redirectUri, state: stateToken });
+      sendRedirect(res, authUrl);
+    } catch (err) {
+      const platform = pathname.endsWith("linkedin") ? "linkedin" : "instagram";
+      sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_start_failed", err.message));
+    }
+    return;
+  }
+
+  if (req.method === "GET" && (pathname === "/auth/linkedin/callback" || pathname === "/auth/instagram/callback")) {
+    const platform = pathname.includes("/linkedin/") ? "linkedin" : "instagram";
+    // #region agent log
+    fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H10", location: "server.js:/auth/platform/callback:entry", message: "OAuth callback route hit", data: { platform, hasCode: Boolean(parsed.searchParams.get("code")), hasError: Boolean(parsed.searchParams.get("error")), hasState: Boolean(parsed.searchParams.get("state")) }, timestamp: Date.now() }) }).catch(() => {});
+    // #endregion
+    const oauthError = parsed.searchParams.get("error");
+    if (oauthError) {
+      // #region agent log
+      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H10", location: "server.js:/auth/platform/callback:oauth-error", message: "Provider returned OAuth error", data: { platform, oauthError }, timestamp: Date.now() }) }).catch(() => {});
+      // #endregion
+      sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_provider_error", oauthError));
+      return;
+    }
+    const consumed = await consumeOAuthState(parsed.searchParams.get("state"));
+    if (!consumed.ok) {
+      sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_state_invalid", consumed.reason));
+      return;
+    }
+    const code = parsed.searchParams.get("code");
+    if (!code) {
+      sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_code_missing", "missing_code"));
+      return;
+    }
+    try {
+      let user = await getAuthedUser(req);
+      if (!user) {
+        const sourceUserId = Number(String(consumed.value.source || "").split(":")[2] || 0);
+        if (sourceUserId) user = await findUserById(sourceUserId);
+      }
+      if (!user) {
+        sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_user_missing", "session_or_state_missing_user"));
+        return;
+      }
+
+      const redirectUri = `${requestOrigin(req)}/auth/${platform}/callback`;
+      const token = await exchangeCodeForToken({ platform, code, redirectUri });
+      const profile = await fetchPlatformProfile({
+        platform,
+        accessToken: token.accessToken,
+      });
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      state.integrations[platform].connected = true;
+      state.integrations[platform].token = token.accessToken;
+      state.integrations[platform].refreshToken = token.refreshToken || null;
+      state.integrations[platform].expiresIn = token.expiresIn || null;
+      state.integrations[platform].connectedAt = nowIso();
+      state.integrations[platform].username = profile.username || state.integrations[platform].username || null;
+      if (!state.integrations[platform].sync) state.integrations[platform].sync = {};
+      state.integrations[platform].sync.status = "connected";
+      state.integrations[platform].sync.lastError = null;
+      updateOnboardingCompletion(state);
+      await saveStateForUser(user.id, state);
+      sendRedirect(res, integrationRedirectUrl(platform, true));
+    } catch (err) {
+      sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_callback_failed", err.message));
+    }
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/account") {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    await saveStateForUser(user.id, state);
+    sendJson(res, 200, accountSummary(state));
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/account/create") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const body = await readBody(req);
+      if (!body.name || !body.email) {
+        sendJson(res, 400, { error: "Name and email are required" });
+        return;
+      }
+      const updatedUser = await updateUserProfile(user.id, {
+        fullName: String(body.name).trim(),
+        email: String(body.email).trim().toLowerCase(),
+      });
+      state.user.createdAt = state.user.createdAt || nowIso();
+      state.user.name = updatedUser.fullName;
+      state.user.email = updatedUser.email;
+      updateOnboardingCompletion(state);
+      await saveStateForUser(user.id, state);
+      sendJson(res, 200, accountSummary(state));
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/account/onboarding/complete") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const body = await readBody(req);
+      if (!state.user.createdAt) {
+        sendJson(res, 400, { error: "Create account first" });
+        return;
+      }
+
+      state.user.niche = String(body.niche || "").trim();
+      state.user.objective = String(body.objective || "").trim();
+
+      const linkedinUsername = String(body.linkedinUsername || "").trim();
+      const instagramUsername = String(body.instagramUsername || "").trim();
+
+      if (linkedinUsername) {
+        state.integrations.linkedin.username = linkedinUsername;
+      }
+      if (instagramUsername) {
+        state.integrations.instagram.username = instagramUsername;
+      }
+
+      updateOnboardingCompletion(state);
+      if (!state.user.onboardingCompleted) {
+        sendJson(res, 400, {
+          error: `Missing onboarding fields: ${onboardingMissingFields(state).join(", ")}`,
+        });
+        return;
+      }
+
+      await saveStateForUser(user.id, state);
+      sendJson(res, 200, accountSummary(state));
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/settings/save") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const body = await readBody(req);
+      if (!state.user.createdAt) {
+        sendJson(res, 400, { error: "Create account first" });
+        return;
+      }
+
+      let updatedUser = user;
+      const shouldUpdateIdentity = typeof body.name === "string" || typeof body.email === "string";
+      if (shouldUpdateIdentity) {
+        updatedUser = await updateUserProfile(user.id, {
+          fullName: typeof body.name === "string" ? body.name : undefined,
+          email: typeof body.email === "string" ? body.email : undefined,
+        });
+      }
+      state.user.name = updatedUser.fullName;
+      state.user.email = updatedUser.email;
+      if (typeof body.niche === "string") state.user.niche = body.niche.trim();
+      if (typeof body.objective === "string") state.user.objective = body.objective.trim();
+
+      if (typeof body.linkedinUsername === "string") {
+        const v = body.linkedinUsername.trim();
+        state.integrations.linkedin.username = v || null;
+        if (!v && !state.integrations.linkedin.connected) state.integrations.linkedin.token = null;
+      }
+
+      if (typeof body.instagramUsername === "string") {
+        const v = body.instagramUsername.trim();
+        state.integrations.instagram.username = v || null;
+        if (!v && !state.integrations.instagram.connected) state.integrations.instagram.token = null;
+      }
+
+      updateOnboardingCompletion(state);
+      await saveStateForUser(user.id, state);
+      sendJson(res, 200, accountSummary(state));
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/integrations") {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    sendJson(res, 200, {
+      integrations: state.integrations,
+      connected: activePlatforms(state),
+      syncJobs: (state.syncJobs || []).slice(0, 20),
+    });
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/payment/status") {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    sendJson(res, 200, {
+      payment: {
+        required: true,
+        completed: isPaymentComplete(state),
+        details: state.user.billing,
+      },
+    });
+    return;
+  }
+
+  if (
+    req.method === "POST" &&
+    (pathname === "/api/payment/create-checkout-session" || pathname === "/api/payment/complete")
+  ) {
+    try {
+      if (!stripe) {
+        sendJson(res, 500, { error: "Stripe is not configured" });
+        return;
+      }
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      if (!state.user.onboardingCompleted) {
+        sendJson(res, 400, { error: "Complete onboarding before payment." });
+        return;
+      }
+      const origin = requestOrigin(req);
+      const successUrl = `${origin}/?checkout=success`;
+      const cancelUrl = `${origin}/?checkout=cancel`;
+      const lineItem = STRIPE_PRICE_ID
+        ? { price: STRIPE_PRICE_ID, quantity: 1 }
+        : {
+            price_data: {
+              currency: "eur",
+              unit_amount: STRIPE_MONTHLY_EUR_CENTS,
+              recurring: { interval: "month" },
+              product_data: {
+                name: "PostPilot Pro",
+                description: "AI creator coach subscription",
+              },
+            },
+            quantity: 1,
+          };
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        customer_email: user.email,
+        line_items: [lineItem],
+        metadata: {
+          userId: String(user.id),
+          plan: "monthly",
+        },
+        subscription_data: {
+          metadata: {
+            userId: String(user.id),
+            plan: "monthly",
+          },
+        },
+      });
+
+      state.user.billing.lastCheckoutInitiatedAt = nowIso();
+      await saveStateForUser(user.id, state);
+      sendJson(res, 200, {
+        ok: true,
+        checkoutUrl: session.url,
+        sessionId: session.id,
+      });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/payment/create-portal-session") {
+    try {
+      if (!stripe) {
+        sendJson(res, 500, { error: "Stripe is not configured" });
+        return;
+      }
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const customerId = state.user.billing?.stripeCustomerId;
+      if (!customerId) {
+        sendJson(res, 400, { error: "No Stripe customer is associated with this account yet." });
+        return;
+      }
+      const session = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: requestOrigin(req),
+      });
+      sendJson(res, 200, { ok: true, url: session.url });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/payment/cancel-subscription") {
+    try {
+      if (!stripe) {
+        sendJson(res, 500, { error: "Stripe is not configured" });
+        return;
+      }
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const subscriptionId = state.user.billing?.stripeSubscriptionId;
+      if (!subscriptionId) {
+        sendJson(res, 400, { error: "No active Stripe subscription found." });
+        return;
+      }
+      const updated = await stripe.subscriptions.update(subscriptionId, {
+        cancel_at_period_end: true,
+      });
+      state.user.billing.cancelAtPeriodEnd = Boolean(updated.cancel_at_period_end);
+      await saveStateForUser(user.id, state);
+      sendJson(res, 200, {
+        ok: true,
+        subscriptionId: updated.id,
+        cancelAtPeriodEnd: Boolean(updated.cancel_at_period_end),
+        currentPeriodEnd: updated.current_period_end || null,
+      });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/payment/webhook") {
+    if (!stripe || !STRIPE_WEBHOOK_SECRET) {
+      sendJson(res, 500, { error: "Stripe webhook is not configured" });
+      return;
+    }
+    const signature = req.headers["stripe-signature"];
+    if (!signature) {
+      sendJson(res, 400, { error: "Missing Stripe signature" });
+      return;
+    }
+    try {
+      const rawBody = await readRawBody(req);
+      const event = stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET);
+      const obj = event.data.object;
+      const userId = await resolveUserIdFromStripeEventObject(obj);
+      if (!userId) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ received: true, ignored: true }));
+        return;
+      }
+      const user = await findUserById(userId);
+      if (!user) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ received: true, ignored: true }));
+        return;
+      }
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+
+      if (event.type === "checkout.session.completed") {
+        markBillingPaid(state, {
+          customerId: typeof obj.customer === "string" ? obj.customer : null,
+          subscriptionId: typeof obj.subscription === "string" ? obj.subscription : null,
+          checkoutSessionId: obj.id,
+        });
+      }
+
+      if (event.type === "invoice.paid") {
+        markBillingPaid(state, {
+          customerId: typeof obj.customer === "string" ? obj.customer : null,
+          subscriptionId: typeof obj.subscription === "string" ? obj.subscription : null,
+        });
+      }
+
+      if (event.type === "customer.subscription.deleted") {
+        markBillingUnpaid(state, {
+          subscriptionId: obj.id,
+          customerId: typeof obj.customer === "string" ? obj.customer : null,
+          reason: "subscription_deleted",
+        });
+      }
+
+      if (event.type === "invoice.payment_failed") {
+        markBillingUnpaid(state, {
+          subscriptionId: typeof obj.subscription === "string" ? obj.subscription : null,
+          customerId: typeof obj.customer === "string" ? obj.customer : null,
+          reason: "invoice_payment_failed",
+        });
+      }
+
+      if (event.type === "customer.subscription.updated") {
+        const status = String(obj.status || "").toLowerCase();
+        if (status === "active" || status === "trialing") {
+          markBillingPaid(state, {
+            subscriptionId: obj.id,
+            customerId: typeof obj.customer === "string" ? obj.customer : null,
+          });
+        } else if (status) {
+          markBillingUnpaid(state, {
+            subscriptionId: obj.id,
+            customerId: typeof obj.customer === "string" ? obj.customer : null,
+            reason: `subscription_status_${status}`,
+          });
+        }
+      }
+
+      await saveStateForUser(user.id, state);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ received: true }));
+    } catch (err) {
+      sendJson(res, 400, { error: `webhook_verification_failed: ${err.message}` });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/integrations/connect") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const body = await readBody(req);
+      // #region agent log
+      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H2", location: "server.js:/api/integrations/connect:body-read", message: "Connect request parsed", data: { method: req.method, pathname, hasUser: Boolean(user?.id), bodyPlatform: body?.platform ?? null, createdAt: Boolean(state.user?.createdAt) }, timestamp: Date.now() }) }).catch(() => {});
+      // #endregion
+      if (!state.user.createdAt) {
+        sendJson(res, 400, { error: "Create account first" });
+        return;
+      }
+      const platform = normalizePlatform(body.platform);
+      // #region agent log
+      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H2", location: "server.js:/api/integrations/connect:normalized-platform", message: "Platform normalized", data: { normalizedPlatform: platform || null, hasIntegrationSlot: Boolean(platform && state.integrations?.[platform]) }, timestamp: Date.now() }) }).catch(() => {});
+      // #endregion
+      if (!platform || !state.integrations[platform]) {
+        sendJson(res, 400, { error: "Unknown platform" });
+        return;
+      }
+      const stateToken = await createOAuthState({
+        source: `social:${platform}:${user.id}`,
+        redirectTo: "/",
+      });
+      const redirectUri = `${requestOrigin(req)}/auth/${platform}/callback`;
+      const authUrl = buildAuthUrl({ platform, redirectUri, state: stateToken });
+      // #region agent log
+      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H6", location: "server.js:/api/integrations/connect:auth-url", message: "OAuth URL generated for client redirect", data: { platform, redirectUriHost: new URL(redirectUri).host, redirectUriPath: new URL(redirectUri).pathname, authUrlHost: new URL(authUrl).host, authUrlPath: new URL(authUrl).pathname, authScope: new URL(authUrl).searchParams.get("scope") || "", hasStateParam: Boolean(new URL(authUrl).searchParams.get("state")) }, timestamp: Date.now() }) }).catch(() => {});
+      // #endregion
+      sendJson(res, 200, {
+        platform,
+        connected: state.integrations[platform].connected,
+        authUrl,
+      });
+    } catch (err) {
+      // #region agent log
+      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H4", location: "server.js:/api/integrations/connect:catch", message: "Connect route threw error", data: { errorMessage: String(err?.message || "unknown_error"), errorName: String(err?.name || "Error") }, timestamp: Date.now() }) }).catch(() => {});
+      // #endregion
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/integrations/sync") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const body = await readBody(req);
+      const platform = normalizePlatform(body.platform || "");
+      const platforms = platform ? [platform] : activePlatforms(state);
+      if (!platforms.length) {
+        sendJson(res, 400, { error: "No connected platforms" });
+        return;
+      }
+      const results = [];
+      for (const p of platforms) {
+        const job = await runSyncJob(state, p);
+        results.push({
+          platform: p,
+          jobId: job.id,
+          status: job.status,
+          attempts: job.attempts,
+          synced: job.recordsSynced,
+          error: job.error,
+        });
+      }
+      await saveStateForUser(user.id, state);
+      sendJson(res, 200, {
+        results,
+        totalPosts: state.posts.length,
+        voiceProfile: state.voiceProfile,
+        jobs: (state.syncJobs || []).slice(0, 20),
+      });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/integrations/sync-status") {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    sendJson(res, 200, {
+      integrations: state.integrations,
+      jobs: (state.syncJobs || []).slice(0, 50),
+    });
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/voice-profile") {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    if (!state.voiceProfile) {
+      state.voiceProfile = buildVoiceProfile(state.posts);
+      await saveStateForUser(user.id, state);
+    }
+    sendJson(res, 200, { voiceProfile: state.voiceProfile });
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/analytics/summary") {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    sendJson(res, 200, summarizeAnalytics(state.posts));
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/posts/recent") {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    sendJson(res, 200, { posts: state.posts.slice(0, 12) });
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/agent/message") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const body = await readBody(req);
+      const message = body.message || "";
+      const sessionId = body.sessionId || "default";
+      if (!isPaymentComplete(state)) {
+        sendJson(res, 402, {
+          error: "Payment required. Complete your EUR 30/month subscription to use the AI coach.",
+          action: "payment_required",
+        });
+        return;
+      }
+      const convo = getConversation(state, sessionId);
+      convo.push({ role: "user", content: message, at: nowIso() });
+      const reply = await agentRespond(state, { message, userId: user.id, sessionId });
+      convo.push({ role: "assistant", content: reply.content, at: nowIso(), action: reply.action });
+      await saveStateForUser(user.id, state);
+      sendJson(res, 200, { reply, conversation: convo.slice(-20) });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/planner/weekly") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const body = await readBody(req);
+      sendJson(res, 200, { plan: generateWeeklyPlan(body || {}) });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "GET") {
+    serveStatic(req, res, pathname);
+    return;
+  }
+
+  sendJson(res, 404, { error: "Route not found" });
+});
+
+async function startServer() {
+  await ensureAppState();
+  server.listen(PORT, () => {
+    console.log(`PostPilot Agent running on http://localhost:${PORT}`);
+  });
+}
+
+process.on("SIGINT", async () => {
+  await closeDb();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  await closeDb();
+  process.exit(0);
+});
+
+startServer().catch((error) => {
+  console.error("Failed to start PostPilot Agent:", error);
+  process.exit(1);
+});
