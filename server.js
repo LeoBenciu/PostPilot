@@ -358,6 +358,9 @@ function integrationRedirectUrl(platform, ok, error, detail) {
 }
 
 function requestOrigin(req) {
+  const configured =
+    (process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (configured) return configured;
   const proto = isSecureRequest(req) ? "https" : "http";
   return `${proto}://${req.headers.host}`;
 }
