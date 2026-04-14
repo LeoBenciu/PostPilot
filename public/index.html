@@ -357,20 +357,32 @@
               <div class="setting-row">
                 <div>
                   <p class="setting-title" id="settingsLinkedinTitle">LinkedIn username</p>
-                  <p class="setting-hint" id="settingsLinkedinStatus">Not connected</p>
+                  <p class="setting-hint connection-status" id="settingsLinkedinStatus">Not connected</p>
                 </div>
-                <div class="connection-field">
-                  <input id="settingsLinkedin" />
+                <div class="connection-row">
+                  <div class="connection-card">
+                    <img id="settingsLinkedinAvatar" class="connection-avatar hidden" alt="LinkedIn profile avatar" />
+                    <div class="connection-meta">
+                      <p id="settingsLinkedinProfile" class="connection-name">Not connected</p>
+                      <p id="settingsLinkedinHandle" class="connection-handle"></p>
+                    </div>
+                  </div>
                   <button type="button" id="connectLinkedinBtn" class="secondary connection-btn">Connect account</button>
                 </div>
               </div>
               <div class="setting-row">
                 <div>
                   <p class="setting-title" id="settingsInstagramTitle">Instagram username</p>
-                  <p class="setting-hint" id="settingsInstagramStatus">Not connected</p>
+                  <p class="setting-hint connection-status" id="settingsInstagramStatus">Not connected</p>
                 </div>
-                <div class="connection-field">
-                  <input id="settingsInstagram" />
+                <div class="connection-row">
+                  <div class="connection-card">
+                    <img id="settingsInstagramAvatar" class="connection-avatar hidden" alt="Instagram profile avatar" />
+                    <div class="connection-meta">
+                      <p id="settingsInstagramProfile" class="connection-name">Not connected</p>
+                      <p id="settingsInstagramHandle" class="connection-handle"></p>
+                    </div>
+                  </div>
                   <button type="button" id="connectInstagramBtn" class="secondary connection-btn">Connect account</button>
                 </div>
               </div>

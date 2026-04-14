@@ -877,6 +877,19 @@ function setText(id, content) {
   if (el) el.textContent = content;
 }
 
+function setAvatar(id, src, alt) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!src) {
+    el.classList.add("hidden");
+    el.removeAttribute("src");
+    return;
+  }
+  el.classList.remove("hidden");
+  el.src = src;
+  if (alt) el.alt = alt;
+}
+
 function setHidden(id, hidden) {
   document.getElementById(id).classList.toggle("hidden", hidden);
 }
@@ -938,8 +951,35 @@ function applyIntegrationUi(platform, integration = {}) {
   const connected = Boolean(integration.connected);
   const statusId = isLinkedin ? "settingsLinkedinStatus" : "settingsInstagramStatus";
   const button = isLinkedin ? connectLinkedinBtn : connectInstagramBtn;
-  setText(statusId, connected ? t("connectedViaOauth") : t("notConnected"));
-  if (button) button.textContent = connected ? t("reconnectAccount") : t("connectAccount");
+  const profileId = isLinkedin ? "settingsLinkedinProfile" : "settingsInstagramProfile";
+  const handleId = isLinkedin ? "settingsLinkedinHandle" : "settingsInstagramHandle";
+  const avatarId = isLinkedin ? "settingsLinkedinAvatar" : "settingsInstagramAvatar";
+  const baseName = isLinkedin ? "LinkedIn" : "Instagram";
+  const username = String(integration.username || "").trim();
+  const avatarUrl = String(integration.avatarUrl || "").trim();
+
+  setText(statusId, connected ? "Connected" : t("notConnected"));
+  const statusEl = document.getElementById(statusId);
+  if (statusEl) statusEl.classList.toggle("is-connected", connected);
+
+  if (connected && username) {
+    setText(profileId, username);
+    setText(handleId, `@${username.replace(/^@/, "")}`);
+  } else {
+    setText(profileId, t("notConnected"));
+    setText(handleId, "");
+  }
+
+  setAvatar(
+    avatarId,
+    connected
+      ? avatarUrl ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(username || baseName)}&background=f7c6c7&color=7f002d&bold=true&size=96`
+      : "",
+    `${baseName} profile avatar`,
+  );
+
+  if (button) button.classList.toggle("hidden", connected);
 }
 
 function applySettingsForm(data) {
@@ -950,8 +990,6 @@ function applySettingsForm(data) {
   document.getElementById("settingsEmail").value = user.email || "";
   document.getElementById("settingsNiche").value = user.niche || "";
   document.getElementById("settingsObjective").value = user.objective || "";
-  document.getElementById("settingsLinkedin").value = integrations.linkedin?.username || "";
-  document.getElementById("settingsInstagram").value = integrations.instagram?.username || "";
   applyIntegrationUi("linkedin", integrations.linkedin || {});
   applyIntegrationUi("instagram", integrations.instagram || {});
   const paid = Boolean(data.payment?.completed);
@@ -1288,8 +1326,8 @@ document.getElementById("settingsForm").addEventListener("submit", async (event)
     email: document.getElementById("settingsEmail").value.trim(),
     niche: document.getElementById("settingsNiche").value.trim(),
     objective: document.getElementById("settingsObjective").value.trim(),
-    linkedinUsername: document.getElementById("settingsLinkedin").value.trim(),
-    instagramUsername: document.getElementById("settingsInstagram").value.trim(),
+    linkedinUsername: accountState?.integrations?.linkedin?.username || "",
+    instagramUsername: accountState?.integrations?.instagram?.username || "",
   };
   try {
     const data = await api("/api/settings/save", "POST", payload);
