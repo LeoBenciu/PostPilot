@@ -383,9 +383,6 @@ function onboardingMissingFields(state) {
   const missing = [];
   if (!state.user.niche || !state.user.niche.trim()) missing.push("niche");
   if (!state.user.objective || !state.user.objective.trim()) missing.push("objective");
-  const hasHandle =
-    Boolean(state.integrations.linkedin.username) || Boolean(state.integrations.instagram.username);
-  if (!hasHandle) missing.push("at least one social handle");
   return missing;
 }
 
@@ -996,16 +993,6 @@ const server = http.createServer(async (req, res) => {
 
       state.user.niche = String(body.niche || "").trim();
       state.user.objective = String(body.objective || "").trim();
-
-      const linkedinUsername = String(body.linkedinUsername || "").trim();
-      const instagramUsername = String(body.instagramUsername || "").trim();
-
-      if (linkedinUsername) {
-        state.integrations.linkedin.username = linkedinUsername;
-      }
-      if (instagramUsername) {
-        state.integrations.instagram.username = instagramUsername;
-      }
 
       updateOnboardingCompletion(state);
       if (!state.user.onboardingCompleted) {
