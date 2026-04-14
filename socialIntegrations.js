@@ -22,7 +22,7 @@ function getPlatformConfig(platform) {
       tokenUrl: "https://api.instagram.com/oauth/access_token",
       clientId: process.env.INSTAGRAM_CLIENT_ID || "",
       clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || "",
-      scopes: (process.env.INSTAGRAM_SCOPES || "user_profile,user_media").split(/[,\s]+/).filter(Boolean),
+      scopes: (process.env.INSTAGRAM_SCOPES || "instagram_business_basic").split(/[,\s]+/).filter(Boolean),
     };
   }
   return null;
@@ -30,9 +30,6 @@ function getPlatformConfig(platform) {
 
 function ensurePlatformConfigured(platform) {
   const cfg = getPlatformConfig(platform);
-  // #region agent log
-  fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H1", location: "socialIntegrations.js:ensurePlatformConfigured", message: "OAuth config presence check", data: { platform, hasConfigObject: Boolean(cfg), hasClientId: Boolean(cfg?.clientId), hasClientSecret: Boolean(cfg?.clientSecret), clientIdLength: cfg?.clientId ? String(cfg.clientId).length : 0, clientSecretLength: cfg?.clientSecret ? String(cfg.clientSecret).length : 0, envClientIdSet: Boolean(process.env.INSTAGRAM_CLIENT_ID), envClientSecretSet: Boolean(process.env.INSTAGRAM_CLIENT_SECRET), nodePid: process.pid }, timestamp: Date.now() }) }).catch(() => {});
-  // #endregion
   if (!cfg) throw new Error("unsupported_platform");
   if (!cfg.clientId || !cfg.clientSecret) throw new Error(`${platform}_oauth_not_configured`);
   return cfg;
@@ -52,9 +49,6 @@ function buildAuthUrl({ platform, redirectUri, state }) {
     url.searchParams.set("enable_fb_login", "0");
   }
   url.searchParams.set("state", state);
-  // #region agent log
-  fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H5", location: "socialIntegrations.js:buildAuthUrl", message: "Built OAuth URL metadata", data: { platform, authorizeHost: url.host, authorizePath: url.pathname, redirectUriHost: new URL(redirectUri).host, redirectUriPath: new URL(redirectUri).pathname, scopeValue: url.searchParams.get("scope") || "", responseType: url.searchParams.get("response_type") || "" }, timestamp: Date.now() }) }).catch(() => {});
-  // #endregion
   return url.toString();
 }
 
@@ -156,12 +150,12 @@ async function fetchLinkedInPostsAndAnalytics(accessToken, profile) {
 
 async function fetchInstagramProfile(accessToken) {
   const res = await fetch(
-    `https://graph.instagram.com/me?fields=id,username,account_type,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
+    `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,account_type,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
   );
   if (!res.ok) throw new Error(`instagram_profile_failed_${res.status}`);
   const data = await res.json();
   return {
-    id: data.id || "",
+    id: data.user_id || data.id || "",
     username: data.username || "instagram-user",
     avatarUrl: data.profile_picture_url || "",
   };
@@ -169,7 +163,7 @@ async function fetchInstagramProfile(accessToken) {
 
 async function fetchInstagramPostsAndAnalytics(accessToken) {
   const mediaRes = await fetch(
-    `https://graph.instagram.com/me/media?fields=id,caption,timestamp,like_count,comments_count&limit=20&access_token=${encodeURIComponent(accessToken)}`,
+    `https://graph.instagram.com/v21.0/me/media?fields=id,caption,timestamp,like_count,comments_count,media_type,permalink&limit=20&access_token=${encodeURIComponent(accessToken)}`,
   );
   if (!mediaRes.ok) throw new Error(`instagram_posts_failed_${mediaRes.status}`);
   const mediaData = await mediaRes.json();

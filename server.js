@@ -887,14 +887,8 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && (pathname === "/auth/linkedin/callback" || pathname === "/auth/instagram/callback")) {
     const platform = pathname.includes("/linkedin/") ? "linkedin" : "instagram";
-    // #region agent log
-    fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H10", location: "server.js:/auth/platform/callback:entry", message: "OAuth callback route hit", data: { platform, hasCode: Boolean(parsed.searchParams.get("code")), hasError: Boolean(parsed.searchParams.get("error")), hasState: Boolean(parsed.searchParams.get("state")) }, timestamp: Date.now() }) }).catch(() => {});
-    // #endregion
     const oauthError = parsed.searchParams.get("error");
     if (oauthError) {
-      // #region agent log
-      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H10", location: "server.js:/auth/platform/callback:oauth-error", message: "Provider returned OAuth error", data: { platform, oauthError }, timestamp: Date.now() }) }).catch(() => {});
-      // #endregion
       sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_provider_error", oauthError));
       return;
     }
@@ -1292,17 +1286,11 @@ const server = http.createServer(async (req, res) => {
       if (!user) return;
       const state = bindStateToUser(await getStateForUser(user.id), user);
       const body = await readBody(req);
-      // #region agent log
-      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H2", location: "server.js:/api/integrations/connect:body-read", message: "Connect request parsed", data: { method: req.method, pathname, hasUser: Boolean(user?.id), bodyPlatform: body?.platform ?? null, createdAt: Boolean(state.user?.createdAt) }, timestamp: Date.now() }) }).catch(() => {});
-      // #endregion
       if (!state.user.createdAt) {
         sendJson(res, 400, { error: "Create account first" });
         return;
       }
       const platform = normalizePlatform(body.platform);
-      // #region agent log
-      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H2", location: "server.js:/api/integrations/connect:normalized-platform", message: "Platform normalized", data: { normalizedPlatform: platform || null, hasIntegrationSlot: Boolean(platform && state.integrations?.[platform]) }, timestamp: Date.now() }) }).catch(() => {});
-      // #endregion
       if (!platform || !state.integrations[platform]) {
         sendJson(res, 400, { error: "Unknown platform" });
         return;
@@ -1313,18 +1301,12 @@ const server = http.createServer(async (req, res) => {
       });
       const redirectUri = `${requestOrigin(req)}/auth/${platform}/callback`;
       const authUrl = buildAuthUrl({ platform, redirectUri, state: stateToken });
-      // #region agent log
-      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H6", location: "server.js:/api/integrations/connect:auth-url", message: "OAuth URL generated for client redirect", data: { platform, redirectUriHost: new URL(redirectUri).host, redirectUriPath: new URL(redirectUri).pathname, authUrlHost: new URL(authUrl).host, authUrlPath: new URL(authUrl).pathname, authScope: new URL(authUrl).searchParams.get("scope") || "", hasStateParam: Boolean(new URL(authUrl).searchParams.get("state")) }, timestamp: Date.now() }) }).catch(() => {});
-      // #endregion
       sendJson(res, 200, {
         platform,
         connected: state.integrations[platform].connected,
         authUrl,
       });
     } catch (err) {
-      // #region agent log
-      fetch("http://127.0.0.1:7513/ingest/adaabdf7-ed9f-4df8-bd87-8ba6084a8a37", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9e9251" }, body: JSON.stringify({ sessionId: "9e9251", runId: "connect-instagram-debug", hypothesisId: "H4", location: "server.js:/api/integrations/connect:catch", message: "Connect route threw error", data: { errorMessage: String(err?.message || "unknown_error"), errorName: String(err?.name || "Error") }, timestamp: Date.now() }) }).catch(() => {});
-      // #endregion
       sendJson(res, 400, { error: err.message });
     }
     return;
