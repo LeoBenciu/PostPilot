@@ -102,10 +102,15 @@ async function fetchLinkedInProfile(accessToken) {
   });
   if (!res.ok) throw new Error(`linkedin_profile_failed_${res.status}`);
   const data = await res.json();
+  const avatarUrl =
+    (typeof data.picture === "string" && data.picture) ||
+    (typeof data.profile_picture === "string" && data.profile_picture) ||
+    "";
   return {
     id: data.sub || data.id || "",
     username: data.name || data.email || "linkedin-user",
     urn: data.sub ? `urn:li:person:${data.sub}` : "",
+    avatarUrl,
   };
 }
 
@@ -151,13 +156,14 @@ async function fetchLinkedInPostsAndAnalytics(accessToken, profile) {
 
 async function fetchInstagramProfile(accessToken) {
   const res = await fetch(
-    `https://graph.instagram.com/me?fields=id,username,account_type&access_token=${encodeURIComponent(accessToken)}`,
+    `https://graph.instagram.com/me?fields=id,username,account_type,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
   );
   if (!res.ok) throw new Error(`instagram_profile_failed_${res.status}`);
   const data = await res.json();
   return {
     id: data.id || "",
     username: data.username || "instagram-user",
+    avatarUrl: data.profile_picture_url || "",
   };
 }
 

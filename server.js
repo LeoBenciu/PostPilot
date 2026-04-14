@@ -439,6 +439,8 @@ function bindStateToUser(state, user) {
   if (!state.syncJobs || !Array.isArray(state.syncJobs)) state.syncJobs = [];
   if (!state.integrations?.linkedin) state.integrations.linkedin = { connected: false, username: null, token: null, lastSyncAt: null };
   if (!state.integrations?.instagram) state.integrations.instagram = { connected: false, username: null, token: null, lastSyncAt: null };
+  if (typeof state.integrations.linkedin.avatarUrl === "undefined") state.integrations.linkedin.avatarUrl = null;
+  if (typeof state.integrations.instagram.avatarUrl === "undefined") state.integrations.instagram.avatarUrl = null;
   return state;
 }
 
@@ -467,6 +469,7 @@ async function syncPlatform(state, platform) {
   });
   upsertPosts(state, fetched);
   integration.username = profile.username || integration.username || null;
+  integration.avatarUrl = profile.avatarUrl || integration.avatarUrl || null;
   integration.lastSyncAt = nowIso();
   state.voiceProfile = buildVoiceProfile(state.posts);
   return fetched.length;
@@ -932,6 +935,7 @@ const server = http.createServer(async (req, res) => {
       state.integrations[platform].expiresIn = token.expiresIn || null;
       state.integrations[platform].connectedAt = nowIso();
       state.integrations[platform].username = profile.username || state.integrations[platform].username || null;
+      state.integrations[platform].avatarUrl = profile.avatarUrl || state.integrations[platform].avatarUrl || null;
       if (!state.integrations[platform].sync) state.integrations[platform].sync = {};
       state.integrations[platform].sync.status = "connected";
       state.integrations[platform].sync.lastError = null;
