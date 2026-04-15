@@ -149,17 +149,32 @@ async function fetchLinkedInPostsAndAnalytics(accessToken, profile) {
 }
 
 async function fetchInstagramProfile(accessToken) {
-  const res = await fetch(
-    `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,account_type,profile_picture_url,biography,followers_count,follows_count,media_count,website&access_token=${encodeURIComponent(accessToken)}`,
+  const extendedFields =
+    "user_id,username,name,account_type,profile_picture_url,biography,followers_count,follows_count,media_count,website";
+  const basicFields = "user_id,username,name,account_type,profile_picture_url";
+
+  let data;
+  const extRes = await fetch(
+    `https://graph.instagram.com/v21.0/me?fields=${extendedFields}&access_token=${encodeURIComponent(accessToken)}`,
   );
-  if (!res.ok) throw new Error(`instagram_profile_failed_${res.status}`);
-  const data = await res.json();
+  if (extRes.ok) {
+    data = await extRes.json();
+  } else {
+    const errBody = await extRes.text().catch(() => "");
+    console.error(`[PostPilot][IG] Extended profile fields failed (${extRes.status}), falling back to basic. Body: ${errBody.slice(0, 300)}`);
+    const basicRes = await fetch(
+      `https://graph.instagram.com/v21.0/me?fields=${basicFields}&access_token=${encodeURIComponent(accessToken)}`,
+    );
+    if (!basicRes.ok) throw new Error(`instagram_profile_failed_${basicRes.status}`);
+    data = await basicRes.json();
+  }
+
   return {
     id: data.user_id || data.id || "",
     username: data.username || "instagram-user",
     avatarUrl: data.profile_picture_url || "",
     name: data.name || "",
-    bio: data.biography || "",
+    bio: data.biography ?? "",
     followersCount: data.followers_count ?? null,
     followsCount: data.follows_count ?? null,
     mediaCount: data.media_count ?? null,
@@ -172,7 +187,11 @@ async function fetchInstagramPostsAndAnalytics(accessToken) {
   const mediaRes = await fetch(
     `https://graph.instagram.com/v21.0/me/media?fields=id,caption,timestamp,like_count,comments_count,media_type,permalink&limit=20&access_token=${encodeURIComponent(accessToken)}`,
   );
-  if (!mediaRes.ok) throw new Error(`instagram_posts_failed_${mediaRes.status}`);
+  if (!mediaRes.ok) {
+    const errBody = await mediaRes.text().catch(() => "");
+    console.error(`[PostPilot][IG] Media fetch failed (${mediaRes.status}): ${errBody.slice(0, 300)}`);
+    throw new Error(`instagram_posts_failed_${mediaRes.status}`);
+  }
   const mediaData = await mediaRes.json();
   const items = Array.isArray(mediaData.data) ? mediaData.data : [];
   return items.map((item) => ({
