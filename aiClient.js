@@ -109,17 +109,17 @@ function buildSystemPrompt({ state, connectedPlatforms }) {
     "## What you can see",
     "- Profile: bio, followers, following count, post count, website",
     "- Each post: media type (Photo/Video/Carousel/Reel), caption, date, likes, comments, permalink",
-    "- You CAN see the actual images of their most recent posts (attached as images in the conversation)",
+    "- When images are attached in the current request, you can see those post images.",
     "- For videos and reels, you see the thumbnail/cover frame, not the full video",
-    "- Use what you see in the images to give specific visual feedback: composition, colors, text overlays, faces, branding, etc.",
-    "- Proactively reference what you see in images when analyzing post performance or suggesting improvements",
+    "- Use what you see in the images to give specific visual feedback when the user asks about posts, visuals, or performance.",
+    "- If the user asks a generic message (e.g. hello), respond to that directly and do not force image analysis.",
     "",
     "## Guardrails",
     "- Never claim to have executed external actions unless explicitly confirmed.",
     "- If asked for unsafe, illegal, or deceptive content, refuse briefly and offer a safe alternative.",
     "- Use concise practical steps and avoid filler.",
     "- When uncertain, ask one focused clarifying question.",
-    "- Reference the user's actual post data, performance metrics, AND visual content when giving advice.",
+    "- Reference the user's actual post data, performance metrics, and visual content when giving advice.",
     "- When discussing posts, always mention the media type (photo, video, reel, carousel).",
     "- Describe specific visual elements you observe: lighting, composition, text overlays, facial expressions, branding elements, color palette.",
     "- For videos/reels, note that you only see the cover frame/thumbnail, not the full video. Ask the user to describe the video content if needed.",
@@ -145,6 +145,14 @@ async function fetchImageAsBase64(url) {
   const base64 = Buffer.from(buffer).toString("base64");
   const mime = contentType.split(";")[0].trim();
   return `data:${mime};base64,${base64}`;
+}
+
+function shouldUseVisionForMessage(message) {
+  const text = String(message || "").toLowerCase().trim();
+  if (!text) return false;
+  return /(post|posts|photo|photos|image|images|video|videos|reel|reels|carousel|thumbnail|feed|instagram|ig|visual|design|look|aesthetic|perform|performance|engagement|viral|success)/i.test(
+    text,
+  );
 }
 
 /**
@@ -215,8 +223,9 @@ async function callOpenAI({ message, history, state, connectedPlatforms }) {
   }
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
-  const postImages = await collectPostImages(state.posts);
-  aiLog("log", "Vision images collected", { count: postImages.length });
+  const useVision = shouldUseVisionForMessage(inputText);
+  const postImages = useVision ? await collectPostImages(state.posts) : [];
+  aiLog("log", "Vision routing", { useVision, count: postImages.length });
   const userContent = buildVisionUserMessage(inputText, postImages);
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -272,8 +281,10 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
     sessionId: String(sessionId || "").slice(0, 36),
   });
 
-  const postImages = await collectPostImages(state.posts);
-  aiLog("log", "Vision images collected for CrewAI", { count: postImages.length });
+  const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  const useVision = shouldUseVisionForMessage(inputText);
+  const postImages = useVision ? await collectPostImages(state.posts) : [];
+  aiLog("log", "Vision routing for CrewAI", { useVision, count: postImages.length });
   let res;
   try {
     res = await fetch(endpoint, {
@@ -285,7 +296,7 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
       body: JSON.stringify({
         userId: String(userId ?? ""),
         sessionId: String(sessionId ?? ""),
-        message: truncate(message, DEFAULT_MAX_INPUT_CHARS),
+        message: inputText,
         history,
         context: {
           account: state.user,
@@ -371,8 +382,9 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms }) {
   if (!apiKey) throw new Error("openai_not_configured");
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
-  const postImages = await collectPostImages(state.posts);
-  aiLog("log", "Vision images collected for stream", { count: postImages.length });
+  const useVision = shouldUseVisionForMessage(inputText);
+  const postImages = useVision ? await collectPostImages(state.posts) : [];
+  aiLog("log", "Vision routing for stream", { useVision, count: postImages.length });
   const userContent = buildVisionUserMessage(inputText, postImages);
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -424,8 +436,10 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
   const apiKey = process.env.CREWAI_API_KEY || "";
   const endpoint = `${baseUrl.replace(/\/$/, "")}/chat/stream`;
 
-  const postImages = await collectPostImages(state.posts);
-  aiLog("log", "Vision images collected for CrewAI stream", { count: postImages.length });
+  const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  const useVision = shouldUseVisionForMessage(inputText);
+  const postImages = useVision ? await collectPostImages(state.posts) : [];
+  aiLog("log", "Vision routing for CrewAI stream", { useVision, count: postImages.length });
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -435,7 +449,7 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
     body: JSON.stringify({
       userId: String(userId ?? ""),
       sessionId: String(sessionId ?? ""),
-      message: truncate(message, DEFAULT_MAX_INPUT_CHARS),
+      message: inputText,
       history,
       context: {
         account: state.user,

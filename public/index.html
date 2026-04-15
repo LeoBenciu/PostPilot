@@ -190,35 +190,86 @@
 
     <div class="app-shell hidden" id="chatApp">
       <aside class="sidebar">
-        <button id="newChatBtn" class="secondary">+ New chat</button>
-        <button id="settingsBtn" class="secondary">Settings</button>
-        <button id="disconnectBtn" class="secondary disconnect-btn">Disconnect</button>
+        <div class="sidebar-top-nav">
+          <button id="agentViewBtn" class="secondary sidebar-view-btn active">
+            <span aria-hidden="true" class="btn-icon">✦</span>
+            <span id="agentViewBtnLabel">Agent</span>
+          </button>
+          <button id="analyticsViewBtn" class="secondary sidebar-view-btn">
+            <span aria-hidden="true" class="btn-icon">◫</span>
+            <span id="analyticsViewBtnLabel">Analytics</span>
+          </button>
+        </div>
+        <div class="sidebar-spacer"></div>
+        <button id="settingsBtn" class="secondary">
+          <span aria-hidden="true" class="btn-icon">⚙</span>
+          <span id="settingsBtnLabel">Settings</span>
+        </button>
+        <button id="disconnectBtn" class="secondary disconnect-btn">
+          <span aria-hidden="true" class="btn-icon">⏻</span>
+          <span id="disconnectBtnLabel">Disconnect</span>
+        </button>
       </aside>
 
       <main class="chat-layout">
         <header class="chat-header">
-          <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span>Agent</span></h1>
-          <p id="chatHeaderSubtitle">Your creator growth assistant</p>
+          <div>
+            <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span>Agent</span></h1>
+            <p id="chatHeaderSubtitle">Your creator growth assistant</p>
+          </div>
         </header>
 
-        <section id="messages" class="messages"></section>
+        <section id="agentView" class="app-view agent-view">
+          <div class="agent-toolbar">
+            <button id="resetChatBtn" class="secondary agent-reset-btn">
+              <span aria-hidden="true" class="btn-icon">↺</span>
+              <span id="resetChatBtnLabel">Reset chat</span>
+            </button>
+          </div>
+          <section id="messages" class="messages"></section>
 
-        <div class="prompt-row">
-          <button class="prompt-chip" data-prompt="Analyze my latest performance and tell me what to improve">
-            Analyze performance
-          </button>
-          <button class="prompt-chip" data-prompt="Write a LinkedIn post about creator monetization psychology">
-            Generate post draft
-          </button>
-          <button class="prompt-chip" data-prompt="Create my weekly content plan">
-            Make weekly plan
-          </button>
-        </div>
+          <div class="prompt-row">
+            <button class="prompt-chip" data-prompt="Analyze my latest performance and tell me what to improve">
+              Analyze performance
+            </button>
+            <button class="prompt-chip" data-prompt="Write a LinkedIn post about creator monetization psychology">
+              Generate post draft
+            </button>
+            <button class="prompt-chip" data-prompt="Create my weekly content plan">
+              Make weekly plan
+            </button>
+          </div>
 
-        <form id="composer" class="composer">
-          <input id="messageInput" placeholder="Message PostPilot Agent" />
-          <button type="submit" id="sendBtn">Send</button>
-        </form>
+          <form id="composer" class="composer">
+            <input id="messageInput" placeholder="Message PostPilot Agent" />
+            <button type="submit" id="sendBtn">Send</button>
+          </form>
+        </section>
+
+        <section id="analyticsView" class="app-view analytics-view hidden">
+          <div class="analytics-grid">
+            <article class="analytics-card">
+              <p class="analytics-label" id="analyticsTotalPostsLabel">Total posts</p>
+              <p class="analytics-value" id="analyticsTotalPosts">0</p>
+            </article>
+            <article class="analytics-card">
+              <p class="analytics-label" id="analyticsTotalLikesLabel">Total likes</p>
+              <p class="analytics-value" id="analyticsTotalLikes">0</p>
+            </article>
+            <article class="analytics-card">
+              <p class="analytics-label" id="analyticsTotalCommentsLabel">Total comments</p>
+              <p class="analytics-value" id="analyticsTotalComments">0</p>
+            </article>
+            <article class="analytics-card">
+              <p class="analytics-label" id="analyticsTopPostLabel">Top post</p>
+              <p class="analytics-value analytics-top-post" id="analyticsTopPost">-</p>
+            </article>
+          </div>
+          <section class="analytics-list-wrap">
+            <h3 id="analyticsRecentPostsTitle">Recent posts</h3>
+            <div id="analyticsRecentPosts" class="analytics-list"></div>
+          </section>
+        </section>
       </main>
     </div>
 

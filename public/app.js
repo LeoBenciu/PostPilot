@@ -14,6 +14,11 @@ const openTrialBtn = document.getElementById("openTrialBtn");
 const closeSignin = document.getElementById("closeSignin");
 const closeOnboarding = document.getElementById("closeOnboarding");
 const disconnectBtn = document.getElementById("disconnectBtn");
+const resetChatBtn = document.getElementById("resetChatBtn");
+const agentViewBtn = document.getElementById("agentViewBtn");
+const analyticsViewBtn = document.getElementById("analyticsViewBtn");
+const agentView = document.getElementById("agentView");
+const analyticsView = document.getElementById("analyticsView");
 const manageBillingBtn = document.getElementById("manageBillingBtn");
 const cancelSubscriptionBtn = document.getElementById("cancelSubscriptionBtn");
 const connectLinkedinBtn = document.getElementById("connectLinkedinBtn");
@@ -79,7 +84,9 @@ const I18N = {
     guarantee2: "Cancel whenever you want - hassle free",
     alreadyAccount: "Already have an account?",
     signIn: "Sign in",
-    newChat: "+ New chat",
+    agentView: "Agent",
+    analyticsView: "Analytics",
+    newChat: "Reset chat",
     settings: "Settings",
     disconnect: "Disconnect",
     chatSubtitle: "Your creator growth assistant",
@@ -87,6 +94,12 @@ const I18N = {
     promptAnalyze: "Analyze performance",
     promptDraft: "Generate post draft",
     promptPlan: "Make weekly plan",
+    analyticsTotalPosts: "Total posts",
+    analyticsTotalLikes: "Total likes",
+    analyticsTotalComments: "Total comments",
+    analyticsTopPost: "Top post",
+    analyticsRecentPosts: "Recent posts",
+    analyticsEmptyRecentPosts: "No posts synced yet.",
     send: "Send",
     saveSettings: "Save settings",
     onboardingRequired: "Complete onboarding when you are ready. I need those details before I can coach your content.",
@@ -211,7 +224,9 @@ const I18N = {
     guarantee2: "Anulezi oricand - Fara intrebari",
     alreadyAccount: "Ai deja cont?",
     signIn: "Autentificare",
-    newChat: "+ Chat nou",
+    agentView: "Agent",
+    analyticsView: "Analize",
+    newChat: "Reset chat",
     settings: "Setari",
     disconnect: "Deconectare",
     chatSubtitle: "Asistentul tau pentru crestere",
@@ -219,6 +234,12 @@ const I18N = {
     promptAnalyze: "Analizeaza performanta",
     promptDraft: "Genereaza draft postare",
     promptPlan: "Creeaza plan saptamanal",
+    analyticsTotalPosts: "Total postari",
+    analyticsTotalLikes: "Total aprecieri",
+    analyticsTotalComments: "Total comentarii",
+    analyticsTopPost: "Postarea de top",
+    analyticsRecentPosts: "Postari recente",
+    analyticsEmptyRecentPosts: "Nu exista postari sincronizate inca.",
     send: "Trimite",
     saveSettings: "Salveaza setarile",
     onboardingRequired: "Completeaza onboarding-ul cand esti pregatit. Am nevoie de aceste detalii inainte sa te pot ajuta.",
@@ -343,7 +364,7 @@ const I18N = {
     guarantee2: "Annulla quando vuoi - Nessuna domanda",
     alreadyAccount: "Hai gia un account?",
     signIn: "Accedi",
-    newChat: "+ Nuova chat",
+    newChat: "Reset chat",
     settings: "Impostazioni",
     disconnect: "Disconnetti",
     chatSubtitle: "Il tuo assistente per la crescita creator",
@@ -466,7 +487,7 @@ const I18N = {
     guarantee2: "Jederzeit kuendbar - Ohne Rueckfragen",
     alreadyAccount: "Du hast bereits ein Konto?",
     signIn: "Anmelden",
-    newChat: "+ Neuer Chat",
+    newChat: "Reset chat",
     settings: "Einstellungen",
     disconnect: "Trennen",
     chatSubtitle: "Dein Assistent fuer Creator-Wachstum",
@@ -589,7 +610,7 @@ const I18N = {
     guarantee2: "Annulez a tout moment - Sans question",
     alreadyAccount: "Vous avez deja un compte ?",
     signIn: "Se connecter",
-    newChat: "+ Nouveau chat",
+    newChat: "Reset chat",
     settings: "Parametres",
     disconnect: "Deconnexion",
     chatSubtitle: "Votre assistant de croissance createur",
@@ -747,10 +768,17 @@ function applyLanguage() {
   setTextIfExists("signupGuarantee2", t("guarantee2"));
   setTextIfExists("alreadyAccountText", t("alreadyAccount"));
   setTextIfExists("openSignin", t("signIn"));
-  setTextIfExists("newChatBtn", t("newChat"));
-  setTextIfExists("settingsBtn", t("settings"));
-  setTextIfExists("disconnectBtn", t("disconnect"));
+  setTextIfExists("agentViewBtnLabel", t("agentView"));
+  setTextIfExists("analyticsViewBtnLabel", t("analyticsView"));
+  setTextIfExists("resetChatBtnLabel", t("newChat"));
+  setTextIfExists("settingsBtnLabel", t("settings"));
+  setTextIfExists("disconnectBtnLabel", t("disconnect"));
   setTextIfExists("chatHeaderSubtitle", t("chatSubtitle"));
+  setTextIfExists("analyticsTotalPostsLabel", t("analyticsTotalPosts"));
+  setTextIfExists("analyticsTotalLikesLabel", t("analyticsTotalLikes"));
+  setTextIfExists("analyticsTotalCommentsLabel", t("analyticsTotalComments"));
+  setTextIfExists("analyticsTopPostLabel", t("analyticsTopPost"));
+  setTextIfExists("analyticsRecentPostsTitle", t("analyticsRecentPosts"));
   setTextIfExists("sendBtn", t("send"));
   setTextIfExists("settingsSaveBtn", t("saveSettings"));
 
@@ -1013,6 +1041,87 @@ function sendPrompt(text) {
   const input = document.getElementById("messageInput");
   input.value = text;
   document.getElementById("composer").requestSubmit();
+}
+
+function setActiveView(view) {
+  const showAnalytics = view === "analytics";
+  agentView?.classList.toggle("hidden", showAnalytics);
+  analyticsView?.classList.toggle("hidden", !showAnalytics);
+  agentViewBtn?.classList.toggle("active", !showAnalytics);
+  analyticsViewBtn?.classList.toggle("active", showAnalytics);
+  if (resetChatBtn) resetChatBtn.classList.toggle("hidden", showAnalytics);
+}
+
+function renderAnalyticsSummary(summary = {}) {
+  const totals = summary.totals || {};
+  const topPost = summary.topPost || null;
+  const totalPosts = Object.values(summary.byPlatform || {}).reduce((acc, p) => acc + Number(p.posts || 0), 0);
+  setText("analyticsTotalPosts", Number(totalPosts || 0).toLocaleString());
+  setText("analyticsTotalLikes", Number(totals.likes || 0).toLocaleString());
+  setText("analyticsTotalComments", Number(totals.comments || 0).toLocaleString());
+
+  if (!topPost) {
+    setText("analyticsTopPost", "-");
+    return;
+  }
+  const type = String(topPost.mediaType || "").toLowerCase() || "post";
+  const likes = Number(topPost.likes || 0);
+  const comments = Number(topPost.comments || 0);
+  const snippet = String(topPost.text || "").trim().slice(0, 90) || "(no caption)";
+  setText("analyticsTopPost", `${type} • ${likes} likes • ${comments} comments — "${snippet}"`);
+}
+
+function renderRecentPosts(posts = []) {
+  const wrap = document.getElementById("analyticsRecentPosts");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  if (!posts.length) {
+    const empty = document.createElement("p");
+    empty.className = "analytics-item-meta";
+    empty.textContent = t("analyticsEmptyRecentPosts");
+    wrap.appendChild(empty);
+    return;
+  }
+
+  for (const post of posts.slice(0, 8)) {
+    const item = document.createElement("article");
+    item.className = "analytics-item";
+    const title = document.createElement("p");
+    title.className = "analytics-item-title";
+    const platform = post.platform || "post";
+    const mediaType = post.mediaType || "post";
+    title.textContent = `${platform} • ${mediaType}`;
+    const meta = document.createElement("p");
+    meta.className = "analytics-item-meta";
+    const likes = Number(post.likes || 0);
+    const comments = Number(post.comments || 0);
+    const date = post.postedAt ? new Date(post.postedAt).toLocaleDateString() : "-";
+    const caption = String(post.text || "").trim().slice(0, 120) || "(no caption)";
+    meta.textContent = `${date} • ${likes} likes • ${comments} comments — "${caption}"`;
+    item.appendChild(title);
+    item.appendChild(meta);
+    wrap.appendChild(item);
+  }
+}
+
+async function loadAnalyticsView() {
+  try {
+    const [summary, recent] = await Promise.all([
+      api("/api/analytics/summary"),
+      api("/api/posts/recent"),
+    ]);
+    renderAnalyticsSummary(summary || {});
+    renderRecentPosts(recent?.posts || []);
+  } catch (err) {
+    renderAnalyticsSummary({});
+    renderRecentPosts([]);
+    const wrap = document.getElementById("analyticsRecentPosts");
+    if (!wrap) return;
+    const error = document.createElement("p");
+    error.className = "analytics-item-meta";
+    error.textContent = `Could not load analytics: ${err.message}`;
+    wrap.appendChild(error);
+  }
 }
 
 function applyIntegrationUi(platform, integration = {}) {
@@ -1299,10 +1408,19 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
   }
 });
 
-document.getElementById("newChatBtn").addEventListener("click", () => {
+resetChatBtn?.addEventListener("click", () => {
   const messages = document.getElementById("messages");
   messages.innerHTML = "";
   addMessage("assistant", t("newChatStarted"));
+});
+
+agentViewBtn?.addEventListener("click", () => {
+  setActiveView("agent");
+});
+
+analyticsViewBtn?.addEventListener("click", async () => {
+  setActiveView("analytics");
+  await loadAnalyticsView();
 });
 
 document.getElementById("settingsBtn").addEventListener("click", async () => {
@@ -1447,6 +1565,7 @@ addMessage(
   t("initialAssistant")
 );
 applyLanguage();
+setActiveView("agent");
 
 const authQueryState = getAuthQueryState();
 let handledFreshGoogleAuth = false;
