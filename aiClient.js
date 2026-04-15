@@ -132,8 +132,8 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
         ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
       },
       body: JSON.stringify({
-        userId,
-        sessionId,
+        userId: String(userId ?? ""),
+        sessionId: String(sessionId ?? ""),
         message: truncate(message, DEFAULT_MAX_INPUT_CHARS),
         history,
         context: {
