@@ -573,6 +573,46 @@ function extractTopic(message) {
   return cleaned || "content strategy";
 }
 
+async function ensureProfileData(state) {
+  let changed = false;
+  for (const [platform, integration] of Object.entries(state.integrations || {})) {
+    if (!integration?.connected || !integration?.token) continue;
+
+    const needsProfile = integration.bio === undefined || integration.bio === null;
+    const needsPosts = !state.posts || !state.posts.some((p) => p.platform === platform);
+
+    if (!needsProfile && !needsPosts) continue;
+
+    try {
+      if (needsProfile || needsPosts) {
+        const profile = await fetchPlatformProfile({ platform, accessToken: integration.token });
+        integration.username = profile.username || integration.username || null;
+        integration.avatarUrl = profile.avatarUrl || integration.avatarUrl || null;
+        if (profile.bio !== undefined) integration.bio = profile.bio || "";
+        if (profile.name !== undefined) integration.displayName = profile.name || "";
+        if (profile.followersCount !== undefined) integration.followersCount = profile.followersCount;
+        if (profile.followsCount !== undefined) integration.followsCount = profile.followsCount;
+        if (profile.mediaCount !== undefined) integration.mediaCount = profile.mediaCount;
+        if (profile.website !== undefined) integration.website = profile.website || "";
+        if (profile.accountType !== undefined) integration.accountType = profile.accountType || "";
+        changed = true;
+        console.log(`[PostPilot] Backfilled profile data for ${platform}/@${integration.username}`);
+      }
+      if (needsPosts) {
+        const profile = { username: integration.username, urn: integration.urn };
+        const posts = await fetchPlatformPostsAndAnalytics({ platform, accessToken: integration.token, profile });
+        upsertPosts(state, posts);
+        state.voiceProfile = buildVoiceProfile(state.posts);
+        changed = true;
+        console.log(`[PostPilot] Backfilled ${posts.length} posts for ${platform}/@${integration.username}`);
+      }
+    } catch (err) {
+      console.error(`[PostPilot] Data backfill failed for ${platform}:`, err?.message);
+    }
+  }
+  return changed;
+}
+
 function latestPostText(state) {
   return state.posts[0] ? state.posts[0].text : "";
 }
@@ -600,6 +640,8 @@ async function agentRespond(state, { message, userId, sessionId }) {
     return { role: "assistant", ...guard };
   }
 
+  const backfilled = await ensureProfileData(state);
+  if (backfilled) await saveStateForUser(userId, state);
   const voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
   state.voiceProfile = voiceProfile;
   const history = getConversation(state, sessionId);
@@ -1459,6 +1501,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      const backfilled = await ensureProfileData(state);
+      if (backfilled) await saveStateForUser(user.id, state);
       const voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
       state.voiceProfile = voiceProfile;
       const convo = getConversation(state, sessionId);
