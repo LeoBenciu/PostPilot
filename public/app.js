@@ -97,9 +97,19 @@ const I18N = {
     analyticsTotalPosts: "Total posts",
     analyticsTotalLikes: "Total likes",
     analyticsTotalComments: "Total comments",
-    analyticsTopPost: "Top post",
-    analyticsRecentPosts: "Recent posts",
-    analyticsEmptyRecentPosts: "No posts synced yet.",
+    analyticsAvgEngagement: "Avg engagement / post",
+    analyticsEngagementTrend: "Engagement over time",
+    analyticsPerformanceByType: "Performance by content type",
+    analyticsBestDay: "Best day to post",
+    analyticsCaptionLength: "Caption length vs engagement",
+    analyticsTopPosts: "Top posts by engagement",
+    chartLikes: "Likes",
+    chartComments: "Comments",
+    chartPosts: "Posts",
+    chartAvgEngagement: "Avg engagement",
+    chartCaptionLengthAxis: "Caption length (chars)",
+    chartEngagementAxis: "Engagement",
+    chartAvgEngShort: "Avg eng.",
     send: "Send",
     saveSettings: "Save settings",
     onboardingRequired: "Complete onboarding when you are ready. I need those details before I can coach your content.",
@@ -237,9 +247,19 @@ const I18N = {
     analyticsTotalPosts: "Total postari",
     analyticsTotalLikes: "Total aprecieri",
     analyticsTotalComments: "Total comentarii",
-    analyticsTopPost: "Postarea de top",
-    analyticsRecentPosts: "Postari recente",
-    analyticsEmptyRecentPosts: "Nu exista postari sincronizate inca.",
+    analyticsAvgEngagement: "Interactiune medie / postare",
+    analyticsEngagementTrend: "Interactiuni in timp",
+    analyticsPerformanceByType: "Performanta dupa tip de continut",
+    analyticsBestDay: "Cea mai buna zi de postare",
+    analyticsCaptionLength: "Lungime descriere vs interactiuni",
+    analyticsTopPosts: "Top postari dupa interactiuni",
+    chartLikes: "Aprecieri",
+    chartComments: "Comentarii",
+    chartPosts: "Postari",
+    chartAvgEngagement: "Interactiune medie",
+    chartCaptionLengthAxis: "Lungime descriere (caractere)",
+    chartEngagementAxis: "Interactiuni",
+    chartAvgEngShort: "Int. medie",
     send: "Trimite",
     saveSettings: "Salveaza setarile",
     onboardingRequired: "Completeaza onboarding-ul cand esti pregatit. Am nevoie de aceste detalii inainte sa te pot ajuta.",
@@ -372,6 +392,22 @@ const I18N = {
     promptAnalyze: "Analizza le performance",
     promptDraft: "Genera bozza post",
     promptPlan: "Crea piano settimanale",
+    analyticsTotalPosts: "Post totali",
+    analyticsTotalLikes: "Like totali",
+    analyticsTotalComments: "Commenti totali",
+    analyticsAvgEngagement: "Interazione media / post",
+    analyticsEngagementTrend: "Interazioni nel tempo",
+    analyticsPerformanceByType: "Performance per tipo di contenuto",
+    analyticsBestDay: "Giorno migliore per postare",
+    analyticsCaptionLength: "Lunghezza descrizione vs interazioni",
+    analyticsTopPosts: "Top post per interazioni",
+    chartLikes: "Like",
+    chartComments: "Commenti",
+    chartPosts: "Post",
+    chartAvgEngagement: "Interazione media",
+    chartCaptionLengthAxis: "Lunghezza descrizione (caratteri)",
+    chartEngagementAxis: "Interazioni",
+    chartAvgEngShort: "Int. media",
     send: "Invia",
     saveSettings: "Salva impostazioni",
     onboardingRequired: "Completa l'onboarding quando vuoi. Mi servono questi dettagli prima di aiutarti.",
@@ -495,6 +531,22 @@ const I18N = {
     promptAnalyze: "Performance analysieren",
     promptDraft: "Post-Entwurf erstellen",
     promptPlan: "Wochenplan erstellen",
+    analyticsTotalPosts: "Beitraege gesamt",
+    analyticsTotalLikes: "Likes gesamt",
+    analyticsTotalComments: "Kommentare gesamt",
+    analyticsAvgEngagement: "Durchschn. Interaktion / Beitrag",
+    analyticsEngagementTrend: "Interaktionen im Zeitverlauf",
+    analyticsPerformanceByType: "Performance nach Inhaltstyp",
+    analyticsBestDay: "Bester Tag zum Posten",
+    analyticsCaptionLength: "Beschreibungslaenge vs Interaktion",
+    analyticsTopPosts: "Top-Beitraege nach Interaktion",
+    chartLikes: "Likes",
+    chartComments: "Kommentare",
+    chartPosts: "Beitraege",
+    chartAvgEngagement: "Durchschn. Interaktion",
+    chartCaptionLengthAxis: "Beschreibungslaenge (Zeichen)",
+    chartEngagementAxis: "Interaktion",
+    chartAvgEngShort: "Durchschn.",
     send: "Senden",
     saveSettings: "Einstellungen speichern",
     onboardingRequired: "Schliesse das Onboarding ab, wenn du bereit bist. Ich brauche diese Angaben, bevor ich helfen kann.",
@@ -618,6 +670,22 @@ const I18N = {
     promptAnalyze: "Analyser les performances",
     promptDraft: "Generer un brouillon de post",
     promptPlan: "Creer un plan hebdomadaire",
+    analyticsTotalPosts: "Total publications",
+    analyticsTotalLikes: "Total mentions j'aime",
+    analyticsTotalComments: "Total commentaires",
+    analyticsAvgEngagement: "Interaction moy. / publication",
+    analyticsEngagementTrend: "Interactions dans le temps",
+    analyticsPerformanceByType: "Performance par type de contenu",
+    analyticsBestDay: "Meilleur jour pour publier",
+    analyticsCaptionLength: "Longueur de description vs interactions",
+    analyticsTopPosts: "Top publications par interactions",
+    chartLikes: "J'aime",
+    chartComments: "Commentaires",
+    chartPosts: "Publications",
+    chartAvgEngagement: "Interaction moyenne",
+    chartCaptionLengthAxis: "Longueur description (caracteres)",
+    chartEngagementAxis: "Interactions",
+    chartAvgEngShort: "Int. moy.",
     send: "Envoyer",
     saveSettings: "Enregistrer les parametres",
     onboardingRequired: "Completez l'onboarding quand vous voulez. J'ai besoin de ces infos avant de vous aider.",
@@ -774,7 +842,15 @@ function applyLanguage() {
   setTextIfExists("settingsBtnLabel", t("settings"));
   setTextIfExists("disconnectBtnLabel", t("disconnect"));
   setTextIfExists("chatHeaderSubtitle", t("chatSubtitle"));
-  // stat card labels are static in HTML; chart titles are static in HTML
+  setTextIfExists("labelTotalPosts", t("analyticsTotalPosts"));
+  setTextIfExists("labelTotalLikes", t("analyticsTotalLikes"));
+  setTextIfExists("labelTotalComments", t("analyticsTotalComments"));
+  setTextIfExists("labelAvgEngagement", t("analyticsAvgEngagement"));
+  setTextIfExists("titleEngagementTrend", t("analyticsEngagementTrend"));
+  setTextIfExists("titlePerformanceByType", t("analyticsPerformanceByType"));
+  setTextIfExists("titleBestDay", t("analyticsBestDay"));
+  setTextIfExists("titleCaptionLength", t("analyticsCaptionLength"));
+  setTextIfExists("titleTopPosts", t("analyticsTopPosts"));
   setTextIfExists("sendBtn", t("send"));
   setTextIfExists("settingsSaveBtn", t("saveSettings"));
 
@@ -1110,8 +1186,8 @@ function renderEngagementTrend(posts) {
     data: {
       labels,
       datasets: [
-        { label: "Likes", data: likes, borderColor: CHART_COLORS.pink, backgroundColor: CHART_COLORS.pinkLight, fill: true, tension: 0.35, pointRadius: 3 },
-        { label: "Comments", data: comments, borderColor: CHART_COLORS.teal, backgroundColor: CHART_COLORS.tealLight, fill: true, tension: 0.35, pointRadius: 3 },
+        { label: t("chartLikes"), data: likes, borderColor: CHART_COLORS.pink, backgroundColor: CHART_COLORS.pinkLight, fill: true, tension: 0.35, pointRadius: 3 },
+        { label: t("chartComments"), data: comments, borderColor: CHART_COLORS.teal, backgroundColor: CHART_COLORS.tealLight, fill: true, tension: 0.35, pointRadius: 3 },
       ],
     },
     options: { ...CHART_DEFAULTS },
@@ -1145,7 +1221,7 @@ function renderMediaTypeBreakdown(posts) {
     type: "bar",
     data: {
       labels: keys,
-      datasets: [{ label: "Avg engagement", data: avgEng, backgroundColor: colors.slice(0, keys.length), borderRadius: 8 }],
+      datasets: [{ label: t("chartAvgEngagement"), data: avgEng, backgroundColor: colors.slice(0, keys.length), borderRadius: 8 }],
     },
     options: {
       ...CHART_DEFAULTS,
@@ -1176,16 +1252,16 @@ function renderPostingCadence(posts) {
     data: {
       labels: days,
       datasets: [
-        { label: "Posts", data: counts, backgroundColor: CHART_COLORS.roseLight, borderColor: CHART_COLORS.rose, borderWidth: 1, borderRadius: 6, yAxisID: "y" },
-        { label: "Avg engagement", data: avgByDay, type: "line", borderColor: CHART_COLORS.plum, backgroundColor: "transparent", tension: 0.3, pointRadius: 4, yAxisID: "y1" },
+        { label: t("chartPosts"), data: counts, backgroundColor: CHART_COLORS.roseLight, borderColor: CHART_COLORS.rose, borderWidth: 1, borderRadius: 6, yAxisID: "y" },
+        { label: t("chartAvgEngagement"), data: avgByDay, type: "line", borderColor: CHART_COLORS.plum, backgroundColor: "transparent", tension: 0.3, pointRadius: 4, yAxisID: "y1" },
       ],
     },
     options: {
       ...CHART_DEFAULTS,
       scales: {
         x: CHART_DEFAULTS.scales.x,
-        y: { ...CHART_DEFAULTS.scales.y, position: "left", title: { display: true, text: "Posts", font: { family: "Poppins", size: 10 } } },
-        y1: { ...CHART_DEFAULTS.scales.y, position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: "Avg eng.", font: { family: "Poppins", size: 10 } } },
+        y: { ...CHART_DEFAULTS.scales.y, position: "left", title: { display: true, text: t("chartPosts"), font: { family: "Poppins", size: 10 } } },
+        y1: { ...CHART_DEFAULTS.scales.y, position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: t("chartAvgEngShort"), font: { family: "Poppins", size: 10 } } },
       },
     },
   });
@@ -1204,7 +1280,7 @@ function renderCaptionLength(posts) {
     type: "scatter",
     data: {
       datasets: [{
-        label: "Post",
+        label: t("chartPosts"),
         data: dataPoints,
         backgroundColor: CHART_COLORS.pink,
         borderColor: CHART_COLORS.pinkLight,
@@ -1216,8 +1292,8 @@ function renderCaptionLength(posts) {
       ...CHART_DEFAULTS,
       plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
       scales: {
-        x: { ...CHART_DEFAULTS.scales.x, title: { display: true, text: "Caption length (chars)", font: { family: "Poppins", size: 10 } } },
-        y: { ...CHART_DEFAULTS.scales.y, title: { display: true, text: "Engagement", font: { family: "Poppins", size: 10 } } },
+        x: { ...CHART_DEFAULTS.scales.x, title: { display: true, text: t("chartCaptionLengthAxis"), font: { family: "Poppins", size: 10 } } },
+        y: { ...CHART_DEFAULTS.scales.y, title: { display: true, text: t("chartEngagementAxis"), font: { family: "Poppins", size: 10 } } },
       },
     },
   });
@@ -1245,8 +1321,8 @@ function renderTopPosts(posts) {
     data: {
       labels,
       datasets: [
-        { label: "Likes", data: likesData, backgroundColor: CHART_COLORS.pink, borderRadius: 6 },
-        { label: "Comments", data: commentsData, backgroundColor: CHART_COLORS.teal, borderRadius: 6 },
+        { label: t("chartLikes"), data: likesData, backgroundColor: CHART_COLORS.pink, borderRadius: 6 },
+        { label: t("chartComments"), data: commentsData, backgroundColor: CHART_COLORS.teal, borderRadius: 6 },
       ],
     },
     options: {

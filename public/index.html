@@ -250,44 +250,44 @@
         <section id="analyticsView" class="app-view analytics-view hidden">
           <div class="analytics-stat-grid">
             <article class="analytics-stat-card">
-              <p class="analytics-label">Total posts</p>
+              <p class="analytics-label" id="labelTotalPosts">Total posts</p>
               <p class="analytics-value" id="analyticsTotalPosts">0</p>
             </article>
             <article class="analytics-stat-card">
-              <p class="analytics-label">Total likes</p>
+              <p class="analytics-label" id="labelTotalLikes">Total likes</p>
               <p class="analytics-value" id="analyticsTotalLikes">0</p>
             </article>
             <article class="analytics-stat-card">
-              <p class="analytics-label">Total comments</p>
+              <p class="analytics-label" id="labelTotalComments">Total comments</p>
               <p class="analytics-value" id="analyticsTotalComments">0</p>
             </article>
             <article class="analytics-stat-card">
-              <p class="analytics-label">Avg engagement / post</p>
+              <p class="analytics-label" id="labelAvgEngagement">Avg engagement / post</p>
               <p class="analytics-value" id="analyticsAvgEngagement">0</p>
             </article>
           </div>
 
           <div class="analytics-chart-grid">
             <article class="analytics-chart-card">
-              <h3>Engagement over time</h3>
+              <h3 id="titleEngagementTrend">Engagement over time</h3>
               <canvas id="chartEngagementTrend"></canvas>
             </article>
             <article class="analytics-chart-card">
-              <h3>Performance by content type</h3>
+              <h3 id="titlePerformanceByType">Performance by content type</h3>
               <canvas id="chartMediaType"></canvas>
             </article>
             <article class="analytics-chart-card">
-              <h3>Best day to post</h3>
+              <h3 id="titleBestDay">Best day to post</h3>
               <canvas id="chartPostingCadence"></canvas>
             </article>
             <article class="analytics-chart-card">
-              <h3>Caption length vs engagement</h3>
+              <h3 id="titleCaptionLength">Caption length vs engagement</h3>
               <canvas id="chartCaptionLength"></canvas>
             </article>
           </div>
 
           <article class="analytics-chart-card analytics-chart-card-wide">
-            <h3>Top posts by engagement</h3>
+            <h3 id="titleTopPosts">Top posts by engagement</h3>
             <canvas id="chartTopPosts"></canvas>
           </article>
         </section>
