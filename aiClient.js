@@ -130,22 +130,52 @@ function buildSystemPrompt({ state, connectedPlatforms }) {
 }
 
 /**
- * Collects image URLs from the user's most recent posts for GPT vision input.
+ * Downloads an image from a URL and returns a base64 data URI.
+ * Instagram CDN URLs are signed/temporary and block OpenAI's servers,
+ * so we must download server-side and pass as base64.
+ */
+async function fetchImageAsBase64(url) {
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; PostPilot/1.0)" },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) return null;
+  const contentType = res.headers.get("content-type") || "image/jpeg";
+  const buffer = await res.arrayBuffer();
+  const base64 = Buffer.from(buffer).toString("base64");
+  const mime = contentType.split(";")[0].trim();
+  return `data:${mime};base64,${base64}`;
+}
+
+/**
+ * Collects image data from the user's most recent posts for GPT vision input.
+ * Downloads each image and converts to base64 data URI.
  * For videos/reels, uses the thumbnail. Caps at `limit` images to control cost.
  */
-function collectPostImages(posts, limit = 5) {
+async function collectPostImages(posts, limit = 5) {
   if (!Array.isArray(posts)) return [];
-  const images = [];
+  const candidates = [];
   for (const p of posts) {
-    if (images.length >= limit) break;
+    if (candidates.length >= limit) break;
     const url = p.imageUrl || p.thumbnailUrl || p.mediaUrl || "";
     if (!url) continue;
     const type = formatMediaType(p.mediaType || "");
     const caption = truncate(p.text || "(no caption)", 120);
     const date = p.postedAt ? new Date(p.postedAt).toLocaleDateString() : "unknown";
-    images.push({ url, type, caption, date, likes: p.likes ?? 0, comments: p.comments ?? 0 });
+    candidates.push({ url, type, caption, date, likes: p.likes ?? 0, comments: p.comments ?? 0 });
   }
-  return images;
+  if (!candidates.length) return [];
+
+  const results = await Promise.allSettled(
+    candidates.map(async (img) => {
+      const dataUri = await fetchImageAsBase64(img.url);
+      if (!dataUri) return null;
+      return { ...img, url: dataUri };
+    }),
+  );
+  return results
+    .filter((r) => r.status === "fulfilled" && r.value)
+    .map((r) => r.value);
 }
 
 /**
@@ -185,7 +215,8 @@ async function callOpenAI({ message, history, state, connectedPlatforms }) {
   }
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
-  const postImages = collectPostImages(state.posts);
+  const postImages = await collectPostImages(state.posts);
+  aiLog("log", "Vision images collected", { count: postImages.length });
   const userContent = buildVisionUserMessage(inputText, postImages);
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -241,7 +272,8 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
     sessionId: String(sessionId || "").slice(0, 36),
   });
 
-  const postImages = collectPostImages(state.posts);
+  const postImages = await collectPostImages(state.posts);
+  aiLog("log", "Vision images collected for CrewAI", { count: postImages.length });
   let res;
   try {
     res = await fetch(endpoint, {
@@ -339,7 +371,8 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms }) {
   if (!apiKey) throw new Error("openai_not_configured");
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
-  const postImages = collectPostImages(state.posts);
+  const postImages = await collectPostImages(state.posts);
+  aiLog("log", "Vision images collected for stream", { count: postImages.length });
   const userContent = buildVisionUserMessage(inputText, postImages);
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -391,7 +424,8 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
   const apiKey = process.env.CREWAI_API_KEY || "";
   const endpoint = `${baseUrl.replace(/\/$/, "")}/chat/stream`;
 
-  const postImages = collectPostImages(state.posts);
+  const postImages = await collectPostImages(state.posts);
+  aiLog("log", "Vision images collected for CrewAI stream", { count: postImages.length });
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
