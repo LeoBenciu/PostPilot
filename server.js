@@ -467,6 +467,13 @@ async function syncPlatform(state, platform) {
   upsertPosts(state, fetched);
   integration.username = profile.username || integration.username || null;
   integration.avatarUrl = profile.avatarUrl || integration.avatarUrl || null;
+  if (profile.bio !== undefined) integration.bio = profile.bio || "";
+  if (profile.name !== undefined) integration.displayName = profile.name || "";
+  if (profile.followersCount !== undefined) integration.followersCount = profile.followersCount;
+  if (profile.followsCount !== undefined) integration.followsCount = profile.followsCount;
+  if (profile.mediaCount !== undefined) integration.mediaCount = profile.mediaCount;
+  if (profile.website !== undefined) integration.website = profile.website || "";
+  if (profile.accountType !== undefined) integration.accountType = profile.accountType || "";
   integration.lastSyncAt = nowIso();
   state.voiceProfile = buildVoiceProfile(state.posts);
   return fetched.length;
@@ -921,6 +928,13 @@ const server = http.createServer(async (req, res) => {
       state.integrations[platform].connectedAt = nowIso();
       state.integrations[platform].username = profile.username || state.integrations[platform].username || null;
       state.integrations[platform].avatarUrl = profile.avatarUrl || state.integrations[platform].avatarUrl || null;
+      if (profile.bio !== undefined) state.integrations[platform].bio = profile.bio || "";
+      if (profile.name !== undefined) state.integrations[platform].displayName = profile.name || "";
+      if (profile.followersCount !== undefined) state.integrations[platform].followersCount = profile.followersCount;
+      if (profile.followsCount !== undefined) state.integrations[platform].followsCount = profile.followsCount;
+      if (profile.mediaCount !== undefined) state.integrations[platform].mediaCount = profile.mediaCount;
+      if (profile.website !== undefined) state.integrations[platform].website = profile.website || "";
+      if (profile.accountType !== undefined) state.integrations[platform].accountType = profile.accountType || "";
       if (!state.integrations[platform].sync) state.integrations[platform].sync = {};
       state.integrations[platform].sync.status = "connected";
       state.integrations[platform].sync.lastError = null;
@@ -1438,6 +1452,7 @@ const server = http.createServer(async (req, res) => {
           Connection: "keep-alive",
           "X-Accel-Buffering": "no",
         });
+        res.flushHeaders();
         res.write(`data: ${JSON.stringify({ token: guardReply.content })}\n\n`);
         res.write(`data: ${JSON.stringify({ done: true, action: guardReply.action })}\n\n`);
         res.end();
@@ -1455,6 +1470,8 @@ const server = http.createServer(async (req, res) => {
         Connection: "keep-alive",
         "X-Accel-Buffering": "no",
       });
+      res.flushHeaders();
+      if (res.socket) res.socket.setNoDelay(true);
 
       let fullContent = "";
       try {

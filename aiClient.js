@@ -47,8 +47,18 @@ function summarizeIntegrations(integrations) {
   for (const [platform, info] of Object.entries(integrations || {})) {
     if (!info?.connected) continue;
     const username = info.username || "(unknown handle)";
+    const displayName = info.displayName || "";
     const syncedAt = info.lastSyncAt ? new Date(info.lastSyncAt).toLocaleString() : "never";
-    lines.push(`- ${platform}: @${username} (last sync: ${syncedAt})`);
+    let line = `- ${platform}: @${username}`;
+    if (displayName) line += ` (${displayName})`;
+    line += ` | last sync: ${syncedAt}`;
+    if (info.bio) line += `\n  Bio: "${info.bio}"`;
+    if (info.followersCount != null) line += `\n  Followers: ${info.followersCount}`;
+    if (info.followsCount != null) line += ` | Following: ${info.followsCount}`;
+    if (info.mediaCount != null) line += ` | Posts: ${info.mediaCount}`;
+    if (info.website) line += `\n  Website: ${info.website}`;
+    if (info.accountType) line += `\n  Account type: ${info.accountType}`;
+    lines.push(line);
   }
   return lines.length ? lines.join("\n") : "No platforms connected.";
 }

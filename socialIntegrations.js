@@ -150,7 +150,7 @@ async function fetchLinkedInPostsAndAnalytics(accessToken, profile) {
 
 async function fetchInstagramProfile(accessToken) {
   const res = await fetch(
-    `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,account_type,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
+    `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,account_type,profile_picture_url,biography,followers_count,follows_count,media_count,website&access_token=${encodeURIComponent(accessToken)}`,
   );
   if (!res.ok) throw new Error(`instagram_profile_failed_${res.status}`);
   const data = await res.json();
@@ -158,6 +158,13 @@ async function fetchInstagramProfile(accessToken) {
     id: data.user_id || data.id || "",
     username: data.username || "instagram-user",
     avatarUrl: data.profile_picture_url || "",
+    name: data.name || "",
+    bio: data.biography || "",
+    followersCount: data.followers_count ?? null,
+    followsCount: data.follows_count ?? null,
+    mediaCount: data.media_count ?? null,
+    website: data.website || "",
+    accountType: data.account_type || "",
   };
 }
 

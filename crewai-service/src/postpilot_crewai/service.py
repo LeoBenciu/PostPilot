@@ -33,7 +33,7 @@ def chat(payload: ChatRequest) -> ChatResponse:
 async def chat_stream(payload: ChatRequest) -> StreamingResponse:
     """SSE endpoint that streams the OpenAI response token-by-token."""
     try:
-        from openai import OpenAI
+        from openai import AsyncOpenAI
     except ImportError:
         raise HTTPException(
             status_code=500,
@@ -45,7 +45,6 @@ async def chat_stream(payload: ChatRequest) -> StreamingResponse:
     if not api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set")
 
-    crew = PostPilotCrew()
     system_prompt = payload.systemPrompt or ""
     context_json = json.dumps(payload.context, default=str)
     history_msgs = []
@@ -61,17 +60,17 @@ async def chat_stream(payload: ChatRequest) -> StreamingResponse:
         {"role": "user", "content": payload.message[:4000]},
     ]
 
-    client = OpenAI(api_key=api_key)
+    client = AsyncOpenAI(api_key=api_key)
 
     async def generate() -> AsyncGenerator[str, None]:
         try:
-            stream = client.chat.completions.create(
+            stream = await client.chat.completions.create(
                 model=model,
                 temperature=0.4,
                 messages=messages,
                 stream=True,
             )
-            for chunk in stream:
+            async for chunk in stream:
                 delta = chunk.choices[0].delta if chunk.choices else None
                 if delta and delta.content:
                     yield f"data: {json.dumps({'token': delta.content})}\n\n"
