@@ -216,10 +216,48 @@ async function fetchPlatformPostsAndAnalytics({ platform, accessToken, profile }
   throw new Error("unsupported_platform");
 }
 
+async function exchangeForLongLivedToken(shortLivedToken) {
+  const cfg = getPlatformConfig("instagram");
+  if (!cfg?.clientSecret) throw new Error("instagram_oauth_not_configured");
+  const url = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(cfg.clientSecret)}&access_token=${encodeURIComponent(shortLivedToken)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[PostPilot][IG] Long-lived token exchange failed (${res.status}): ${body.slice(0, 300)}`);
+    return null;
+  }
+  const data = await res.json();
+  if (!data.access_token) return null;
+  console.log(`[PostPilot][IG] Exchanged for long-lived token (expires_in: ${data.expires_in}s)`);
+  return {
+    accessToken: data.access_token,
+    expiresIn: Number(data.expires_in || 0),
+  };
+}
+
+async function refreshLongLivedToken(currentToken) {
+  const url = `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(currentToken)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[PostPilot][IG] Token refresh failed (${res.status}): ${body.slice(0, 300)}`);
+    return null;
+  }
+  const data = await res.json();
+  if (!data.access_token) return null;
+  console.log(`[PostPilot][IG] Refreshed long-lived token (expires_in: ${data.expires_in}s)`);
+  return {
+    accessToken: data.access_token,
+    expiresIn: Number(data.expires_in || 0),
+  };
+}
+
 module.exports = {
   normalizePlatform,
   buildAuthUrl,
   exchangeCodeForToken,
+  exchangeForLongLivedToken,
+  refreshLongLivedToken,
   fetchPlatformProfile,
   fetchPlatformPostsAndAnalytics,
 };

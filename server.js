@@ -27,6 +27,8 @@ const {
   normalizePlatform,
   buildAuthUrl,
   exchangeCodeForToken,
+  exchangeForLongLivedToken,
+  refreshLongLivedToken,
   fetchPlatformProfile,
   fetchPlatformPostsAndAnalytics,
 } = require("./socialIntegrations");
@@ -573,10 +575,49 @@ function extractTopic(message) {
   return cleaned || "content strategy";
 }
 
+async function ensureValidToken(state, platform) {
+  const integration = state.integrations[platform];
+  if (!integration?.connected || !integration?.token) return false;
+
+  const expiresAt = integration.tokenExpiresAt ? new Date(integration.tokenExpiresAt) : null;
+  const isExpired = expiresAt && expiresAt.getTime() < Date.now();
+  const expiresSoon = expiresAt && expiresAt.getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+  if (platform === "instagram" && (isExpired || expiresSoon || !expiresAt)) {
+    try {
+      const refreshed = await refreshLongLivedToken(integration.token);
+      if (refreshed) {
+        integration.token = refreshed.accessToken;
+        integration.expiresIn = refreshed.expiresIn;
+        integration.tokenExpiresAt = new Date(Date.now() + refreshed.expiresIn * 1000).toISOString();
+        return true;
+      }
+      if (isExpired) {
+        console.error(`[PostPilot] ${platform} token expired and refresh failed — user must reconnect`);
+        integration.connected = false;
+        integration.token = null;
+        return true;
+      }
+    } catch (err) {
+      console.error(`[PostPilot] Token refresh error for ${platform}:`, err?.message);
+      if (isExpired) {
+        integration.connected = false;
+        integration.token = null;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 async function ensureProfileData(state) {
   let changed = false;
   for (const [platform, integration] of Object.entries(state.integrations || {})) {
     if (!integration?.connected || !integration?.token) continue;
+
+    const tokenChanged = await ensureValidToken(state, platform);
+    if (tokenChanged) changed = true;
+    if (!integration.connected || !integration.token) continue;
 
     const needsProfile = integration.bio === undefined || integration.bio === null;
     const needsPosts = !state.posts || !state.posts.some((p) => p.platform === platform);
@@ -958,15 +999,29 @@ const server = http.createServer(async (req, res) => {
 
       const redirectUri = `${requestOrigin(req)}/auth/${platform}/callback`;
       const token = await exchangeCodeForToken({ platform, code, redirectUri });
+
+      let finalAccessToken = token.accessToken;
+      let finalExpiresIn = token.expiresIn;
+      if (platform === "instagram") {
+        const longLived = await exchangeForLongLivedToken(token.accessToken);
+        if (longLived) {
+          finalAccessToken = longLived.accessToken;
+          finalExpiresIn = longLived.expiresIn;
+        }
+      }
+
       const profile = await fetchPlatformProfile({
         platform,
-        accessToken: token.accessToken,
+        accessToken: finalAccessToken,
       });
       const state = bindStateToUser(await getStateForUser(user.id), user);
       state.integrations[platform].connected = true;
-      state.integrations[platform].token = token.accessToken;
+      state.integrations[platform].token = finalAccessToken;
       state.integrations[platform].refreshToken = token.refreshToken || null;
-      state.integrations[platform].expiresIn = token.expiresIn || null;
+      state.integrations[platform].expiresIn = finalExpiresIn || null;
+      state.integrations[platform].tokenExpiresAt = finalExpiresIn
+        ? new Date(Date.now() + finalExpiresIn * 1000).toISOString()
+        : null;
       state.integrations[platform].connectedAt = nowIso();
       state.integrations[platform].username = profile.username || state.integrations[platform].username || null;
       state.integrations[platform].avatarUrl = profile.avatarUrl || state.integrations[platform].avatarUrl || null;
