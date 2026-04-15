@@ -185,7 +185,7 @@ async function fetchInstagramProfile(accessToken) {
 
 async function fetchInstagramPostsAndAnalytics(accessToken) {
   const mediaRes = await fetch(
-    `https://graph.instagram.com/v21.0/me/media?fields=id,caption,timestamp,like_count,comments_count,media_type,permalink&limit=20&access_token=${encodeURIComponent(accessToken)}`,
+    `https://graph.instagram.com/v21.0/me/media?fields=id,caption,timestamp,like_count,comments_count,media_type,media_url,thumbnail_url,permalink&limit=20&access_token=${encodeURIComponent(accessToken)}`,
   );
   if (!mediaRes.ok) {
     const errBody = await mediaRes.text().catch(() => "");
@@ -194,16 +194,23 @@ async function fetchInstagramPostsAndAnalytics(accessToken) {
   }
   const mediaData = await mediaRes.json();
   const items = Array.isArray(mediaData.data) ? mediaData.data : [];
-  return items.map((item) => ({
-    platform: "instagram",
-    text: item.caption || "",
-    likes: Number(item.like_count || 0),
-    comments: Number(item.comments_count || 0),
-    impressions: 0,
-    postedAt: item.timestamp || new Date().toISOString(),
-    mediaType: item.media_type || "",
-    permalink: item.permalink || "",
-  }));
+  return items.map((item) => {
+    const type = String(item.media_type || "").toUpperCase();
+    const isVideo = type === "VIDEO" || type === "REEL" || type === "REELS";
+    return {
+      platform: "instagram",
+      text: item.caption || "",
+      likes: Number(item.like_count || 0),
+      comments: Number(item.comments_count || 0),
+      impressions: 0,
+      postedAt: item.timestamp || new Date().toISOString(),
+      mediaType: item.media_type || "",
+      permalink: item.permalink || "",
+      mediaUrl: item.media_url || "",
+      thumbnailUrl: item.thumbnail_url || "",
+      imageUrl: isVideo ? (item.thumbnail_url || "") : (item.media_url || ""),
+    };
+  });
 }
 
 async function fetchPlatformProfile({ platform, accessToken }) {

@@ -109,20 +109,64 @@ function buildSystemPrompt({ state, connectedPlatforms }) {
     "## What you can see",
     "- Profile: bio, followers, following count, post count, website",
     "- Each post: media type (Photo/Video/Carousel/Reel), caption, date, likes, comments, permalink",
-    "- You CANNOT see the actual images or video content, only the metadata above",
-    "- When the user asks about visual content, acknowledge this and ask them to describe it if needed",
+    "- You CAN see the actual images of their most recent posts (attached as images in the conversation)",
+    "- For videos and reels, you see the thumbnail/cover frame, not the full video",
+    "- Use what you see in the images to give specific visual feedback: composition, colors, text overlays, faces, branding, etc.",
+    "- Proactively reference what you see in images when analyzing post performance or suggesting improvements",
     "",
     "## Guardrails",
     "- Never claim to have executed external actions unless explicitly confirmed.",
     "- If asked for unsafe, illegal, or deceptive content, refuse briefly and offer a safe alternative.",
     "- Use concise practical steps and avoid filler.",
     "- When uncertain, ask one focused clarifying question.",
-    "- Reference the user's actual post data and performance metrics when giving advice.",
+    "- Reference the user's actual post data, performance metrics, AND visual content when giving advice.",
     "- When discussing posts, always mention the media type (photo, video, reel, carousel).",
+    "- Describe specific visual elements you observe: lighting, composition, text overlays, facial expressions, branding elements, color palette.",
+    "- For videos/reels, note that you only see the cover frame/thumbnail, not the full video. Ask the user to describe the video content if needed.",
     "- Match the user's voice tone and style when drafting content.",
   ];
 
   return sections.filter(Boolean).join("\n");
+}
+
+/**
+ * Collects image URLs from the user's most recent posts for GPT vision input.
+ * For videos/reels, uses the thumbnail. Caps at `limit` images to control cost.
+ */
+function collectPostImages(posts, limit = 5) {
+  if (!Array.isArray(posts)) return [];
+  const images = [];
+  for (const p of posts) {
+    if (images.length >= limit) break;
+    const url = p.imageUrl || p.thumbnailUrl || p.mediaUrl || "";
+    if (!url) continue;
+    const type = formatMediaType(p.mediaType || "");
+    const caption = truncate(p.text || "(no caption)", 120);
+    const date = p.postedAt ? new Date(p.postedAt).toLocaleDateString() : "unknown";
+    images.push({ url, type, caption, date, likes: p.likes ?? 0, comments: p.comments ?? 0 });
+  }
+  return images;
+}
+
+/**
+ * Builds a multimodal user message with text + image_url content blocks.
+ * Uses detail:"low" (85 tokens/image) to keep cost minimal.
+ */
+function buildVisionUserMessage(text, postImages) {
+  if (!postImages.length) return text;
+  const content = [];
+  let imageContext = "I'm attaching your most recent post images for reference:\n";
+  postImages.forEach((img, i) => {
+    imageContext += `\nImage ${i + 1}: [${img.type}] ${img.date} — likes: ${img.likes}, comments: ${img.comments}\nCaption: "${img.caption}"`;
+  });
+  content.push({ type: "text", text: `${imageContext}\n\nUser message: ${text}` });
+  for (const img of postImages) {
+    content.push({
+      type: "image_url",
+      image_url: { url: img.url, detail: "low" },
+    });
+  }
+  return content;
 }
 
 function aiLog(level, message, data = undefined) {
@@ -141,6 +185,8 @@ async function callOpenAI({ message, history, state, connectedPlatforms }) {
   }
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  const postImages = collectPostImages(state.posts);
+  const userContent = buildVisionUserMessage(inputText, postImages);
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -153,7 +199,7 @@ async function callOpenAI({ message, history, state, connectedPlatforms }) {
       messages: [
         { role: "system", content: buildSystemPrompt({ state, connectedPlatforms }) },
         ...history.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user", content: inputText },
+        { role: "user", content: userContent },
       ],
     }),
   });
@@ -195,6 +241,7 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
     sessionId: String(sessionId || "").slice(0, 36),
   });
 
+  const postImages = collectPostImages(state.posts);
   let res;
   try {
     res = await fetch(endpoint, {
@@ -215,6 +262,7 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
           voiceProfile: state.voiceProfile,
         },
         systemPrompt: buildSystemPrompt({ state, connectedPlatforms }),
+        postImages,
       }),
     });
   } catch (err) {
@@ -291,6 +339,8 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms }) {
   if (!apiKey) throw new Error("openai_not_configured");
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  const postImages = collectPostImages(state.posts);
+  const userContent = buildVisionUserMessage(inputText, postImages);
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -304,7 +354,7 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms }) {
       messages: [
         { role: "system", content: buildSystemPrompt({ state, connectedPlatforms }) },
         ...history.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user", content: inputText },
+        { role: "user", content: userContent },
       ],
     }),
   });
@@ -341,6 +391,7 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
   const apiKey = process.env.CREWAI_API_KEY || "";
   const endpoint = `${baseUrl.replace(/\/$/, "")}/chat/stream`;
 
+  const postImages = collectPostImages(state.posts);
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -359,6 +410,7 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
         voiceProfile: state.voiceProfile,
       },
       systemPrompt: buildSystemPrompt({ state, connectedPlatforms }),
+      postImages,
     }),
   });
 
@@ -422,4 +474,6 @@ module.exports = {
   streamAgentReply,
   buildSystemPrompt,
   normalizeHistory,
+  collectPostImages,
+  buildVisionUserMessage,
 };

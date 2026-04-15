@@ -54,10 +54,31 @@ async def chat_stream(payload: ChatRequest) -> StreamingResponse:
         if role in ("user", "assistant") and content:
             history_msgs.append({"role": role, "content": content[:1500]})
 
+    post_images = payload.postImages or []
+    if post_images:
+        image_context = "I'm attaching your most recent post images for reference:\n"
+        for i, img in enumerate(post_images):
+            image_context += (
+                f"\nImage {i + 1}: [{img.type}] {img.date} — "
+                f"likes: {img.likes}, comments: {img.comments}\n"
+                f'Caption: "{img.caption}"'
+            )
+        user_content: list[dict] = [
+            {"type": "text", "text": f"{image_context}\n\nUser message: {payload.message[:4000]}"},
+        ]
+        for img in post_images:
+            if img.url:
+                user_content.append(
+                    {"type": "image_url", "image_url": {"url": img.url, "detail": "low"}}
+                )
+        user_message = {"role": "user", "content": user_content}
+    else:
+        user_message = {"role": "user", "content": payload.message[:4000]}
+
     messages = [
         {"role": "system", "content": f"{system_prompt}\n\nSession context:\n{context_json}"},
         *history_msgs,
-        {"role": "user", "content": payload.message[:4000]},
+        user_message,
     ]
 
     client = AsyncOpenAI(api_key=api_key)
