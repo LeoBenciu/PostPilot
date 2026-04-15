@@ -91,9 +91,15 @@ const I18N = {
     disconnect: "Disconnect",
     chatSubtitle: "Your creator growth assistant",
     chatInputPlaceholder: "Message PostPilot Agent",
-    promptAnalyze: "Analyze performance",
-    promptDraft: "Generate post draft",
-    promptPlan: "Make weekly plan",
+    suggestionsLabel: "Suggestions",
+    suggestions: [
+      { icon: "📊", label: "Analyze performance", prompt: "Analyze my latest performance and tell me what to improve" },
+      { icon: "✏️", label: "Generate post draft", prompt: "Write a post draft based on my niche and recent best-performing content" },
+      { icon: "📅", label: "Weekly content plan", prompt: "Create my weekly content plan with specific post ideas for each day" },
+      { icon: "♻️", label: "Repurpose a post", prompt: "Take my best performing post and repurpose it into 3 different formats" },
+      { icon: "💬", label: "Caption ideas", prompt: "Give me 5 engaging caption ideas based on my niche and audience" },
+      { icon: "🚀", label: "Growth tips", prompt: "What are the top 3 things I should change to grow faster on social media?" },
+    ],
     analyticsTotalPosts: "Total posts",
     analyticsTotalLikes: "Total likes",
     analyticsTotalComments: "Total comments",
@@ -110,6 +116,8 @@ const I18N = {
     chartCaptionLengthAxis: "Caption length (chars)",
     chartEngagementAxis: "Engagement",
     chartAvgEngShort: "Avg eng.",
+    msgSenderAssistant: "PostPilot",
+    msgSenderUser: "You",
     send: "Send",
     saveSettings: "Save settings",
     onboardingRequired: "Complete onboarding when you are ready. I need those details before I can coach your content.",
@@ -241,9 +249,15 @@ const I18N = {
     disconnect: "Deconectare",
     chatSubtitle: "Asistentul tau pentru crestere",
     chatInputPlaceholder: "Mesaj catre PostPilot Agent",
-    promptAnalyze: "Analizeaza performanta",
-    promptDraft: "Genereaza draft postare",
-    promptPlan: "Creeaza plan saptamanal",
+    suggestionsLabel: "Sugestii",
+    suggestions: [
+      { icon: "📊", label: "Analizeaza performanta", prompt: "Analizeaza-mi ultima performanta si spune-mi ce sa imbunatatesc" },
+      { icon: "✏️", label: "Genereaza draft postare", prompt: "Scrie un draft de postare bazat pe nisa mea si continutul recent cu cele mai bune rezultate" },
+      { icon: "📅", label: "Plan saptamanal de continut", prompt: "Creeaza-mi planul saptamanal de continut cu idei specifice de postari pentru fiecare zi" },
+      { icon: "♻️", label: "Reutilizeaza o postare", prompt: "Ia cea mai performanta postare a mea si transform-o in 3 formate diferite" },
+      { icon: "💬", label: "Idei de descrieri", prompt: "Da-mi 5 idei de descrieri captivante bazate pe nisa si audienta mea" },
+      { icon: "🚀", label: "Sfaturi de crestere", prompt: "Care sunt cele mai importante 3 lucruri pe care ar trebui sa le schimb ca sa cresc mai repede pe social media?" },
+    ],
     analyticsTotalPosts: "Total postari",
     analyticsTotalLikes: "Total aprecieri",
     analyticsTotalComments: "Total comentarii",
@@ -260,6 +274,8 @@ const I18N = {
     chartCaptionLengthAxis: "Lungime descriere (caractere)",
     chartEngagementAxis: "Interactiuni",
     chartAvgEngShort: "Int. medie",
+    msgSenderAssistant: "PostPilot",
+    msgSenderUser: "Tu",
     send: "Trimite",
     saveSettings: "Salveaza setarile",
     onboardingRequired: "Completeaza onboarding-ul cand esti pregatit. Am nevoie de aceste detalii inainte sa te pot ajuta.",
@@ -389,9 +405,15 @@ const I18N = {
     disconnect: "Disconnetti",
     chatSubtitle: "Il tuo assistente per la crescita creator",
     chatInputPlaceholder: "Messaggio per PostPilot Agent",
-    promptAnalyze: "Analizza le performance",
-    promptDraft: "Genera bozza post",
-    promptPlan: "Crea piano settimanale",
+    suggestionsLabel: "Suggerimenti",
+    suggestions: [
+      { icon: "📊", label: "Analizza le performance", prompt: "Analizza le mie ultime performance e dimmi cosa migliorare" },
+      { icon: "✏️", label: "Genera bozza post", prompt: "Scrivi una bozza di post basata sulla mia nicchia e sui contenuti recenti piu performanti" },
+      { icon: "📅", label: "Piano settimanale contenuti", prompt: "Crea il mio piano settimanale di contenuti con idee specifiche per ogni giorno" },
+      { icon: "♻️", label: "Riutilizza un post", prompt: "Prendi il mio post piu performante e trasformalo in 3 formati diversi" },
+      { icon: "💬", label: "Idee per descrizioni", prompt: "Dammi 5 idee di descrizioni coinvolgenti basate sulla mia nicchia e il mio pubblico" },
+      { icon: "🚀", label: "Consigli di crescita", prompt: "Quali sono le 3 cose principali che dovrei cambiare per crescere piu velocemente sui social?" },
+    ],
     analyticsTotalPosts: "Post totali",
     analyticsTotalLikes: "Like totali",
     analyticsTotalComments: "Commenti totali",
@@ -408,6 +430,8 @@ const I18N = {
     chartCaptionLengthAxis: "Lunghezza descrizione (caratteri)",
     chartEngagementAxis: "Interazioni",
     chartAvgEngShort: "Int. media",
+    msgSenderAssistant: "PostPilot",
+    msgSenderUser: "Tu",
     send: "Invia",
     saveSettings: "Salva impostazioni",
     onboardingRequired: "Completa l'onboarding quando vuoi. Mi servono questi dettagli prima di aiutarti.",
@@ -528,9 +552,15 @@ const I18N = {
     disconnect: "Trennen",
     chatSubtitle: "Dein Assistent fuer Creator-Wachstum",
     chatInputPlaceholder: "Nachricht an PostPilot Agent",
-    promptAnalyze: "Performance analysieren",
-    promptDraft: "Post-Entwurf erstellen",
-    promptPlan: "Wochenplan erstellen",
+    suggestionsLabel: "Vorschlaege",
+    suggestions: [
+      { icon: "📊", label: "Performance analysieren", prompt: "Analysiere meine letzte Performance und sage mir, was ich verbessern soll" },
+      { icon: "✏️", label: "Post-Entwurf erstellen", prompt: "Schreibe einen Post-Entwurf basierend auf meiner Nische und meinen besten Inhalten" },
+      { icon: "📅", label: "Wochenplan erstellen", prompt: "Erstelle meinen woechentlichen Content-Plan mit konkreten Post-Ideen fuer jeden Tag" },
+      { icon: "♻️", label: "Beitrag wiederverwerten", prompt: "Nimm meinen erfolgreichsten Beitrag und verwandle ihn in 3 verschiedene Formate" },
+      { icon: "💬", label: "Beschreibungsideen", prompt: "Gib mir 5 ansprechende Beschreibungsideen basierend auf meiner Nische und Zielgruppe" },
+      { icon: "🚀", label: "Wachstumstipps", prompt: "Was sind die 3 wichtigsten Dinge, die ich aendern sollte, um schneller in Social Media zu wachsen?" },
+    ],
     analyticsTotalPosts: "Beitraege gesamt",
     analyticsTotalLikes: "Likes gesamt",
     analyticsTotalComments: "Kommentare gesamt",
@@ -547,6 +577,8 @@ const I18N = {
     chartCaptionLengthAxis: "Beschreibungslaenge (Zeichen)",
     chartEngagementAxis: "Interaktion",
     chartAvgEngShort: "Durchschn.",
+    msgSenderAssistant: "PostPilot",
+    msgSenderUser: "Du",
     send: "Senden",
     saveSettings: "Einstellungen speichern",
     onboardingRequired: "Schliesse das Onboarding ab, wenn du bereit bist. Ich brauche diese Angaben, bevor ich helfen kann.",
@@ -667,9 +699,15 @@ const I18N = {
     disconnect: "Deconnexion",
     chatSubtitle: "Votre assistant de croissance createur",
     chatInputPlaceholder: "Message a PostPilot Agent",
-    promptAnalyze: "Analyser les performances",
-    promptDraft: "Generer un brouillon de post",
-    promptPlan: "Creer un plan hebdomadaire",
+    suggestionsLabel: "Suggestions",
+    suggestions: [
+      { icon: "📊", label: "Analyser les performances", prompt: "Analyse mes dernieres performances et dis-moi quoi ameliorer" },
+      { icon: "✏️", label: "Generer un brouillon", prompt: "Ecris un brouillon de publication base sur ma niche et mes contenus les plus performants" },
+      { icon: "📅", label: "Plan hebdomadaire", prompt: "Cree mon plan de contenu hebdomadaire avec des idees de publications pour chaque jour" },
+      { icon: "♻️", label: "Reutiliser une publication", prompt: "Prends ma publication la plus performante et transforme-la en 3 formats differents" },
+      { icon: "💬", label: "Idees de descriptions", prompt: "Donne-moi 5 idees de descriptions engageantes basees sur ma niche et mon audience" },
+      { icon: "🚀", label: "Conseils de croissance", prompt: "Quels sont les 3 changements les plus importants que je devrais faire pour grandir plus vite sur les reseaux sociaux ?" },
+    ],
     analyticsTotalPosts: "Total publications",
     analyticsTotalLikes: "Total mentions j'aime",
     analyticsTotalComments: "Total commentaires",
@@ -686,6 +724,8 @@ const I18N = {
     chartCaptionLengthAxis: "Longueur description (caracteres)",
     chartEngagementAxis: "Interactions",
     chartAvgEngShort: "Int. moy.",
+    msgSenderAssistant: "PostPilot",
+    msgSenderUser: "Vous",
     send: "Envoyer",
     saveSettings: "Enregistrer les parametres",
     onboardingRequired: "Completez l'onboarding quand vous voulez. J'ai besoin de ces infos avant de vous aider.",
@@ -857,10 +897,7 @@ function applyLanguage() {
   const messageInput = document.getElementById("messageInput");
   if (messageInput) messageInput.placeholder = t("chatInputPlaceholder");
 
-  const chips = document.querySelectorAll(".prompt-chip");
-  if (chips[0]) chips[0].textContent = t("promptAnalyze");
-  if (chips[1]) chips[1].textContent = t("promptDraft");
-  if (chips[2]) chips[2].textContent = t("promptPlan");
+  buildSuggestionsPopup();
 
   if (googleSignupBtn) googleSignupBtn.textContent = t("continueGoogle");
   if (googleSigninBtn) googleSigninBtn.textContent = t("continueGoogle");
@@ -1027,33 +1064,44 @@ function clearFeedback() {
   showFeedback(signinFeedback, "");
 }
 
+function createMsgRow(role) {
+  const row = document.createElement("div");
+  row.className = `msg-row ${role}`;
+  const sender = document.createElement("div");
+  sender.className = "msg-sender";
+  sender.textContent = role === "assistant" ? t("msgSenderAssistant") : t("msgSenderUser");
+  const bubble = document.createElement("div");
+  bubble.className = "msg-bubble";
+  row.appendChild(sender);
+  row.appendChild(bubble);
+  return { row, bubble };
+}
+
 function addMessage(role, content) {
   const messages = document.getElementById("messages");
-  const item = document.createElement("div");
-  item.className = `msg ${role}`;
-  item.textContent = content;
-  messages.appendChild(item);
+  const { row, bubble } = createMsgRow(role);
+  bubble.textContent = content;
+  messages.appendChild(row);
   messages.scrollTop = messages.scrollHeight;
 }
 
 function addStreamingMessage() {
   const messages = document.getElementById("messages");
-  const item = document.createElement("div");
-  item.className = "msg assistant";
+  const { row, bubble } = createMsgRow("assistant");
   const cursor = document.createElement("span");
   cursor.className = "streaming-cursor";
-  item.appendChild(cursor);
-  messages.appendChild(item);
+  bubble.appendChild(cursor);
+  messages.appendChild(row);
   messages.scrollTop = messages.scrollHeight;
   return {
     append(token) {
-      item.insertBefore(document.createTextNode(token), cursor);
+      bubble.insertBefore(document.createTextNode(token), cursor);
       messages.scrollTop = messages.scrollHeight;
     },
     finish() {
       cursor.remove();
     },
-    element: item,
+    element: bubble,
   };
 }
 
@@ -1784,10 +1832,47 @@ for (const tabButton of document.querySelectorAll(".settings-nav-btn")) {
   });
 }
 
-for (const button of document.querySelectorAll(".prompt-chip")) {
-  button.addEventListener("click", () => {
-    const prompt = button.getAttribute("data-prompt");
-    if (prompt) sendPrompt(prompt);
+function buildSuggestionsPopup() {
+  const popup = document.getElementById("suggestionsPopup");
+  if (!popup) return;
+  popup.innerHTML = "";
+  const suggestions = t("suggestions");
+  if (!Array.isArray(suggestions)) return;
+  for (const s of suggestions) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "suggestion-item";
+    if (s.icon) {
+      const ico = document.createElement("span");
+      ico.className = "suggestion-item-icon";
+      ico.textContent = s.icon;
+      btn.appendChild(ico);
+    }
+    const label = document.createElement("span");
+    label.className = "suggestion-item-label";
+    label.textContent = s.label;
+    btn.appendChild(label);
+    btn.addEventListener("click", () => {
+      const input = document.getElementById("messageInput");
+      if (input) { input.value = s.prompt; input.focus(); }
+      popup.classList.add("hidden");
+    });
+    popup.appendChild(btn);
+  }
+}
+
+const suggestionsBtn = document.getElementById("suggestionsBtn");
+const suggestionsPopup = document.getElementById("suggestionsPopup");
+
+if (suggestionsBtn && suggestionsPopup) {
+  suggestionsBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    suggestionsPopup.classList.toggle("hidden");
+  });
+  document.addEventListener("click", (e) => {
+    if (!suggestionsPopup.contains(e.target) && e.target !== suggestionsBtn) {
+      suggestionsPopup.classList.add("hidden");
+    }
   });
 }
 

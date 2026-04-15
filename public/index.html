@@ -229,19 +229,13 @@
           </div>
           <section id="messages" class="messages"></section>
 
-          <div class="prompt-row">
-            <button class="prompt-chip" data-prompt="Analyze my latest performance and tell me what to improve">
-              Analyze performance
-            </button>
-            <button class="prompt-chip" data-prompt="Write a LinkedIn post about creator monetization psychology">
-              Generate post draft
-            </button>
-            <button class="prompt-chip" data-prompt="Create my weekly content plan">
-              Make weekly plan
-            </button>
-          </div>
-
           <form id="composer" class="composer">
+            <div class="composer-suggestions-wrap">
+              <button type="button" id="suggestionsBtn" class="suggestions-toggle" title="Suggestions">
+                <span class="suggestions-icon">💡</span>
+              </button>
+              <div id="suggestionsPopup" class="suggestions-popup hidden"></div>
+            </div>
             <input id="messageInput" placeholder="Message PostPilot Agent" />
             <button type="submit" id="sendBtn">Send</button>
           </form>

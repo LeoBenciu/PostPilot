@@ -441,7 +441,7 @@ body {
 
 .agent-view {
   display: grid;
-  grid-template-rows: 1fr auto auto;
+  grid-template-rows: 1fr auto;
   min-height: 0;
   position: relative;
 }
@@ -479,32 +479,68 @@ body {
 .messages {
   overflow-y: auto;
   min-height: 0;
-  padding: 26px 20px;
+  padding: 24px 24px 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
-.msg {
-  max-width: 86%;
-  border-radius: 16px;
-  padding: 13px 15px;
+.msg-row {
+  display: flex;
+  flex-direction: column;
+  animation: msg-in 0.18s ease-out;
+}
+
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-row.user {
+  align-items: flex-end;
+}
+
+.msg-row.assistant {
+  align-items: flex-start;
+}
+
+.msg-sender {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 5px;
+  padding: 0 4px;
+}
+
+.msg-row.assistant .msg-sender {
+  color: #b03050;
+}
+
+.msg-row.user .msg-sender {
+  color: #845660;
+}
+
+.msg-bubble {
+  padding: 13px 16px;
+  line-height: 1.65;
+  font-size: 14.5px;
   white-space: pre-wrap;
-  line-height: 1.5;
-  box-shadow: 0 10px 24px rgba(140, 30, 55, 0.08);
+  word-break: break-word;
+  max-width: 78%;
 }
 
-.msg.user {
-  align-self: flex-end;
-  background: linear-gradient(180deg, #d50032 0%, #b7002b 100%);
-  color: #ffffff;
-  border: 1px solid #a80028;
+.msg-row.assistant .msg-bubble {
+  background: #ffffff;
+  border: 1px solid #edd8de;
+  border-radius: 4px 18px 18px 18px;
+  color: #2d1218;
+  box-shadow: 0 2px 10px rgba(120, 28, 50, 0.05);
 }
 
-.msg.assistant {
-  align-self: flex-start;
-  background: var(--surface);
-  border: 1px solid var(--border);
+.msg-row.user .msg-bubble {
+  background: #c7002e;
+  border-radius: 18px 4px 18px 18px;
+  color: #fff;
 }
 
 .streaming-cursor {
@@ -522,28 +558,108 @@ body {
   100% { opacity: 0; }
 }
 
-.prompt-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 20px 10px;
-}
-
-.prompt-chip {
-  width: auto;
-  border-radius: 999px;
-  border: 1px solid #efb7bf;
-  background: var(--accent-soft);
-  color: #5d1526;
-  padding: 8px 12px;
-  font-size: 12px;
-}
-
 .composer {
   padding: 12px 20px 22px;
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+}
+
+.composer-suggestions-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.suggestions-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid #efd0d7;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(120, 28, 50, 0.08);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.suggestions-toggle:hover {
+  background: #fff4f7;
+  box-shadow: 0 4px 12px rgba(120, 28, 50, 0.13);
+}
+
+.suggestions-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.suggestions-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 260px;
+  max-width: 320px;
+  background: #fff;
+  border: 1px solid #efd0d7;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(120, 28, 50, 0.13);
+  padding: 6px;
+  z-index: 20;
+  animation: suggestions-in 0.15s ease-out;
+}
+
+@keyframes suggestions-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.suggestions-popup.hidden {
+  display: none;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #3d1b25;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-family: "Poppins", sans-serif;
+}
+
+.suggestion-item:hover {
+  background: #fff0f4;
+}
+
+.suggestion-item-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.suggestion-item-label {
+  font-weight: 600;
+}
+
+.suggestion-item-desc {
+  font-size: 11px;
+  color: #845660;
+  display: block;
 }
 
 input,
@@ -719,8 +835,9 @@ button:hover {
   background: #ffffff;
 }
 
-.composer button {
+.composer button[type="submit"] {
   width: 90px;
+  flex-shrink: 0;
   border-radius: 14px;
   background: var(--accent);
   color: #ffffff;
