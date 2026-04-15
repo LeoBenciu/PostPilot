@@ -53,10 +53,18 @@ function buildSystemPrompt({ state, connectedPlatforms }) {
   ].join("\n");
 }
 
+function aiLog(level, message, data = undefined) {
+  const payload = data !== undefined ? ` ${JSON.stringify(data)}` : "";
+  const line = `[PostPilot][AI] ${message}${payload}`;
+  if (level === "error") console.error(line);
+  else console.log(line);
+}
+
 async function callOpenAI({ message, history, state, connectedPlatforms }) {
   const apiKey = process.env.OPENAI_API_KEY || "";
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   if (!apiKey) {
+    aiLog("error", "OpenAI skipped: OPENAI_API_KEY not set");
     throw new Error("openai_not_configured");
   }
 
@@ -79,6 +87,8 @@ async function callOpenAI({ message, history, state, connectedPlatforms }) {
   });
 
   if (!res.ok) {
+    const errBody = truncate(await res.text(), 400);
+    aiLog("error", "OpenAI HTTP error", { status: res.status, bodyPreview: errBody });
     throw new Error(`openai_request_failed_${res.status}`);
   }
   const data = await res.json();
@@ -94,37 +104,72 @@ async function callOpenAI({ message, history, state, connectedPlatforms }) {
 async function callCrewAI({ message, history, state, connectedPlatforms, userId, sessionId }) {
   const baseUrl = process.env.CREWAI_API_URL || "";
   if (!baseUrl) {
+    aiLog("error", "CrewAI skipped: CREWAI_API_URL not set");
     throw new Error("crewai_not_configured");
   }
   const apiKey = process.env.CREWAI_API_KEY || "";
   const endpoint = `${baseUrl.replace(/\/$/, "")}/chat`;
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-    },
-    body: JSON.stringify({
-      userId,
-      sessionId,
-      message: truncate(message, DEFAULT_MAX_INPUT_CHARS),
-      history,
-      context: {
-        account: state.user,
-        integrations: state.integrations,
-        connectedPlatforms,
-        voiceProfile: state.voiceProfile,
-      },
-      systemPrompt: buildSystemPrompt({ state, connectedPlatforms }),
-    }),
+  let crewaiHost = "";
+  try {
+    crewaiHost = new URL(baseUrl).host;
+  } catch (_e) {
+    crewaiHost = "(invalid CREWAI_API_URL)";
+  }
+  aiLog("log", "CrewAI request", {
+    host: crewaiHost,
+    path: "/chat",
+    sendsAuthHeader: Boolean(apiKey),
+    userId,
+    sessionId: String(sessionId || "").slice(0, 36),
   });
 
+  let res;
+  try {
+    res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+      },
+      body: JSON.stringify({
+        userId,
+        sessionId,
+        message: truncate(message, DEFAULT_MAX_INPUT_CHARS),
+        history,
+        context: {
+          account: state.user,
+          integrations: state.integrations,
+          connectedPlatforms,
+          voiceProfile: state.voiceProfile,
+        },
+        systemPrompt: buildSystemPrompt({ state, connectedPlatforms }),
+      }),
+    });
+  } catch (err) {
+    aiLog("error", "CrewAI fetch failed (network / DNS / TLS)", {
+      host: crewaiHost,
+      name: err?.name,
+      message: String(err?.message || err),
+    });
+    throw err;
+  }
+
   if (!res.ok) {
+    const errBody = truncate(await res.text(), 500);
+    aiLog("error", "CrewAI HTTP error", { status: res.status, host: crewaiHost, bodyPreview: errBody });
     throw new Error(`crewai_request_failed_${res.status}`);
   }
-  const data = safeJsonParse(await res.text(), {});
+  const rawText = await res.text();
+  const data = safeJsonParse(rawText, {});
   const content = String(data.reply || data.content || "").trim();
-  if (!content) throw new Error("crewai_empty_response");
+  if (!content) {
+    aiLog("error", "CrewAI empty reply", {
+      host: crewaiHost,
+      rawLen: rawText.length,
+      jsonKeys: Object.keys(data || {}),
+    });
+    throw new Error("crewai_empty_response");
+  }
   return {
     content: truncate(content, DEFAULT_MAX_OUTPUT_CHARS),
     action: data.action || "ai_reply",
@@ -134,6 +179,11 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
 
 async function generateAgentReply({ message, history, state, userId, sessionId }) {
   const provider = (process.env.AI_PROVIDER || "crewai").toLowerCase();
+  aiLog("log", "generateAgentReply", {
+    provider,
+    crewaiUrlSet: Boolean(process.env.CREWAI_API_URL),
+    openaiKeySet: Boolean(process.env.OPENAI_API_KEY),
+  });
   const connectedPlatforms = Object.entries(state.integrations || {})
     .filter(([, value]) => value?.connected)
     .map(([key]) => key);
@@ -159,6 +209,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId }
     });
   }
 
+  aiLog("error", "Unsupported AI_PROVIDER", { provider });
   throw new Error(`unsupported_ai_provider_${provider}`);
 }
 

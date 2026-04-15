@@ -622,6 +622,10 @@ async function agentRespond(state, { message, userId, sessionId }) {
       payload: { provider: response.provider || "unknown" },
     };
   } catch (error) {
+    console.error("[PostPilot][AI] agentRespond provider failure", {
+      reason: String(error?.message || error),
+      name: error?.name,
+    });
     return {
       role: "assistant",
       content:
