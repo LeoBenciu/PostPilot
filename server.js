@@ -1503,7 +1503,7 @@ const server = http.createServer(async (req, res) => {
     const user = await requireAuth(req, res);
     if (!user) return;
     const state = bindStateToUser(await getStateForUser(user.id), user);
-    sendJson(res, 200, { posts: state.posts.slice(0, 12) });
+    sendJson(res, 200, { posts: state.posts.slice(0, 20) });
     return;
   }
 

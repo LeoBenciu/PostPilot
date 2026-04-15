@@ -774,11 +774,7 @@ function applyLanguage() {
   setTextIfExists("settingsBtnLabel", t("settings"));
   setTextIfExists("disconnectBtnLabel", t("disconnect"));
   setTextIfExists("chatHeaderSubtitle", t("chatSubtitle"));
-  setTextIfExists("analyticsTotalPostsLabel", t("analyticsTotalPosts"));
-  setTextIfExists("analyticsTotalLikesLabel", t("analyticsTotalLikes"));
-  setTextIfExists("analyticsTotalCommentsLabel", t("analyticsTotalComments"));
-  setTextIfExists("analyticsTopPostLabel", t("analyticsTopPost"));
-  setTextIfExists("analyticsRecentPostsTitle", t("analyticsRecentPosts"));
+  // stat card labels are static in HTML; chart titles are static in HTML
   setTextIfExists("sendBtn", t("send"));
   setTextIfExists("settingsSaveBtn", t("saveSettings"));
 
@@ -1052,56 +1048,217 @@ function setActiveView(view) {
   if (resetChatBtn) resetChatBtn.classList.toggle("hidden", showAnalytics);
 }
 
-function renderAnalyticsSummary(summary = {}) {
-  const totals = summary.totals || {};
-  const topPost = summary.topPost || null;
-  const totalPosts = Object.values(summary.byPlatform || {}).reduce((acc, p) => acc + Number(p.posts || 0), 0);
-  setText("analyticsTotalPosts", Number(totalPosts || 0).toLocaleString());
-  setText("analyticsTotalLikes", Number(totals.likes || 0).toLocaleString());
-  setText("analyticsTotalComments", Number(totals.comments || 0).toLocaleString());
+const analyticsCharts = {};
 
-  if (!topPost) {
-    setText("analyticsTopPost", "-");
-    return;
-  }
-  const type = String(topPost.mediaType || "").toLowerCase() || "post";
-  const likes = Number(topPost.likes || 0);
-  const comments = Number(topPost.comments || 0);
-  const snippet = String(topPost.text || "").trim().slice(0, 90) || "(no caption)";
-  setText("analyticsTopPost", `${type} • ${likes} likes • ${comments} comments — "${snippet}"`);
+const CHART_COLORS = {
+  pink: "rgba(194, 49, 96, 0.85)",
+  pinkLight: "rgba(194, 49, 96, 0.15)",
+  rose: "rgba(232, 121, 149, 0.85)",
+  roseLight: "rgba(232, 121, 149, 0.15)",
+  plum: "rgba(128, 30, 60, 0.85)",
+  plumLight: "rgba(128, 30, 60, 0.15)",
+  gold: "rgba(217, 164, 65, 0.85)",
+  goldLight: "rgba(217, 164, 65, 0.15)",
+  teal: "rgba(56, 161, 148, 0.85)",
+  tealLight: "rgba(56, 161, 148, 0.15)",
+};
+
+const CHART_DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { labels: { font: { family: "Poppins", size: 11 }, boxWidth: 12, padding: 10 } },
+    tooltip: { titleFont: { family: "Poppins" }, bodyFont: { family: "Poppins" } },
+  },
+  scales: {
+    x: { ticks: { font: { family: "Poppins", size: 10 } }, grid: { display: false } },
+    y: { ticks: { font: { family: "Poppins", size: 10 } }, grid: { color: "rgba(0,0,0,0.04)" }, beginAtZero: true },
+  },
+};
+
+function destroyChart(id) {
+  if (analyticsCharts[id]) { analyticsCharts[id].destroy(); delete analyticsCharts[id]; }
 }
 
-function renderRecentPosts(posts = []) {
-  const wrap = document.getElementById("analyticsRecentPosts");
-  if (!wrap) return;
-  wrap.innerHTML = "";
-  if (!posts.length) {
-    const empty = document.createElement("p");
-    empty.className = "analytics-item-meta";
-    empty.textContent = t("analyticsEmptyRecentPosts");
-    wrap.appendChild(empty);
-    return;
-  }
+function renderStatCards(summary, posts) {
+  const totals = summary.totals || {};
+  const totalPosts = Object.values(summary.byPlatform || {}).reduce((a, p) => a + Number(p.posts || 0), 0);
+  const totalLikes = Number(totals.likes || 0);
+  const totalComments = Number(totals.comments || 0);
+  const avgEngagement = totalPosts > 0 ? ((totalLikes + totalComments) / totalPosts).toFixed(1) : "0";
 
-  for (const post of posts.slice(0, 8)) {
-    const item = document.createElement("article");
-    item.className = "analytics-item";
-    const title = document.createElement("p");
-    title.className = "analytics-item-title";
-    const platform = post.platform || "post";
-    const mediaType = post.mediaType || "post";
-    title.textContent = `${platform} • ${mediaType}`;
-    const meta = document.createElement("p");
-    meta.className = "analytics-item-meta";
-    const likes = Number(post.likes || 0);
-    const comments = Number(post.comments || 0);
-    const date = post.postedAt ? new Date(post.postedAt).toLocaleDateString() : "-";
-    const caption = String(post.text || "").trim().slice(0, 120) || "(no caption)";
-    meta.textContent = `${date} • ${likes} likes • ${comments} comments — "${caption}"`;
-    item.appendChild(title);
-    item.appendChild(meta);
-    wrap.appendChild(item);
+  setText("analyticsTotalPosts", Number(totalPosts).toLocaleString());
+  setText("analyticsTotalLikes", totalLikes.toLocaleString());
+  setText("analyticsTotalComments", totalComments.toLocaleString());
+  setText("analyticsAvgEngagement", avgEngagement);
+}
+
+function renderEngagementTrend(posts) {
+  const sorted = [...posts].sort((a, b) => new Date(a.postedAt) - new Date(b.postedAt));
+  const labels = sorted.map(p => {
+    const d = new Date(p.postedAt);
+    return `${d.getDate()}/${d.getMonth() + 1}`;
+  });
+  const likes = sorted.map(p => Number(p.likes || 0));
+  const comments = sorted.map(p => Number(p.comments || 0));
+
+  destroyChart("engagementTrend");
+  const ctx = document.getElementById("chartEngagementTrend");
+  if (!ctx) return;
+  analyticsCharts.engagementTrend = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Likes", data: likes, borderColor: CHART_COLORS.pink, backgroundColor: CHART_COLORS.pinkLight, fill: true, tension: 0.35, pointRadius: 3 },
+        { label: "Comments", data: comments, borderColor: CHART_COLORS.teal, backgroundColor: CHART_COLORS.tealLight, fill: true, tension: 0.35, pointRadius: 3 },
+      ],
+    },
+    options: { ...CHART_DEFAULTS },
+  });
+}
+
+function renderMediaTypeBreakdown(posts) {
+  const buckets = {};
+  for (const p of posts) {
+    const type = String(p.mediaType || "post").toUpperCase();
+    const key = type.includes("REEL") || type === "VIDEO" ? "Reels / Video"
+      : type.includes("CAROUSEL") ? "Carousel"
+      : type === "IMAGE" ? "Image" : "Other";
+    if (!buckets[key]) buckets[key] = { count: 0, likes: 0, comments: 0 };
+    buckets[key].count++;
+    buckets[key].likes += Number(p.likes || 0);
+    buckets[key].comments += Number(p.comments || 0);
   }
+  const keys = Object.keys(buckets);
+  const avgEng = keys.map(k => {
+    const b = buckets[k];
+    return b.count > 0 ? +((b.likes + b.comments) / b.count).toFixed(1) : 0;
+  });
+  const colors = [CHART_COLORS.pink, CHART_COLORS.teal, CHART_COLORS.gold, CHART_COLORS.plum];
+  const bgColors = [CHART_COLORS.pinkLight, CHART_COLORS.tealLight, CHART_COLORS.goldLight, CHART_COLORS.plumLight];
+
+  destroyChart("mediaType");
+  const ctx = document.getElementById("chartMediaType");
+  if (!ctx) return;
+  analyticsCharts.mediaType = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: keys,
+      datasets: [{ label: "Avg engagement", data: avgEng, backgroundColor: colors.slice(0, keys.length), borderRadius: 8 }],
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
+      scales: { ...CHART_DEFAULTS.scales, x: { ...CHART_DEFAULTS.scales.x, grid: { display: false } } },
+    },
+  });
+}
+
+function renderPostingCadence(posts) {
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayBuckets = Array.from({ length: 7 }, () => ({ count: 0, engagement: 0 }));
+  for (const p of posts) {
+    const d = new Date(p.postedAt);
+    if (isNaN(d.getTime())) continue;
+    const day = d.getDay();
+    dayBuckets[day].count++;
+    dayBuckets[day].engagement += Number(p.likes || 0) + Number(p.comments || 0);
+  }
+  const avgByDay = dayBuckets.map(b => b.count > 0 ? +(b.engagement / b.count).toFixed(1) : 0);
+  const counts = dayBuckets.map(b => b.count);
+
+  destroyChart("postingCadence");
+  const ctx = document.getElementById("chartPostingCadence");
+  if (!ctx) return;
+  analyticsCharts.postingCadence = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: days,
+      datasets: [
+        { label: "Posts", data: counts, backgroundColor: CHART_COLORS.roseLight, borderColor: CHART_COLORS.rose, borderWidth: 1, borderRadius: 6, yAxisID: "y" },
+        { label: "Avg engagement", data: avgByDay, type: "line", borderColor: CHART_COLORS.plum, backgroundColor: "transparent", tension: 0.3, pointRadius: 4, yAxisID: "y1" },
+      ],
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      scales: {
+        x: CHART_DEFAULTS.scales.x,
+        y: { ...CHART_DEFAULTS.scales.y, position: "left", title: { display: true, text: "Posts", font: { family: "Poppins", size: 10 } } },
+        y1: { ...CHART_DEFAULTS.scales.y, position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: "Avg eng.", font: { family: "Poppins", size: 10 } } },
+      },
+    },
+  });
+}
+
+function renderCaptionLength(posts) {
+  const dataPoints = posts.map(p => ({
+    x: String(p.text || "").length,
+    y: Number(p.likes || 0) + Number(p.comments || 0),
+  }));
+
+  destroyChart("captionLength");
+  const ctx = document.getElementById("chartCaptionLength");
+  if (!ctx) return;
+  analyticsCharts.captionLength = new Chart(ctx, {
+    type: "scatter",
+    data: {
+      datasets: [{
+        label: "Post",
+        data: dataPoints,
+        backgroundColor: CHART_COLORS.pink,
+        borderColor: CHART_COLORS.pinkLight,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      }],
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
+      scales: {
+        x: { ...CHART_DEFAULTS.scales.x, title: { display: true, text: "Caption length (chars)", font: { family: "Poppins", size: 10 } } },
+        y: { ...CHART_DEFAULTS.scales.y, title: { display: true, text: "Engagement", font: { family: "Poppins", size: 10 } } },
+      },
+    },
+  });
+}
+
+function renderTopPosts(posts) {
+  const sorted = [...posts].sort((a, b) => {
+    const engA = Number(a.likes || 0) + Number(a.comments || 0);
+    const engB = Number(b.likes || 0) + Number(b.comments || 0);
+    return engB - engA;
+  }).slice(0, 8);
+
+  const labels = sorted.map((p, i) => {
+    const caption = String(p.text || "").trim().slice(0, 30) || `Post ${i + 1}`;
+    return caption.length >= 30 ? caption + "…" : caption;
+  });
+  const likesData = sorted.map(p => Number(p.likes || 0));
+  const commentsData = sorted.map(p => Number(p.comments || 0));
+
+  destroyChart("topPosts");
+  const ctx = document.getElementById("chartTopPosts");
+  if (!ctx) return;
+  analyticsCharts.topPosts = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Likes", data: likesData, backgroundColor: CHART_COLORS.pink, borderRadius: 6 },
+        { label: "Comments", data: commentsData, backgroundColor: CHART_COLORS.teal, borderRadius: 6 },
+      ],
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      indexAxis: "y",
+      plugins: { ...CHART_DEFAULTS.plugins },
+      scales: {
+        x: { ...CHART_DEFAULTS.scales.y, stacked: true },
+        y: { ...CHART_DEFAULTS.scales.x, stacked: true, ticks: { font: { family: "Poppins", size: 10 }, autoSkip: false } },
+      },
+    },
+  });
 }
 
 async function loadAnalyticsView() {
@@ -1110,17 +1267,15 @@ async function loadAnalyticsView() {
       api("/api/analytics/summary"),
       api("/api/posts/recent"),
     ]);
-    renderAnalyticsSummary(summary || {});
-    renderRecentPosts(recent?.posts || []);
+    const posts = recent?.posts || [];
+    renderStatCards(summary || {}, posts);
+    renderEngagementTrend(posts);
+    renderMediaTypeBreakdown(posts);
+    renderPostingCadence(posts);
+    renderCaptionLength(posts);
+    renderTopPosts(posts);
   } catch (err) {
-    renderAnalyticsSummary({});
-    renderRecentPosts([]);
-    const wrap = document.getElementById("analyticsRecentPosts");
-    if (!wrap) return;
-    const error = document.createElement("p");
-    error.className = "analytics-item-meta";
-    error.textContent = `Could not load analytics: ${err.message}`;
-    wrap.appendChild(error);
+    console.error("Analytics load error:", err);
   }
 }
 

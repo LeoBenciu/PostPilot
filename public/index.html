@@ -12,6 +12,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   </head>
   <body>
     <div class="language-switch">
@@ -247,28 +248,48 @@
         </section>
 
         <section id="analyticsView" class="app-view analytics-view hidden">
-          <div class="analytics-grid">
-            <article class="analytics-card">
-              <p class="analytics-label" id="analyticsTotalPostsLabel">Total posts</p>
+          <div class="analytics-stat-grid">
+            <article class="analytics-stat-card">
+              <p class="analytics-label">Total posts</p>
               <p class="analytics-value" id="analyticsTotalPosts">0</p>
             </article>
-            <article class="analytics-card">
-              <p class="analytics-label" id="analyticsTotalLikesLabel">Total likes</p>
+            <article class="analytics-stat-card">
+              <p class="analytics-label">Total likes</p>
               <p class="analytics-value" id="analyticsTotalLikes">0</p>
             </article>
-            <article class="analytics-card">
-              <p class="analytics-label" id="analyticsTotalCommentsLabel">Total comments</p>
+            <article class="analytics-stat-card">
+              <p class="analytics-label">Total comments</p>
               <p class="analytics-value" id="analyticsTotalComments">0</p>
             </article>
-            <article class="analytics-card">
-              <p class="analytics-label" id="analyticsTopPostLabel">Top post</p>
-              <p class="analytics-value analytics-top-post" id="analyticsTopPost">-</p>
+            <article class="analytics-stat-card">
+              <p class="analytics-label">Avg engagement / post</p>
+              <p class="analytics-value" id="analyticsAvgEngagement">0</p>
             </article>
           </div>
-          <section class="analytics-list-wrap">
-            <h3 id="analyticsRecentPostsTitle">Recent posts</h3>
-            <div id="analyticsRecentPosts" class="analytics-list"></div>
-          </section>
+
+          <div class="analytics-chart-grid">
+            <article class="analytics-chart-card">
+              <h3>Engagement over time</h3>
+              <canvas id="chartEngagementTrend"></canvas>
+            </article>
+            <article class="analytics-chart-card">
+              <h3>Performance by content type</h3>
+              <canvas id="chartMediaType"></canvas>
+            </article>
+            <article class="analytics-chart-card">
+              <h3>Best day to post</h3>
+              <canvas id="chartPostingCadence"></canvas>
+            </article>
+            <article class="analytics-chart-card">
+              <h3>Caption length vs engagement</h3>
+              <canvas id="chartCaptionLength"></canvas>
+            </article>
+          </div>
+
+          <article class="analytics-chart-card analytics-chart-card-wide">
+            <h3>Top posts by engagement</h3>
+            <canvas id="chartTopPosts"></canvas>
+          </article>
         </section>
       </main>
     </div>
