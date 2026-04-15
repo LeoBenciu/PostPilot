@@ -936,6 +936,79 @@ function addMessage(role, content) {
   messages.scrollTop = messages.scrollHeight;
 }
 
+function addStreamingMessage() {
+  const messages = document.getElementById("messages");
+  const item = document.createElement("div");
+  item.className = "msg assistant";
+  const cursor = document.createElement("span");
+  cursor.className = "streaming-cursor";
+  item.appendChild(cursor);
+  messages.appendChild(item);
+  messages.scrollTop = messages.scrollHeight;
+  return {
+    append(token) {
+      item.insertBefore(document.createTextNode(token), cursor);
+      messages.scrollTop = messages.scrollHeight;
+    },
+    finish() {
+      cursor.remove();
+    },
+    element: item,
+  };
+}
+
+async function streamChat(message, sessionId) {
+  const res = await fetch("/api/agent/message/stream", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId, message }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Request failed" }));
+    throw new Error(err.error || "Request failed");
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  const handle = addStreamingMessage();
+  let buffer = "";
+  let fullText = "";
+  let lastAction = "ai_reply";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith("data: ")) continue;
+        try {
+          const data = JSON.parse(trimmed.slice(6));
+          if (data.token) {
+            handle.append(data.token);
+            fullText += data.token;
+          }
+          if (data.done) {
+            lastAction = data.action || lastAction;
+          }
+          if (data.error) {
+            handle.append(`\nError: ${data.error}`);
+          }
+        } catch (_e) { /* skip */ }
+      }
+    }
+  } finally {
+    handle.finish();
+  }
+
+  return { content: fullText, action: lastAction };
+}
+
 function sendPrompt(text) {
   const input = document.getElementById("messageInput");
   input.value = text;
@@ -1201,21 +1274,18 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
   try {
     const canChat = await ensureOnboardingForChat();
     if (!canChat) {
-      addMessage(
-        "assistant",
-        t("onboardingRequired"),
-      );
+      addMessage("assistant", t("onboardingRequired"));
       return;
     }
 
     input.value = "";
     addMessage("user", message);
-    const data = await api("/api/agent/message", "POST", { sessionId, message });
-    addMessage("assistant", data.reply.content);
-    if (data.reply?.action === "onboarding_required") {
+
+    const result = await streamChat(message, sessionId);
+    if (result.action === "onboarding_required") {
       setOnboardingMode("onboarding");
       showOnboardingModal();
-    } else if (data.reply?.action === "payment_required") {
+    } else if (result.action === "payment_required") {
       setOnboardingMode("payment");
       showOnboardingModal();
     }

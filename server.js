@@ -22,7 +22,7 @@ const {
   consumeOAuthState,
   closeDb,
 } = require("./dbState");
-const { generateAgentReply } = require("./aiClient");
+const { generateAgentReply, streamAgentReply } = require("./aiClient");
 const {
   normalizePlatform,
   buildAuthUrl,
@@ -570,37 +570,27 @@ function latestPostText(state) {
   return state.posts[0] ? state.posts[0].text : "";
 }
 
-async function agentRespond(state, { message, userId, sessionId }) {
+function agentGuardReply(state) {
   if (!state.user.createdAt) {
-    return {
-      role: "assistant",
-      content: "Create your account first to start using the content agent.",
-      action: "account_required",
-    };
+    return { content: "Create your account first to start using the content agent.", action: "account_required" };
   }
   if (!state.user.onboardingCompleted) {
-    return {
-      role: "assistant",
-      content: "Complete onboarding in Settings so I can personalize your strategy and voice.",
-      action: "onboarding_required",
-    };
+    return { content: "Complete onboarding in Settings so I can personalize your strategy and voice.", action: "onboarding_required" };
   }
   if (!isPaymentComplete(state)) {
-    return {
-      role: "assistant",
-      content: "Payment is required before using the AI coach. Please complete your EUR 30/month subscription.",
-      action: "payment_required",
-    };
+    return { content: "Payment is required before using the AI coach. Please complete your EUR 30/month subscription.", action: "payment_required" };
   }
-
   const connected = activePlatforms(state);
   if (!connected.length) {
-    return {
-      role: "assistant",
-      content:
-        "Connect LinkedIn or Instagram first. I need account data to learn your voice and analyze performance.",
-      action: "connect_required",
-    };
+    return { content: "Connect LinkedIn or Instagram first. I need account data to learn your voice and analyze performance.", action: "connect_required" };
+  }
+  return null;
+}
+
+async function agentRespond(state, { message, userId, sessionId }) {
+  const guard = agentGuardReply(state);
+  if (guard) {
+    return { role: "assistant", ...guard };
   }
 
   const voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
@@ -934,6 +924,14 @@ const server = http.createServer(async (req, res) => {
       if (!state.integrations[platform].sync) state.integrations[platform].sync = {};
       state.integrations[platform].sync.status = "connected";
       state.integrations[platform].sync.lastError = null;
+
+      try {
+        const postCount = await syncPlatform(state, platform);
+        console.log(`[PostPilot] Auto-synced ${postCount} posts from ${platform} on connect`);
+      } catch (syncErr) {
+        console.error(`[PostPilot] Auto-sync after connect failed for ${platform}:`, syncErr?.message);
+      }
+
       updateOnboardingCompletion(state);
       await saveStateForUser(user.id, state);
       sendRedirect(res, integrationRedirectUrl(platform, true));
@@ -1415,6 +1413,79 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, { reply, conversation: convo.slice(-20) });
     } catch (err) {
       sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/agent/message/stream") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const body = await readBody(req);
+      const message = body.message || "";
+      const sessionId = body.sessionId || "default";
+      if (!isPaymentComplete(state)) {
+        sendJson(res, 402, { error: "Payment required.", action: "payment_required" });
+        return;
+      }
+
+      const guardReply = agentGuardReply(state);
+      if (guardReply) {
+        res.writeHead(200, {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+          "X-Accel-Buffering": "no",
+        });
+        res.write(`data: ${JSON.stringify({ token: guardReply.content })}\n\n`);
+        res.write(`data: ${JSON.stringify({ done: true, action: guardReply.action })}\n\n`);
+        res.end();
+        return;
+      }
+
+      const voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
+      state.voiceProfile = voiceProfile;
+      const convo = getConversation(state, sessionId);
+      convo.push({ role: "user", content: message, at: nowIso() });
+
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      });
+
+      let fullContent = "";
+      try {
+        for await (const token of streamAgentReply({
+          message,
+          history: convo,
+          state,
+          userId: user.id,
+          sessionId,
+        })) {
+          fullContent += token;
+          res.write(`data: ${JSON.stringify({ token })}\n\n`);
+        }
+        res.write(`data: ${JSON.stringify({ done: true, action: "ai_reply" })}\n\n`);
+      } catch (streamErr) {
+        console.error("[PostPilot][AI] stream error", streamErr?.message);
+        if (!fullContent) {
+          res.write(`data: ${JSON.stringify({ token: "I could not reach the AI provider. Please try again." })}\n\n`);
+        }
+        res.write(`data: ${JSON.stringify({ done: true, action: "provider_error" })}\n\n`);
+      }
+      res.end();
+
+      if (fullContent) {
+        convo.push({ role: "assistant", content: fullContent, at: nowIso(), action: "ai_reply" });
+        await saveStateForUser(user.id, state);
+      }
+    } catch (err) {
+      if (!res.headersSent) {
+        sendJson(res, 400, { error: err.message });
+      }
     }
     return;
   }
