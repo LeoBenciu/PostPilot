@@ -201,6 +201,8 @@ async function fetchInstagramPostsAndAnalytics(accessToken) {
     comments: Number(item.comments_count || 0),
     impressions: 0,
     postedAt: item.timestamp || new Date().toISOString(),
+    mediaType: item.media_type || "",
+    permalink: item.permalink || "",
   }));
 }
 

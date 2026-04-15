@@ -28,16 +28,28 @@ function normalizeHistory(history) {
     .slice(-20);
 }
 
+function formatMediaType(raw) {
+  const t = String(raw || "").toUpperCase();
+  if (t === "VIDEO") return "Video";
+  if (t === "IMAGE") return "Photo";
+  if (t === "CAROUSEL_ALBUM") return "Carousel";
+  if (t === "REEL" || t === "REELS") return "Reel";
+  return raw || "Unknown";
+}
+
 function summarizePosts(posts, limit = 10) {
   if (!Array.isArray(posts) || !posts.length) return "No posts synced yet.";
   const items = posts.slice(0, limit).map((p, i) => {
     const platform = p.platform || "unknown";
     const date = p.postedAt ? new Date(p.postedAt).toLocaleDateString() : "unknown date";
+    const type = p.mediaType ? formatMediaType(p.mediaType) : "";
     const likes = p.likes ?? "?";
     const comments = p.comments ?? "?";
     const impressions = p.impressions ?? "?";
     const caption = truncate(p.text || "(no caption)", 280);
-    return `${i + 1}. [${platform}] ${date} | likes: ${likes}, comments: ${comments}, impressions: ${impressions}\n   "${caption}"`;
+    const link = p.permalink ? ` ${p.permalink}` : "";
+    const typeLabel = type ? ` [${type}]` : "";
+    return `${i + 1}. [${platform}]${typeLabel} ${date} | likes: ${likes}, comments: ${comments}, impressions: ${impressions}${link}\n   "${caption}"`;
   });
   return items.join("\n");
 }
@@ -94,12 +106,19 @@ function buildSystemPrompt({ state, connectedPlatforms }) {
     "## Recent posts (with performance)",
     summarizePosts(state.posts),
     "",
+    "## What you can see",
+    "- Profile: bio, followers, following count, post count, website",
+    "- Each post: media type (Photo/Video/Carousel/Reel), caption, date, likes, comments, permalink",
+    "- You CANNOT see the actual images or video content, only the metadata above",
+    "- When the user asks about visual content, acknowledge this and ask them to describe it if needed",
+    "",
     "## Guardrails",
     "- Never claim to have executed external actions unless explicitly confirmed.",
     "- If asked for unsafe, illegal, or deceptive content, refuse briefly and offer a safe alternative.",
     "- Use concise practical steps and avoid filler.",
     "- When uncertain, ask one focused clarifying question.",
     "- Reference the user's actual post data and performance metrics when giving advice.",
+    "- When discussing posts, always mention the media type (photo, video, reel, carousel).",
     "- Match the user's voice tone and style when drafting content.",
   ];
 
