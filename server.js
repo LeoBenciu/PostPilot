@@ -623,8 +623,10 @@ async function ensureProfileData(state) {
     const platformPosts = (state.posts || []).filter((p) => p.platform === platform);
     const needsPosts = !platformPosts.length;
     const needsMediaUrls = platformPosts.length > 0 && !platformPosts.some((p) => p.imageUrl || p.mediaUrl);
+    const knownTotal = Number(integration.mediaCount || 0);
+    const needsMorePosts = knownTotal > 0 && platformPosts.length > 0 && platformPosts.length < knownTotal * 0.8;
 
-    if (!needsProfile && !needsPosts && !needsMediaUrls) continue;
+    if (!needsProfile && !needsPosts && !needsMediaUrls && !needsMorePosts) continue;
 
     try {
       if (needsProfile) {
@@ -641,17 +643,18 @@ async function ensureProfileData(state) {
         changed = true;
         console.log(`[PostPilot] Backfilled profile data for ${platform}/@${integration.username}`);
       }
-      if (needsPosts || needsMediaUrls) {
-        if (needsMediaUrls) {
+      if (needsPosts || needsMediaUrls || needsMorePosts) {
+        if (needsMediaUrls || needsMorePosts) {
+          const reason = needsMorePosts ? `incomplete (${platformPosts.length}/${knownTotal})` : "missing media URLs";
           state.posts = state.posts.filter((p) => p.platform !== platform);
-          console.log(`[PostPilot] Clearing old ${platform} posts to re-fetch with media URLs`);
+          console.log(`[PostPilot] Clearing old ${platform} posts — ${reason}`);
         }
         const profile = { username: integration.username, urn: integration.urn };
         const posts = await fetchPlatformPostsAndAnalytics({ platform, accessToken: integration.token, profile });
         upsertPosts(state, posts);
         state.voiceProfile = buildVoiceProfile(state.posts);
         changed = true;
-        console.log(`[PostPilot] Backfilled ${posts.length} posts for ${platform}/@${integration.username} (media URLs: ${posts.filter(p => p.imageUrl).length})`);
+        console.log(`[PostPilot] Synced ${posts.length} posts for ${platform}/@${integration.username} (media URLs: ${posts.filter(p => p.imageUrl).length})`);
       }
     } catch (err) {
       console.error(`[PostPilot] Data backfill failed for ${platform}:`, err?.message);
