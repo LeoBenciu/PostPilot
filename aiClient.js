@@ -362,14 +362,30 @@ async function generateAgentReply({ message, history, state, userId, sessionId }
   }
 
   if (provider === "crewai") {
-    return callCrewAI({
-      message,
-      history: normalizedHistory,
-      state,
-      connectedPlatforms,
-      userId,
-      sessionId,
-    });
+    try {
+      return await callCrewAI({
+        message,
+        history: normalizedHistory,
+        state,
+        connectedPlatforms,
+        userId,
+        sessionId,
+      });
+    } catch (err) {
+      const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
+      aiLog("error", "CrewAI request failed; evaluating OpenAI fallback", {
+        reason: String(err?.message || err),
+        hasOpenAiKey,
+      });
+      if (!hasOpenAiKey) throw err;
+      aiLog("log", "Falling back to OpenAI request");
+      return callOpenAI({
+        message,
+        history: normalizedHistory,
+        state,
+        connectedPlatforms,
+      });
+    }
   }
 
   aiLog("error", "Unsupported AI_PROVIDER", { provider });
@@ -503,15 +519,27 @@ async function* streamAgentReply({ message, history, state, userId, sessionId })
   }
 
   if (provider === "crewai") {
-    yield* streamCrewAI({
-      message,
-      history: normalizedHistory,
-      state,
-      connectedPlatforms,
-      userId,
-      sessionId,
-    });
-    return;
+    try {
+      yield* streamCrewAI({
+        message,
+        history: normalizedHistory,
+        state,
+        connectedPlatforms,
+        userId,
+        sessionId,
+      });
+      return;
+    } catch (err) {
+      const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
+      aiLog("error", "CrewAI stream failed; evaluating OpenAI fallback", {
+        reason: String(err?.message || err),
+        hasOpenAiKey,
+      });
+      if (!hasOpenAiKey) throw err;
+      aiLog("log", "Falling back to OpenAI stream");
+      yield* streamOpenAI({ message, history: normalizedHistory, state, connectedPlatforms });
+      return;
+    }
   }
 
   throw new Error(`unsupported_ai_provider_${provider}`);
