@@ -1515,6 +1515,36 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && pathname === "/api/agent/conversation") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const sessionId = parsed.searchParams.get("sessionId") || "default";
+      const convo = getConversation(state, sessionId);
+      sendJson(res, 200, { conversation: convo });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/agent/conversation/reset") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const body = await readBody(req);
+      const sessionId = body.sessionId || "default";
+      state.conversations[sessionId] = [];
+      await saveStateForUser(user.id, state);
+      sendJson(res, 200, { ok: true });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
   if (req.method === "POST" && pathname === "/api/agent/message") {
     try {
       const user = await requireAuth(req, res);

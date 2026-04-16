@@ -578,6 +578,10 @@ body {
   gap: 8px;
 }
 
+.composer.composer--busy {
+  opacity: 0.72;
+}
+
 .composer input {
   flex: 1;
   min-width: 0;

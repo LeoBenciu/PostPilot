@@ -1,6 +1,7 @@
 const LANGUAGE_KEY = "postpilot_language";
 const sessionId = "session-main";
 let accountState = null;
+let isSendingMessage = false;
 
 const authGate = document.getElementById("authGate");
 const chatApp = document.getElementById("chatApp");
@@ -1122,6 +1123,24 @@ function addMessage(role, content) {
   messages.scrollTop = messages.scrollHeight;
 }
 
+function renderConversation(conversation = []) {
+  const messages = document.getElementById("messages");
+  if (!messages) return;
+  messages.innerHTML = "";
+  for (const item of conversation) {
+    if (!item || (item.role !== "assistant" && item.role !== "user")) continue;
+    addMessage(item.role, String(item.content || ""));
+  }
+  if (!conversation.length) {
+    addMessage("assistant", t("initialAssistant"));
+  }
+}
+
+async function loadConversationFromServer() {
+  const data = await api(`/api/agent/conversation?sessionId=${encodeURIComponent(sessionId)}`);
+  renderConversation(Array.isArray(data.conversation) ? data.conversation : []);
+}
+
 function addStreamingMessage() {
   const messages = document.getElementById("messages");
   const { row, bubble } = createMsgRow("assistant");
@@ -1192,6 +1211,20 @@ async function streamChat(message, sessionId) {
   }
 
   return { content: fullText, action: lastAction };
+}
+
+function setComposerBusy(busy) {
+  const input = document.getElementById("messageInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const suggestionsBtn = document.getElementById("suggestionsBtn");
+  const composer = document.getElementById("composer");
+  if (input) input.disabled = busy;
+  if (sendBtn) sendBtn.disabled = busy;
+  if (suggestionsBtn) suggestionsBtn.disabled = busy;
+  if (composer) {
+    composer.classList.toggle("composer--busy", busy);
+    composer.setAttribute("aria-busy", busy ? "true" : "false");
+  }
 }
 
 function sendPrompt(text) {
@@ -1564,6 +1597,11 @@ async function unlockChat(toastMessage) {
   clearFeedback();
   showToast(toastMessage);
   await loadAccountState();
+  try {
+    await loadConversationFromServer();
+  } catch (_error) {
+    renderConversation([]);
+  }
 }
 
 async function handleGoogleAuth(source) {
@@ -1709,18 +1747,22 @@ connectInstagramBtn?.addEventListener("click", () => connectPlatform("instagram"
 
 document.getElementById("composer").addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (isSendingMessage) return;
   const input = document.getElementById("messageInput");
   const message = input.value.trim();
   if (!message) return;
 
+  isSendingMessage = true;
+  setComposerBusy(true);
+  input.value = "";
   try {
     const canChat = await ensureOnboardingForChat();
     if (!canChat) {
+      input.value = message;
       addMessage("assistant", t("onboardingRequired"));
       return;
     }
 
-    input.value = "";
     addMessage("user", message);
 
     const result = await streamChat(message, sessionId);
@@ -1738,13 +1780,21 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
       showOnboardingModal();
     }
     addMessage("assistant", `Error: ${msg}`);
+  } finally {
+    isSendingMessage = false;
+    setComposerBusy(false);
   }
 });
 
-resetChatBtn?.addEventListener("click", () => {
-  const messages = document.getElementById("messages");
-  messages.innerHTML = "";
-  addMessage("assistant", t("newChatStarted"));
+resetChatBtn?.addEventListener("click", async () => {
+  try {
+    await api("/api/agent/conversation/reset", "POST", { sessionId });
+    const messages = document.getElementById("messages");
+    messages.innerHTML = "";
+    addMessage("assistant", t("newChatStarted"));
+  } catch (err) {
+    showToast(`Could not reset chat: ${err.message}`);
+  }
 });
 
 agentViewBtn?.addEventListener("click", () => {
@@ -1930,10 +1980,7 @@ if (suggestionsBtn && suggestionsPopup) {
   });
 }
 
-addMessage(
-  "assistant",
-  t("initialAssistant")
-);
+renderConversation([]);
 applyLanguage();
 setActiveView("agent");
 
