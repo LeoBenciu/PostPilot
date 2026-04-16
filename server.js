@@ -1503,7 +1503,12 @@ const server = http.createServer(async (req, res) => {
     const user = await requireAuth(req, res);
     if (!user) return;
     const state = bindStateToUser(await getStateForUser(user.id), user);
-    sendJson(res, 200, { posts: state.posts.slice(0, 20) });
+    const limit = Number(parsed.searchParams.get("limit") || 20);
+    if (!Number.isFinite(limit) || limit <= 0) {
+      sendJson(res, 200, { posts: state.posts });
+      return;
+    }
+    sendJson(res, 200, { posts: state.posts.slice(0, limit) });
     return;
   }
 

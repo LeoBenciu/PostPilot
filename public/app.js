@@ -1389,7 +1389,7 @@ async function loadAnalyticsView() {
   try {
     const [summary, recent] = await Promise.all([
       api("/api/analytics/summary"),
-      api("/api/posts/recent"),
+      api("/api/posts/recent?limit=0"),
     ]);
     const posts = recent?.posts || [];
     renderStatCards(summary || {}, posts);

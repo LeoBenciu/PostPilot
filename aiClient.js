@@ -54,6 +54,37 @@ function summarizePosts(posts, limit = 10) {
   return items.join("\n");
 }
 
+function wantsDeepHistory(message) {
+  const text = String(message || "").toLowerCase();
+  return /(all posts|all my posts|everything|entire history|full history|last year|past year|12 months|6 months|last 6 months|all time)/i.test(
+    text,
+  );
+}
+
+function selectPostsForMessage({ posts, message, max = 50 }) {
+  if (!Array.isArray(posts) || !posts.length) return [];
+  const sortedRecent = [...posts].sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
+  if (wantsDeepHistory(message)) return sortedRecent.slice(0, Math.min(max, sortedRecent.length));
+
+  const topByEngagement = [...posts]
+    .map((p) => ({ p, eng: Number(p.likes || 0) + Number(p.comments || 0) }))
+    .sort((a, b) => b.eng - a.eng)
+    .slice(0, 8)
+    .map((x) => x.p);
+
+  const recent = sortedRecent.slice(0, 10);
+  const merged = [];
+  const seen = new Set();
+  for (const p of [...topByEngagement, ...recent]) {
+    const key = `${p.platform}:${p.postedAt}:${p.text}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(p);
+    if (merged.length >= 18) break;
+  }
+  return merged;
+}
+
 function summarizeIntegrations(integrations) {
   const lines = [];
   for (const [platform, info] of Object.entries(integrations || {})) {
@@ -104,7 +135,7 @@ function buildSystemPrompt({ state, connectedPlatforms }) {
     favoredOpeners ? `- Favored openers: ${favoredOpeners}` : "",
     "",
     "## Recent posts (with performance)",
-    summarizePosts(state.posts),
+    summarizePosts(selectPostsForMessage({ posts: state.posts, message: state._lastUserMessageForPrompt || "" })),
     "",
     "## What you can see",
     "- Profile: bio, followers, following count, post count, website",
@@ -223,6 +254,7 @@ async function callOpenAI({ message, history, state, connectedPlatforms }) {
   }
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
   const postImages = useVision ? await collectPostImages(state.posts) : [];
   aiLog("log", "Vision routing", { useVision, count: postImages.length });
@@ -282,6 +314,7 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
   });
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
   const postImages = useVision ? await collectPostImages(state.posts) : [];
   aiLog("log", "Vision routing for CrewAI", { useVision, count: postImages.length });
@@ -398,6 +431,7 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms }) {
   if (!apiKey) throw new Error("openai_not_configured");
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
   const postImages = useVision ? await collectPostImages(state.posts) : [];
   aiLog("log", "Vision routing for stream", { useVision, count: postImages.length });
@@ -453,6 +487,7 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
   const endpoint = `${baseUrl.replace(/\/$/, "")}/chat/stream`;
 
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
   const postImages = useVision ? await collectPostImages(state.posts) : [];
   aiLog("log", "Vision routing for CrewAI stream", { useVision, count: postImages.length });

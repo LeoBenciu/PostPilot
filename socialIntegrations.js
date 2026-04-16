@@ -111,13 +111,20 @@ async function fetchLinkedInProfile(accessToken) {
 async function fetchLinkedInPostsAndAnalytics(accessToken, profile) {
   const author = encodeURIComponent(profile.urn || "");
   if (!author) throw new Error("linkedin_profile_missing_urn");
-  const postsRes = await fetch(
-    `https://api.linkedin.com/v2/ugcPosts?q=authors&authors=List(${author})&count=20`,
-    { headers: { Authorization: `Bearer ${accessToken}` } },
-  );
-  if (!postsRes.ok) throw new Error(`linkedin_posts_failed_${postsRes.status}`);
-  const postsData = await postsRes.json();
-  const elements = Array.isArray(postsData.elements) ? postsData.elements : [];
+  const maxPosts = Number(process.env.POSTPILOT_MAX_POSTS_SYNC || 500);
+  const pageSize = 50;
+  const elements = [];
+  for (let start = 0; start < maxPosts; start += pageSize) {
+    const postsRes = await fetch(
+      `https://api.linkedin.com/v2/ugcPosts?q=authors&authors=List(${author})&count=${pageSize}&start=${start}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (!postsRes.ok) throw new Error(`linkedin_posts_failed_${postsRes.status}`);
+    const postsData = await postsRes.json();
+    const page = Array.isArray(postsData.elements) ? postsData.elements : [];
+    elements.push(...page);
+    if (page.length < pageSize) break;
+  }
 
   const posts = [];
   for (const element of elements) {
@@ -184,17 +191,28 @@ async function fetchInstagramProfile(accessToken) {
 }
 
 async function fetchInstagramPostsAndAnalytics(accessToken) {
-  const mediaRes = await fetch(
-    `https://graph.instagram.com/v21.0/me/media?fields=id,caption,timestamp,like_count,comments_count,media_type,media_url,thumbnail_url,permalink&limit=20&access_token=${encodeURIComponent(accessToken)}`,
-  );
-  if (!mediaRes.ok) {
-    const errBody = await mediaRes.text().catch(() => "");
-    console.error(`[PostPilot][IG] Media fetch failed (${mediaRes.status}): ${errBody.slice(0, 300)}`);
-    throw new Error(`instagram_posts_failed_${mediaRes.status}`);
+  const maxPosts = Number(process.env.POSTPILOT_MAX_POSTS_SYNC || 500);
+  const pageSize = 50;
+  const items = [];
+  let after = "";
+  while (items.length < maxPosts) {
+    const afterParam = after ? `&after=${encodeURIComponent(after)}` : "";
+    const mediaRes = await fetch(
+      `https://graph.instagram.com/v21.0/me/media?fields=id,caption,timestamp,like_count,comments_count,media_type,media_url,thumbnail_url,permalink&limit=${pageSize}${afterParam}&access_token=${encodeURIComponent(accessToken)}`,
+    );
+    if (!mediaRes.ok) {
+      const errBody = await mediaRes.text().catch(() => "");
+      console.error(`[PostPilot][IG] Media fetch failed (${mediaRes.status}): ${errBody.slice(0, 300)}`);
+      throw new Error(`instagram_posts_failed_${mediaRes.status}`);
+    }
+    const mediaData = await mediaRes.json();
+    const page = Array.isArray(mediaData.data) ? mediaData.data : [];
+    items.push(...page);
+    after = mediaData?.paging?.cursors?.after || "";
+    if (!after || page.length < pageSize) break;
   }
-  const mediaData = await mediaRes.json();
-  const items = Array.isArray(mediaData.data) ? mediaData.data : [];
-  return items.map((item) => {
+
+  return items.slice(0, maxPosts).map((item) => {
     const type = String(item.media_type || "").toUpperCase();
     const isVideo = type === "VIDEO" || type === "REEL" || type === "REELS";
     return {
