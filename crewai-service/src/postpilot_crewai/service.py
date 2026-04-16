@@ -1,15 +1,31 @@
+import atexit
 import json
 import os
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from posthog import Posthog, new_context, identify_context, set_context_session
 
 from .crew import PostPilotCrew
 from .schemas import ChatRequest, ChatResponse
 
+posthog_client = Posthog(
+    os.environ.get("POSTHOG_API_KEY", ""),
+    host=os.environ.get("POSTHOG_HOST", "https://us.i.posthog.com"),
+    enable_exception_autocapture=True,
+)
+atexit.register(posthog_client.shutdown)
 
-app = FastAPI(title="PostPilot CrewAI Service", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    posthog_client.flush()
+
+
+app = FastAPI(title="PostPilot CrewAI Service", version="1.0.0", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -18,20 +34,46 @@ def health() -> dict[str, str]:
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat(payload: ChatRequest) -> ChatResponse:
-    try:
-        crew = PostPilotCrew()
-        reply = crew.kickoff(payload.model_dump())
-        if not reply:
-            raise RuntimeError("empty_reply")
-        return ChatResponse(reply=reply, action="ai_reply", provider="crewai")
-    except Exception as err:
-        raise HTTPException(status_code=500, detail=f"crewai_service_error: {err}") from err
+def chat(request: Request, payload: ChatRequest) -> ChatResponse:
+    distinct_id = request.headers.get("X-POSTHOG-DISTINCT-ID") or payload.userId
+    session_id = request.headers.get("X-POSTHOG-SESSION-ID") or payload.sessionId
+    with new_context():
+        identify_context(distinct_id)
+        set_context_session(session_id)
+        try:
+            crew = PostPilotCrew()
+            reply = crew.kickoff(payload.model_dump())
+            if not reply:
+                raise RuntimeError("empty_reply")
+            posthog_client.capture(
+                "chat completed",
+                distinct_id=distinct_id,
+                properties={
+                    "provider": "crewai",
+                    "has_images": len(payload.postImages) > 0,
+                    "history_length": len(payload.history),
+                    "message_length": len(payload.message),
+                },
+            )
+            return ChatResponse(reply=reply, action="ai_reply", provider="crewai")
+        except Exception as err:
+            posthog_client.capture(
+                "chat failed",
+                distinct_id=distinct_id,
+                properties={
+                    "provider": "crewai",
+                    "error_type": type(err).__name__,
+                },
+            )
+            raise HTTPException(status_code=500, detail=f"crewai_service_error: {err}") from err
 
 
 @app.post("/chat/stream")
-async def chat_stream(payload: ChatRequest) -> StreamingResponse:
+async def chat_stream(request: Request, payload: ChatRequest) -> StreamingResponse:
     """SSE endpoint that streams the OpenAI response token-by-token."""
+    distinct_id = request.headers.get("X-POSTHOG-DISTINCT-ID") or payload.userId
+    session_id = request.headers.get("X-POSTHOG-SESSION-ID") or payload.sessionId
+
     try:
         from openai import AsyncOpenAI
     except ImportError:
@@ -83,6 +125,18 @@ async def chat_stream(payload: ChatRequest) -> StreamingResponse:
 
     client = AsyncOpenAI(api_key=api_key)
 
+    posthog_client.capture(
+        "chat stream started",
+        distinct_id=distinct_id,
+        properties={
+            "provider": "openai",
+            "model": model,
+            "has_images": len(payload.postImages) > 0,
+            "history_length": len(payload.history),
+            "message_length": len(payload.message),
+        },
+    )
+
     async def generate() -> AsyncGenerator[str, None]:
         try:
             stream = await client.chat.completions.create(
@@ -95,8 +149,24 @@ async def chat_stream(payload: ChatRequest) -> StreamingResponse:
                 delta = chunk.choices[0].delta if chunk.choices else None
                 if delta and delta.content:
                     yield f"data: {json.dumps({'token': delta.content})}\n\n"
+            posthog_client.capture(
+                "chat stream completed",
+                distinct_id=distinct_id,
+                properties={
+                    "provider": "openai",
+                    "model": model,
+                },
+            )
             yield f"data: {json.dumps({'done': True})}\n\n"
         except Exception as exc:
+            posthog_client.capture(
+                "chat stream failed",
+                distinct_id=distinct_id,
+                properties={
+                    "provider": "openai",
+                    "error_type": type(exc).__name__,
+                },
+            )
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
 
     return StreamingResponse(
