@@ -6,121 +6,72 @@
     <title>PostPilot - Terms of Service</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        margin: 0;
-        font-family: "Poppins", sans-serif;
-        background: #fff7f9;
-        color: #2f1a20;
-      }
-      .wrap {
-        width: min(900px, 92vw);
-        margin: 36px auto 60px;
-        background: #fff;
-        border: 1px solid #f0c9d1;
-        border-radius: 16px;
-        padding: 24px;
-      }
-      h1 {
-        margin: 0 0 10px;
-      }
-      h2 {
-        margin: 26px 0 8px;
-      }
-      p, li {
-        line-height: 1.65;
-      }
-      .top-links, .bottom-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-      }
-      a {
-        color: #b0002a;
-        text-decoration: none;
-        font-weight: 600;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-      .muted {
-        color: #7a4f5c;
-      }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/legal.css" />
   </head>
-  <body>
+  <body data-legal-page="terms">
+    <div class="language-switch">
+      <label id="languageLabel" for="languageSelect">Language</label>
+      <select id="languageSelect" aria-label="Select site language">
+        <option value="en">English</option>
+        <option value="ro">Romanian</option>
+        <option value="it">Italian</option>
+        <option value="de">German</option>
+        <option value="fr">French</option>
+      </select>
+    </div>
+
     <main class="wrap">
       <div class="top-links">
-        <a href="/">Back to PostPilot</a>
-        <a href="/privacy.html">Privacy Policy</a>
-        <a href="/cookies.html">Cookie Policy</a>
+        <a href="/" id="navBackTop">Back to PostPilot</a>
+        <a href="/privacy.html" id="navPrivacyTop">Privacy Policy</a>
+        <a href="/cookies.html" id="navCookiesTop">Cookie Policy</a>
       </div>
 
-      <h1>Terms of Service</h1>
-      <p class="muted">Last updated: April 16, 2026</p>
+      <h1 id="pageTitle">Terms of Service</h1>
+      <p class="muted" id="updatedAt">Last updated: April 16, 2026</p>
 
-      <h2>1. Acceptance</h2>
-      <p>
-        By using PostPilot, you agree to these Terms. If you do not agree, do not use the service.
-      </p>
+      <h2 id="s1t"></h2>
+      <p id="s1p"></p>
 
-      <h2>2. Service Description</h2>
-      <p>
-        PostPilot provides AI-powered coaching and analytics tools for creators. Features may
-        evolve over time.
-      </p>
+      <h2 id="s2t"></h2>
+      <p id="s2p"></p>
 
-      <h2>3. Account Responsibilities</h2>
+      <h2 id="s3t"></h2>
       <ul>
-        <li>You are responsible for your account credentials and account activity.</li>
-        <li>You must provide accurate information and keep it up to date.</li>
-        <li>You may not misuse, disrupt, or attempt unauthorized access to the service.</li>
+        <li id="s3i1"></li>
+        <li id="s3i2"></li>
+        <li id="s3i3"></li>
       </ul>
 
-      <h2>4. Payments and Subscriptions</h2>
+      <h2 id="s4t"></h2>
       <ul>
-        <li>Paid features are billed on a recurring subscription basis unless canceled.</li>
-        <li>Payment processing is handled by third-party providers (for example Stripe).</li>
-        <li>Refund and cancellation conditions are presented at checkout or in your plan details.</li>
+        <li id="s4i1"></li>
+        <li id="s4i2"></li>
+        <li id="s4i3"></li>
       </ul>
 
-      <h2>5. Intellectual Property</h2>
-      <p>
-        PostPilot and related branding are our property. You retain rights to content you provide,
-        subject to the permissions required to operate the service.
-      </p>
+      <h2 id="s5t"></h2>
+      <p id="s5p"></p>
 
-      <h2>6. Disclaimers</h2>
-      <p>
-        The service is provided "as is" and "as available." We do not guarantee uninterrupted
-        availability or specific business outcomes.
-      </p>
+      <h2 id="s6t"></h2>
+      <p id="s6p"></p>
 
-      <h2>7. Limitation of Liability</h2>
-      <p>
-        To the fullest extent permitted by law, PostPilot is not liable for indirect, incidental,
-        special, consequential, or punitive damages.
-      </p>
+      <h2 id="s7t"></h2>
+      <p id="s7p"></p>
 
-      <h2>8. Termination</h2>
-      <p>
-        We may suspend or terminate access for violations of these Terms or misuse of the platform.
-      </p>
+      <h2 id="s8t"></h2>
+      <p id="s8p"></p>
 
-      <h2>9. Contact</h2>
-      <p>
-        For legal questions, contact
-        <a href="mailto:legal@postpilotcoach.com">legal@postpilotcoach.com</a>.
-      </p>
+      <h2 id="s9t"></h2>
+      <p><span id="s9p"></span> <a href="mailto:nextcorpromania@gmail.com">nextcorpromania@gmail.com</a>.</p>
 
       <div class="bottom-links">
-        <a href="/privacy.html">Privacy Policy</a>
-        <a href="/cookies.html">Cookie Policy</a>
+        <a href="/privacy.html" id="navPrivacyBottom">Privacy Policy</a>
+        <a href="/cookies.html" id="navCookiesBottom">Cookie Policy</a>
       </div>
     </main>
+
+    <script src="/legal.js"></script>
   </body>
 </html>

@@ -6,103 +6,57 @@
     <title>PostPilot - Cookie Policy</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        margin: 0;
-        font-family: "Poppins", sans-serif;
-        background: #fff7f9;
-        color: #2f1a20;
-      }
-      .wrap {
-        width: min(900px, 92vw);
-        margin: 36px auto 60px;
-        background: #fff;
-        border: 1px solid #f0c9d1;
-        border-radius: 16px;
-        padding: 24px;
-      }
-      h1 {
-        margin: 0 0 10px;
-      }
-      h2 {
-        margin: 26px 0 8px;
-      }
-      p, li {
-        line-height: 1.65;
-      }
-      .top-links, .bottom-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-      }
-      a {
-        color: #b0002a;
-        text-decoration: none;
-        font-weight: 600;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-      .muted {
-        color: #7a4f5c;
-      }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/legal.css" />
   </head>
-  <body>
+  <body data-legal-page="cookies">
+    <div class="language-switch">
+      <label id="languageLabel" for="languageSelect">Language</label>
+      <select id="languageSelect" aria-label="Select site language">
+        <option value="en">English</option>
+        <option value="ro">Romanian</option>
+        <option value="it">Italian</option>
+        <option value="de">German</option>
+        <option value="fr">French</option>
+      </select>
+    </div>
+
     <main class="wrap">
       <div class="top-links">
-        <a href="/">Back to PostPilot</a>
-        <a href="/privacy.html">Privacy Policy</a>
-        <a href="/terms.html">Terms of Service</a>
+        <a href="/" id="navBackTop">Back to PostPilot</a>
+        <a href="/privacy.html" id="navPrivacyTop">Privacy Policy</a>
+        <a href="/terms.html" id="navTermsTop">Terms of Service</a>
       </div>
 
-      <h1>Cookie Policy</h1>
-      <p class="muted">Last updated: April 16, 2026</p>
+      <h1 id="pageTitle">Cookie Policy</h1>
+      <p class="muted" id="updatedAt">Last updated: April 16, 2026</p>
+      <p id="intro"></p>
 
-      <p>
-        This Cookie Policy explains how PostPilot uses cookies and similar technologies when
-        you use our website and application.
-      </p>
+      <h2 id="s1t"></h2>
+      <p id="s1p"></p>
 
-      <h2>1. What Are Cookies</h2>
-      <p>
-        Cookies are small text files stored on your device to remember preferences and improve
-        your experience.
-      </p>
-
-      <h2>2. Cookies We Use</h2>
+      <h2 id="s2t"></h2>
       <ul>
-        <li><strong>Essential cookies:</strong> authentication, security, and session management.</li>
-        <li><strong>Analytics cookies:</strong> understand usage and improve product decisions.</li>
-        <li><strong>Preference cookies:</strong> remember settings such as language preferences.</li>
+        <li id="s2i1"></li>
+        <li id="s2i2"></li>
+        <li id="s2i3"></li>
       </ul>
 
-      <h2>3. Third-Party Technologies</h2>
-      <p>
-        We may use trusted third-party services for analytics, payments, and infrastructure that
-        set their own cookies according to their policies.
-      </p>
+      <h2 id="s3t"></h2>
+      <p id="s3p"></p>
 
-      <h2>4. Managing Cookies</h2>
-      <p>
-        You can manage or disable cookies in your browser settings. Disabling essential cookies
-        may impact functionality (for example authentication and secure sessions).
-      </p>
+      <h2 id="s4t"></h2>
+      <p id="s4p"></p>
 
-      <h2>5. Contact</h2>
-      <p>
-        For questions about this policy, contact
-        <a href="mailto:privacy@postpilotcoach.com">privacy@postpilotcoach.com</a>.
-      </p>
+      <h2 id="s5t"></h2>
+      <p><span id="s5p"></span> <a href="mailto:nextcorpromania@gmail.com">nextcorpromania@gmail.com</a>.</p>
 
       <div class="bottom-links">
-        <a href="/privacy.html">Privacy Policy</a>
-        <a href="/terms.html">Terms of Service</a>
+        <a href="/privacy.html" id="navPrivacyBottom">Privacy Policy</a>
+        <a href="/terms.html" id="navTermsBottom">Terms of Service</a>
       </div>
     </main>
+
+    <script src="/legal.js"></script>
   </body>
 </html>
