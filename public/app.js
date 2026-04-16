@@ -93,6 +93,9 @@ const I18N = {
     newChat: "Reset chat",
     settings: "Settings",
     disconnect: "Disconnect",
+    legalPrivacy: "Privacy",
+    legalTerms: "Terms",
+    legalCookies: "Cookies",
     chatSubtitle: "Your creator growth assistant",
     chatInputPlaceholder: "Message PostPilot Agent",
     suggestionsLabel: "Suggestions",
@@ -236,9 +239,9 @@ const I18N = {
     finalCtaTitle: "Nu ai nevoie de inca un tool de continut.",
     finalCtaSubtitle: "Ai nevoie de un coach care te ajuta sa crezi in ideile tale.",
     finalCtaClosing: "Acesta este PostPilot.",
-    finalCtaGuarantee: "Anulezi oricand - garantie 100% banii inapoi",
+    finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Construit pentru creatorii independenti.",
-    signupTitle: "Incepe testul gratuit",
+    signupTitle: "Foloseste PostPilot",
     continueGoogle: "Continua cu Google",
     or: "sau",
     fullName: "Nume complet",
@@ -255,6 +258,9 @@ const I18N = {
     newChat: "Reset chat",
     settings: "Setari",
     disconnect: "Deconectare",
+    legalPrivacy: "Confidentialitate",
+    legalTerms: "Termeni",
+    legalCookies: "Cookie-uri",
     chatSubtitle: "Asistentul tau pentru crestere",
     chatInputPlaceholder: "Mesaj catre PostPilot Agent",
     suggestionsLabel: "Sugestii",
@@ -415,6 +421,9 @@ const I18N = {
     newChat: "Reset chat",
     settings: "Impostazioni",
     disconnect: "Disconnetti",
+    legalPrivacy: "Privacy",
+    legalTerms: "Termini",
+    legalCookies: "Cookie",
     chatSubtitle: "Il tuo assistente per la crescita creator",
     chatInputPlaceholder: "Messaggio per PostPilot Agent",
     suggestionsLabel: "Suggerimenti",
@@ -566,6 +575,9 @@ const I18N = {
     newChat: "Reset chat",
     settings: "Einstellungen",
     disconnect: "Trennen",
+    legalPrivacy: "Datenschutz",
+    legalTerms: "AGB",
+    legalCookies: "Cookies",
     chatSubtitle: "Dein Assistent fuer Creator-Wachstum",
     chatInputPlaceholder: "Nachricht an PostPilot Agent",
     suggestionsLabel: "Vorschlaege",
@@ -717,6 +729,9 @@ const I18N = {
     newChat: "Reset chat",
     settings: "Parametres",
     disconnect: "Deconnexion",
+    legalPrivacy: "Confidentialite",
+    legalTerms: "Conditions",
+    legalCookies: "Cookies",
     chatSubtitle: "Votre assistant de croissance createur",
     chatInputPlaceholder: "Message a PostPilot Agent",
     suggestionsLabel: "Suggestions",
@@ -897,7 +912,12 @@ function applyLanguage() {
   setTextIfExists("finalCtaTitle", t("finalCtaTitle"));
   setTextIfExists("finalCtaSubtitle", t("finalCtaSubtitle"));
   setTextIfExists("finalCtaClosing", t("finalCtaClosing"));
-  setTextIfExists("finalCtaGuarantee", t("finalCtaGuarantee"));
+  const finalGuaranteeText = t("finalCtaGuarantee");
+  setTextIfExists("finalCtaGuarantee", finalGuaranteeText);
+  const finalGuaranteeEl = document.getElementById("finalCtaGuarantee");
+  if (finalGuaranteeEl) {
+    finalGuaranteeEl.classList.toggle("hidden", !String(finalGuaranteeText || "").trim());
+  }
   setTextIfExists("finalLegalNote", t("finalLegalNote"));
   if (openTrialBtn) openTrialBtn.textContent = t("signupTitle");
   setTextIfExists("signupTitle", t("signupTitle"));
@@ -915,6 +935,12 @@ function applyLanguage() {
   setTextIfExists("resetChatBtnLabel", t("newChat"));
   setTextIfExists("settingsBtnLabel", t("settings"));
   setTextIfExists("disconnectBtnLabel", t("disconnect"));
+  setTextIfExists("legalPrivacyLinkLanding", t("legalPrivacy"));
+  setTextIfExists("legalTermsLinkLanding", t("legalTerms"));
+  setTextIfExists("legalCookiesLinkLanding", t("legalCookies"));
+  setTextIfExists("legalPrivacyLinkApp", t("legalPrivacy"));
+  setTextIfExists("legalTermsLinkApp", t("legalTerms"));
+  setTextIfExists("legalCookiesLinkApp", t("legalCookies"));
   setTextIfExists("disconnectConfirmTitle", t("disconnectConfirmTitle"));
   setTextIfExists("disconnectConfirmBody", t("disconnectConfirmBody"));
   setTextIfExists("disconnectCancelBtn", t("disconnectConfirmCancel"));

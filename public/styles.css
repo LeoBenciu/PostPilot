@@ -342,6 +342,34 @@ body {
   opacity: 0.9;
 }
 
+.legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.legal-links a {
+  color: #8a1f49;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.legal-links a:hover {
+  text-decoration: underline;
+}
+
+.legal-links-landing {
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.legal-links-app {
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
 .app-shell {
   height: 100vh;
   display: grid;
@@ -1537,6 +1565,14 @@ pre {
 
   .chat-header p {
     font-size: 11px;
+  }
+
+  .legal-links-app {
+    gap: 8px;
+  }
+
+  .legal-links-app a {
+    font-size: 10px;
   }
 
   .agent-toolbar {
