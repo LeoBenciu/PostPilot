@@ -2,7 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <title>PostPilot - AI Coach</title>
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -56,7 +58,15 @@
 
           <form class="signup-card" id="signupForm">
             <h2 id="signupTitle">Start Your Free Trial</h2>
-            <button type="button" class="google-btn" id="googleSignupBtn">Continue with Google</button>
+            <button type="button" class="google-btn" id="googleSignupBtn">
+              <img
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                alt=""
+                class="google-btn-icon"
+                aria-hidden="true"
+              />
+              <span>Continue with Google</span>
+            </button>
             <div class="divider">or</div>
             <label>
               <span id="signupFullNameLabel">Full name</span>
@@ -178,7 +188,15 @@
       <div class="modal-card auth-modal-card">
         <button class="modal-close" id="closeSignin" type="button" aria-label="Close sign in form">x</button>
         <h2 id="signinTitle">Sign In to PostPilot</h2>
-        <button type="button" class="google-btn" id="googleSigninBtn">Continue with Google</button>
+        <button type="button" class="google-btn" id="googleSigninBtn">
+          <img
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+            alt=""
+            class="google-btn-icon"
+            aria-hidden="true"
+          />
+          <span>Continue with Google</span>
+        </button>
         <div class="divider">or</div>
         <form id="signinForm">
           <label>

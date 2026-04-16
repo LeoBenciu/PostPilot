@@ -813,6 +813,16 @@ function setPlaceholderIfExists(id, value) {
   if (el) el.placeholder = value;
 }
 
+function setGoogleButtonLabel(button, label) {
+  if (!button) return;
+  const labelEl = button.querySelector("span");
+  if (labelEl) {
+    labelEl.textContent = label;
+    return;
+  }
+  button.textContent = label;
+}
+
 function syncOnboardingLanguage() {
   const modal = document.getElementById("onboardingModal");
   if (!modal || modal.classList.contains("hidden")) return;
@@ -899,8 +909,8 @@ function applyLanguage() {
 
   buildSuggestionsPopup();
 
-  if (googleSignupBtn) googleSignupBtn.textContent = t("continueGoogle");
-  if (googleSigninBtn) googleSigninBtn.textContent = t("continueGoogle");
+  setGoogleButtonLabel(googleSignupBtn, t("continueGoogle"));
+  setGoogleButtonLabel(googleSigninBtn, t("continueGoogle"));
   const dividers = document.querySelectorAll(".divider");
   for (const divider of dividers) divider.textContent = t("or");
 
