@@ -481,6 +481,23 @@
       </div>
     </div>
 
+    <div
+      id="disconnectConfirmModal"
+      class="modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="disconnectConfirmTitle"
+    >
+      <div class="modal-card confirm-modal-card">
+        <h2 id="disconnectConfirmTitle">Disconnect account?</h2>
+        <p id="disconnectConfirmBody">You will be signed out and returned to the home screen.</p>
+        <div class="confirm-actions">
+          <button type="button" id="disconnectCancelBtn" class="secondary">Cancel</button>
+          <button type="button" id="disconnectConfirmBtn" class="danger-btn">Disconnect</button>
+        </div>
+      </div>
+    </div>
+
     <script src="/app.js"></script>
   </body>
 </html>

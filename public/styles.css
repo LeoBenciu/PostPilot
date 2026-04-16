@@ -1199,7 +1199,7 @@ pre {
 .settings-layout {
   display: grid;
   grid-template-columns: 210px 1fr;
-  min-height: 560px;
+  min-height: 0;
 }
 
 .settings-nav {
@@ -1300,6 +1300,32 @@ pre {
   color: #7a4a56;
 }
 
+.confirm-modal-card {
+  width: min(420px, calc(100vw - 24px));
+  padding: 20px;
+}
+
+.confirm-modal-card h2 {
+  margin: 0 0 8px;
+}
+
+.confirm-modal-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.confirm-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-actions button {
+  width: auto;
+  min-width: 0;
+  flex: 1;
+}
+
 .billing-row {
   align-items: start;
 }
@@ -1380,9 +1406,7 @@ pre {
 
 #settingsStatus {
   margin-top: 8px;
-  min-height: 210px;
-  background: #fff;
-  border-color: #e8bcc4;
+  min-height: 0;
   color: #6c3f4b;
 }
 
@@ -1676,6 +1700,10 @@ pre {
 
   .auth-modal-card {
     width: calc(100vw - 16px);
+  }
+
+  .confirm-actions {
+    flex-direction: column;
   }
 
   .language-switch {

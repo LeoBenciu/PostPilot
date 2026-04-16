@@ -26,6 +26,9 @@ const connectInstagramBtn = document.getElementById("connectInstagramBtn");
 const languageSelect = document.getElementById("languageSelect");
 const googleSignupBtn = document.getElementById("googleSignupBtn");
 const googleSigninBtn = document.getElementById("googleSigninBtn");
+const disconnectConfirmModal = document.getElementById("disconnectConfirmModal");
+const disconnectCancelBtn = document.getElementById("disconnectCancelBtn");
+const disconnectConfirmBtn = document.getElementById("disconnectConfirmBtn");
 const authToast = document.getElementById("authToast");
 const onboardingModal = document.getElementById("onboardingModal");
 let onboardingHideTimer = null;
@@ -122,6 +125,10 @@ const I18N = {
     saveSettings: "Save settings",
     onboardingRequired: "Complete onboarding when you are ready. I need those details before I can coach your content.",
     disconnectToast: "Disconnected. Sign in again when you are ready.",
+    disconnectConfirmTitle: "Disconnect account?",
+    disconnectConfirmBody: "You will be signed out and returned to the home screen.",
+    disconnectConfirmCancel: "Cancel",
+    disconnectConfirmCta: "Disconnect",
     newChatStarted: "New chat started. Ask for drafts, analytics, repurposing, or a weekly plan.",
     onboardingDone: "Onboarding complete. I am ready to coach your content strategy.",
     settingsSaved: "Settings saved. I refreshed your account profile and content sources.",
@@ -280,6 +287,10 @@ const I18N = {
     saveSettings: "Salveaza setarile",
     onboardingRequired: "Completeaza onboarding-ul cand esti pregatit. Am nevoie de aceste detalii inainte sa te pot ajuta.",
     disconnectToast: "Deconectat. Autentifica-te din nou cand esti pregatit.",
+    disconnectConfirmTitle: "Confirmi deconectarea?",
+    disconnectConfirmBody: "Vei fi deconectat si trimis inapoi la ecranul principal.",
+    disconnectConfirmCancel: "Anuleaza",
+    disconnectConfirmCta: "Deconectare",
     newChatStarted: "Chat nou pornit. Cere drafturi, analize, reutilizare sau un plan saptamanal.",
     onboardingDone: "Onboarding finalizat. Sunt gata sa te ajut cu strategia ta de continut.",
     settingsSaved: "Setarile au fost salvate. Am actualizat profilul si sursele tale de continut.",
@@ -436,6 +447,10 @@ const I18N = {
     saveSettings: "Salva impostazioni",
     onboardingRequired: "Completa l'onboarding quando vuoi. Mi servono questi dettagli prima di aiutarti.",
     disconnectToast: "Disconnesso. Accedi di nuovo quando vuoi.",
+    disconnectConfirmTitle: "Confermi la disconnessione?",
+    disconnectConfirmBody: "Verrai disconnesso e riportato alla schermata principale.",
+    disconnectConfirmCancel: "Annulla",
+    disconnectConfirmCta: "Disconnetti",
     newChatStarted: "Nuova chat avviata. Chiedi bozze, analisi, repurposing o un piano settimanale.",
     onboardingDone: "Onboarding completato. Sono pronto ad aiutarti con la tua strategia contenuti.",
     settingsSaved: "Impostazioni salvate. Ho aggiornato il profilo e le fonti contenuto.",
@@ -583,6 +598,10 @@ const I18N = {
     saveSettings: "Einstellungen speichern",
     onboardingRequired: "Schliesse das Onboarding ab, wenn du bereit bist. Ich brauche diese Angaben, bevor ich helfen kann.",
     disconnectToast: "Getrennt. Melde dich wieder an, wenn du bereit bist.",
+    disconnectConfirmTitle: "Trennen bestaetigen?",
+    disconnectConfirmBody: "Du wirst abgemeldet und zur Startseite zurueckgeleitet.",
+    disconnectConfirmCancel: "Abbrechen",
+    disconnectConfirmCta: "Trennen",
     newChatStarted: "Neuer Chat gestartet. Frage nach Entwuerfen, Analysen, Repurposing oder Wochenplan.",
     onboardingDone: "Onboarding abgeschlossen. Ich bin bereit, deine Content-Strategie zu coachen.",
     settingsSaved: "Einstellungen gespeichert. Ich habe dein Profil und deine Content-Quellen aktualisiert.",
@@ -730,6 +749,10 @@ const I18N = {
     saveSettings: "Enregistrer les parametres",
     onboardingRequired: "Completez l'onboarding quand vous voulez. J'ai besoin de ces infos avant de vous aider.",
     disconnectToast: "Deconnecte. Reconnectez-vous quand vous voulez.",
+    disconnectConfirmTitle: "Confirmer la deconnexion ?",
+    disconnectConfirmBody: "Vous serez deconnecte et renvoye vers l'ecran principal.",
+    disconnectConfirmCancel: "Annuler",
+    disconnectConfirmCta: "Deconnexion",
     newChatStarted: "Nouveau chat demarre. Demandez des brouillons, analyses, reutilisation ou un plan hebdomadaire.",
     onboardingDone: "Onboarding termine. Je suis pret a vous aider sur votre strategie de contenu.",
     settingsSaved: "Parametres enregistres. J'ai actualise votre profil et vos sources de contenu.",
@@ -891,6 +914,10 @@ function applyLanguage() {
   setTextIfExists("resetChatBtnLabel", t("newChat"));
   setTextIfExists("settingsBtnLabel", t("settings"));
   setTextIfExists("disconnectBtnLabel", t("disconnect"));
+  setTextIfExists("disconnectConfirmTitle", t("disconnectConfirmTitle"));
+  setTextIfExists("disconnectConfirmBody", t("disconnectConfirmBody"));
+  setTextIfExists("disconnectCancelBtn", t("disconnectConfirmCancel"));
+  setTextIfExists("disconnectConfirmBtn", t("disconnectConfirmCta"));
   setTextIfExists("chatHeaderSubtitle", t("chatSubtitle"));
   setTextIfExists("labelTotalPosts", t("analyticsTotalPosts"));
   setTextIfExists("labelTotalLikes", t("analyticsTotalLikes"));
@@ -1626,12 +1653,13 @@ closeOnboarding.addEventListener("click", () => {
   hideOnboardingModal();
 });
 
-disconnectBtn.addEventListener("click", async () => {
+async function performDisconnect() {
   try {
     await api("/api/auth/signout", "POST");
   } catch (_error) {
     // Still clear local UI state even if signout request fails.
   }
+  if (disconnectConfirmModal) disconnectConfirmModal.classList.add("hidden");
   setHidden("settingsModal", true);
   signinModal.classList.add("hidden");
   hideOnboardingModal();
@@ -1639,6 +1667,18 @@ disconnectBtn.addEventListener("click", async () => {
   authGate.classList.remove("hidden");
   clearFeedback();
   showToast(t("disconnectToast"));
+}
+
+disconnectBtn.addEventListener("click", () => {
+  disconnectConfirmModal?.classList.remove("hidden");
+});
+
+disconnectCancelBtn?.addEventListener("click", () => {
+  disconnectConfirmModal?.classList.add("hidden");
+});
+
+disconnectConfirmBtn?.addEventListener("click", async () => {
+  await performDisconnect();
 });
 
 signinModal.addEventListener("click", (event) => {
@@ -1656,6 +1696,10 @@ onboardingModal.addEventListener("click", (event) => {
     setText("onboardingError", "");
     hideOnboardingModal();
   }
+});
+
+disconnectConfirmModal?.addEventListener("click", (event) => {
+  if (event.target === disconnectConfirmModal) disconnectConfirmModal.classList.add("hidden");
 });
 
 googleSignupBtn.addEventListener("click", () => handleGoogleAuth("signup"));
