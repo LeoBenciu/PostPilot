@@ -74,9 +74,9 @@ const I18N = {
     finalCtaTitle: "You do not need another noisy platform.",
     finalCtaSubtitle: "You need a coach that helps you act on your best ideas.",
     finalCtaClosing: "That is PostPilot.",
-    finalCtaGuarantee: "Cancel anytime - protected by our full refund promise",
+    finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Studio 2026 - Designed for independent creators.",
-    signupTitle: "Start Your Free Trial",
+    signupTitle: "Try PostPilot",
     continueGoogle: "Continue with Google",
     or: "or",
     fullName: "Full name",
@@ -84,8 +84,8 @@ const I18N = {
     password: "Password",
     tipsOptIn: "Send me Creator tips and other opportunities",
     createAccount: "Create account",
-    guarantee1: "30-day refund policy",
-    guarantee2: "Cancel whenever you want - hassle free",
+    guarantee1: "",
+    guarantee2: "",
     alreadyAccount: "Already have an account?",
     signIn: "Sign in",
     agentView: "Agent",
@@ -241,7 +241,7 @@ const I18N = {
     finalCtaClosing: "Acesta este PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Construit pentru creatorii independenti.",
-    signupTitle: "Foloseste PostPilot",
+    signupTitle: "Incearca PostPilot",
     continueGoogle: "Continua cu Google",
     or: "sau",
     fullName: "Nume complet",
@@ -249,8 +249,8 @@ const I18N = {
     password: "Parola",
     tipsOptIn: "Trimite-mi sfaturi pentru creatori si alte oportunitati",
     createAccount: "Creeaza cont",
-    guarantee1: "Garantie de returnare in 30 de zile",
-    guarantee2: "Anulezi oricand - Fara intrebari",
+    guarantee1: "",
+    guarantee2: "",
     alreadyAccount: "Ai deja cont?",
     signIn: "Autentificare",
     agentView: "Agent",
@@ -404,9 +404,9 @@ const I18N = {
     finalCtaTitle: "Non ti serve un altro tool per contenuti.",
     finalCtaSubtitle: "Ti serve un coach che ti aiuti a credere nelle tue idee.",
     finalCtaClosing: "Questo e PostPilot.",
-    finalCtaGuarantee: "Annulla quando vuoi - Garanzia rimborso 100%",
+    finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Creato per creator indipendenti.",
-    signupTitle: "Inizia la prova gratuita",
+    signupTitle: "Prova PostPilot",
     continueGoogle: "Continua con Google",
     or: "oppure",
     fullName: "Nome completo",
@@ -414,8 +414,8 @@ const I18N = {
     password: "Password",
     tipsOptIn: "Inviami consigli per creator e altre opportunita",
     createAccount: "Crea account",
-    guarantee1: "Garanzia soddisfatti o rimborsati 30 giorni",
-    guarantee2: "Annulla quando vuoi - Nessuna domanda",
+    guarantee1: "",
+    guarantee2: "",
     alreadyAccount: "Hai gia un account?",
     signIn: "Accedi",
     newChat: "Reset chat",
@@ -558,9 +558,9 @@ const I18N = {
     finalCtaTitle: "Du brauchst kein weiteres Content-Tool.",
     finalCtaSubtitle: "Du brauchst einen Coach, der dir hilft, an deine Ideen zu glauben.",
     finalCtaClosing: "Das ist PostPilot.",
-    finalCtaGuarantee: "Jederzeit kuendbar - 100% Geld-zurueck-Garantie",
+    finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Entwickelt fuer unabhaengige Creator.",
-    signupTitle: "Starte deine kostenlose Testphase",
+    signupTitle: "Probiere PostPilot",
     continueGoogle: "Mit Google fortfahren",
     or: "oder",
     fullName: "Vollstaendiger Name",
@@ -568,8 +568,8 @@ const I18N = {
     password: "Passwort",
     tipsOptIn: "Sende mir Creator-Tipps und weitere Moeglichkeiten",
     createAccount: "Konto erstellen",
-    guarantee1: "30 Tage Geld-zurueck-Garantie",
-    guarantee2: "Jederzeit kuendbar - Ohne Rueckfragen",
+    guarantee1: "",
+    guarantee2: "",
     alreadyAccount: "Du hast bereits ein Konto?",
     signIn: "Anmelden",
     newChat: "Reset chat",
@@ -712,9 +712,9 @@ const I18N = {
     finalCtaTitle: "Vous n'avez pas besoin d'un autre outil de contenu.",
     finalCtaSubtitle: "Vous avez besoin d'un coach qui vous aide a croire en vos idees.",
     finalCtaClosing: "C'est PostPilot.",
-    finalCtaGuarantee: "Annulez a tout moment - garantie 100% satisfait ou rembourse",
+    finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Concu pour les createurs independants.",
-    signupTitle: "Demarrez votre essai gratuit",
+    signupTitle: "Essayez PostPilot",
     continueGoogle: "Continuer avec Google",
     or: "ou",
     fullName: "Nom complet",
@@ -722,8 +722,8 @@ const I18N = {
     password: "Mot de passe",
     tipsOptIn: "Envoyez-moi des conseils createur et d'autres opportunites",
     createAccount: "Creer un compte",
-    guarantee1: "Garantie remboursement 30 jours",
-    guarantee2: "Annulez a tout moment - Sans question",
+    guarantee1: "",
+    guarantee2: "",
     alreadyAccount: "Vous avez deja un compte ?",
     signIn: "Se connecter",
     newChat: "Reset chat",
@@ -926,8 +926,18 @@ function applyLanguage() {
   setTextIfExists("signupPasswordLabel", t("password"));
   setTextIfExists("tipsOptInLabel", t("tipsOptIn"));
   setTextIfExists("signupSubmitBtn", t("createAccount"));
-  setTextIfExists("signupGuarantee1", t("guarantee1"));
-  setTextIfExists("signupGuarantee2", t("guarantee2"));
+  const signupGuarantee1Text = t("guarantee1");
+  setTextIfExists("signupGuarantee1", signupGuarantee1Text);
+  const signupGuarantee1El = document.getElementById("signupGuarantee1");
+  if (signupGuarantee1El) {
+    signupGuarantee1El.classList.toggle("hidden", !String(signupGuarantee1Text || "").trim());
+  }
+  const signupGuarantee2Text = t("guarantee2");
+  setTextIfExists("signupGuarantee2", signupGuarantee2Text);
+  const signupGuarantee2El = document.getElementById("signupGuarantee2");
+  if (signupGuarantee2El) {
+    signupGuarantee2El.classList.toggle("hidden", !String(signupGuarantee2Text || "").trim());
+  }
   setTextIfExists("alreadyAccountText", t("alreadyAccount"));
   setTextIfExists("openSignin", t("signIn"));
   setTextIfExists("agentViewBtnLabel", t("agentView"));
