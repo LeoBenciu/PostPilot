@@ -2,13 +2,20 @@ import atexit
 import json
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
+import yaml
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from posthog import Posthog, new_context, identify_context, set_context_session
 
-from .crew import PostPilotCrew
+from .crew import (
+    PostPilotCrew,
+    _format_account_context,
+    _history_summary,
+    _resolve_language_name,
+)
 from .schemas import ChatRequest, ChatResponse
 
 posthog_client = Posthog(
@@ -17,6 +24,51 @@ posthog_client = Posthog(
     enable_exception_autocapture=True,
 )
 atexit.register(posthog_client.shutdown)
+
+
+CONFIG_DIR = Path(__file__).resolve().parent / "config"
+
+
+def _load_yaml(name: str) -> dict:
+    with (CONFIG_DIR / name).open("r", encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
+def _build_system_prompt_from_yaml(
+    *, message: str, account_context: str, history_summary: str, language: str
+) -> str:
+    """YAML is the single source of truth for the agent's prompt.
+
+    Builds the system message by combining:
+      - agent role/goal/backstory  (from agents.yaml)
+      - task description           (from tasks.yaml, with placeholders substituted)
+    """
+    agents_cfg = _load_yaml("agents.yaml")
+    tasks_cfg = _load_yaml("tasks.yaml")
+
+    strategist = agents_cfg.get("strategist", {}) or {}
+    role = str(strategist.get("role", "")).strip()
+    goal = " ".join(str(strategist.get("goal", "")).split())
+    backstory = " ".join(str(strategist.get("backstory", "")).split())
+
+    task = tasks_cfg.get("compose_response", {}) or {}
+    description_template = str(task.get("description", ""))
+    try:
+        description = description_template.format(
+            message=message,
+            account_context=account_context,
+            history_summary=history_summary,
+            language=language,
+        )
+    except (KeyError, IndexError):
+        description = description_template
+
+    return (
+        f"You are {role}.\n\n"
+        f"Goal: {goal}\n\n"
+        f"Backstory: {backstory}\n\n"
+        f"{description.strip()}"
+    )
 
 
 @asynccontextmanager
@@ -70,7 +122,12 @@ def chat(request: Request, payload: ChatRequest) -> ChatResponse:
 
 @app.post("/chat/stream")
 async def chat_stream(request: Request, payload: ChatRequest) -> StreamingResponse:
-    """SSE endpoint that streams the OpenAI response token-by-token."""
+    """SSE endpoint.
+
+    YAML (agents.yaml + tasks.yaml) is the single source of truth for the prompt.
+    Context from the Node app is formatted into readable sections (profile, accounts,
+    posts) and injected into the task description before being sent to OpenAI.
+    """
     distinct_id = request.headers.get("X-POSTHOG-DISTINCT-ID") or payload.userId
     session_id = request.headers.get("X-POSTHOG-SESSION-ID") or payload.sessionId
 
@@ -87,10 +144,21 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
     if not api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set")
 
-    system_prompt = payload.systemPrompt or ""
-    context_json = json.dumps(payload.context, default=str)
+    context = payload.context or {}
+    history = payload.history or []
+    account_context = _format_account_context(context)
+    history_summary_text = _history_summary(history)
+    language_name = _resolve_language_name(context.get("language"))
+
+    system_prompt = _build_system_prompt_from_yaml(
+        message=payload.message[:4000],
+        account_context=account_context,
+        history_summary=history_summary_text,
+        language=language_name,
+    )
+
     history_msgs = []
-    for m in (payload.history or [])[-20:]:
+    for m in history[-20:]:
         role = m.get("role", "user")
         content = m.get("content", "")
         if role in ("user", "assistant") and content:
@@ -118,7 +186,7 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
         user_message = {"role": "user", "content": payload.message[:4000]}
 
     messages = [
-        {"role": "system", "content": f"{system_prompt}\n\nSession context:\n{context_json}"},
+        {"role": "system", "content": system_prompt},
         *history_msgs,
         user_message,
     ]

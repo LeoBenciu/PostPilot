@@ -1467,7 +1467,7 @@ async function streamChat(message, sessionId) {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sessionId, message }),
+    body: JSON.stringify({ sessionId, message, language: currentLanguage }),
   });
 
   if (!res.ok) {

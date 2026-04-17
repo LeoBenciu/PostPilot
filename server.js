@@ -684,7 +684,7 @@ function agentGuardReply(state) {
   return null;
 }
 
-async function agentRespond(state, { message, userId, sessionId }) {
+async function agentRespond(state, { message, userId, sessionId, language }) {
   const guard = agentGuardReply(state);
   if (guard) {
     return { role: "assistant", ...guard };
@@ -703,6 +703,7 @@ async function agentRespond(state, { message, userId, sessionId }) {
       state,
       userId,
       sessionId,
+      language,
     });
     return {
       role: "assistant",
@@ -1610,6 +1611,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const message = body.message || "";
       const sessionId = body.sessionId || "default";
+      const language = typeof body.language === "string" ? body.language : "";
       if (!isPaymentComplete(state)) {
         sendJson(res, 402, {
           error: "Payment required. Complete your 29 Euro/month subscription to use the AI coach.",
@@ -1619,7 +1621,7 @@ const server = http.createServer(async (req, res) => {
       }
       const convo = getConversation(state, sessionId);
       convo.push({ role: "user", content: message, at: nowIso() });
-      const reply = await agentRespond(state, { message, userId: user.id, sessionId });
+      const reply = await agentRespond(state, { message, userId: user.id, sessionId, language });
       convo.push({ role: "assistant", content: reply.content, at: nowIso(), action: reply.action });
       await saveStateForUser(user.id, state);
       sendJson(res, 200, { reply, conversation: convo.slice(-20) });
@@ -1637,6 +1639,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const message = body.message || "";
       const sessionId = body.sessionId || "default";
+      const language = typeof body.language === "string" ? body.language : "";
       if (!isPaymentComplete(state)) {
         sendJson(res, 402, { error: "Payment required.", action: "payment_required" });
         return;
@@ -1681,6 +1684,7 @@ const server = http.createServer(async (req, res) => {
           state,
           userId: user.id,
           sessionId,
+          language,
         })) {
           fullContent += token;
           res.write(`data: ${JSON.stringify({ token })}\n\n`);

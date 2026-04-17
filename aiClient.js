@@ -116,7 +116,7 @@ function summarizeIntegrations(integrations) {
   return lines.length ? lines.join("\n") : "No platforms connected.";
 }
 
-function buildSystemPrompt({ state, connectedPlatforms }) {
+function buildSystemPrompt({ state, connectedPlatforms, language }) {
   const niche = state.user?.niche || "creator growth";
   const objective = state.user?.objective || "audience growth";
   const voice = state.voiceProfile || {};
@@ -126,8 +126,10 @@ function buildSystemPrompt({ state, connectedPlatforms }) {
   const ctaStyle = voice.ctaStyle || "";
   const favoredOpeners = (voice.favoredOpeners || []).join("; ");
 
+  const langCode = String(language || "").toLowerCase().slice(0, 2) || "en";
   const sections = [
     "You are PostPilot, an AI content coach for creators.",
+    `Respond in the user's UI language (ISO code: ${langCode}) unless the user clearly switches language.`,
     "",
     "## Creator profile",
     `- Niche: ${niche}`,
@@ -255,7 +257,42 @@ function aiLog(level, message, data = undefined) {
   else console.log(line);
 }
 
-async function callOpenAI({ message, history, state, connectedPlatforms }) {
+/**
+ * Builds the data-only context sent to the CrewAI service.
+ * CrewAI's YAML (agents.yaml + tasks.yaml) is the prompt source of truth;
+ * this context provides the data the prompt references.
+ */
+function buildCrewContext({ state, connectedPlatforms, language, message }) {
+  const selected = selectPostsForMessage({
+    posts: state.posts,
+    message: state._lastUserMessageForPrompt || message || "",
+    max: 20,
+  });
+  const posts = selected.map((p) => ({
+    platform: p.platform || "",
+    type: formatMediaType(p.mediaType || ""),
+    postedAt: p.postedAt || "",
+    likes: Number(p.likes || 0),
+    comments: Number(p.comments || 0),
+    impressions: Number(p.impressions || 0),
+    reach: Number(p.reach || 0),
+    saved: Number(p.saved || 0),
+    shares: Number(p.shares || 0),
+    videoViews: Number(p.videoViews || 0),
+    text: truncate(p.text || "", 500),
+    permalink: p.permalink || "",
+  }));
+  return {
+    account: state.user || {},
+    integrations: state.integrations || {},
+    connectedPlatforms,
+    voiceProfile: state.voiceProfile || {},
+    posts,
+    language: String(language || "").toLowerCase().slice(0, 2) || "en",
+  };
+}
+
+async function callOpenAI({ message, history, state, connectedPlatforms, language }) {
   const apiKey = process.env.OPENAI_API_KEY || "";
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   if (!apiKey) {
@@ -279,7 +316,7 @@ async function callOpenAI({ message, history, state, connectedPlatforms }) {
       model,
       temperature: 0.4,
       messages: [
-        { role: "system", content: buildSystemPrompt({ state, connectedPlatforms }) },
+        { role: "system", content: buildSystemPrompt({ state, connectedPlatforms, language }) },
         ...history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user", content: userContent },
       ],
@@ -301,7 +338,7 @@ async function callOpenAI({ message, history, state, connectedPlatforms }) {
   };
 }
 
-async function callCrewAI({ message, history, state, connectedPlatforms, userId, sessionId }) {
+async function callCrewAI({ message, history, state, connectedPlatforms, userId, sessionId, language }) {
   const baseUrl = process.env.CREWAI_API_URL || "";
   if (!baseUrl) {
     aiLog("error", "CrewAI skipped: CREWAI_API_URL not set");
@@ -341,13 +378,8 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
         sessionId: String(sessionId ?? ""),
         message: inputText,
         history,
-        context: {
-          account: state.user,
-          integrations: state.integrations,
-          connectedPlatforms,
-          voiceProfile: state.voiceProfile,
-        },
-        systemPrompt: buildSystemPrompt({ state, connectedPlatforms }),
+        context: buildCrewContext({ state, connectedPlatforms, language, message: inputText }),
+        systemPrompt: "",
         postImages,
       }),
     });
@@ -383,7 +415,7 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
   };
 }
 
-async function generateAgentReply({ message, history, state, userId, sessionId }) {
+async function generateAgentReply({ message, history, state, userId, sessionId, language }) {
   const provider = (process.env.AI_PROVIDER || "crewai").toLowerCase();
   aiLog("log", "generateAgentReply", {
     provider,
@@ -401,6 +433,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId }
       history: normalizedHistory,
       state,
       connectedPlatforms,
+      language,
     });
   }
 
@@ -413,6 +446,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId }
         connectedPlatforms,
         userId,
         sessionId,
+        language,
       });
     } catch (err) {
       const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
@@ -427,6 +461,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId }
         history: normalizedHistory,
         state,
         connectedPlatforms,
+        language,
       });
     }
   }
@@ -435,7 +470,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId }
   throw new Error(`unsupported_ai_provider_${provider}`);
 }
 
-async function* streamOpenAI({ message, history, state, connectedPlatforms }) {
+async function* streamOpenAI({ message, history, state, connectedPlatforms, language }) {
   const apiKey = process.env.OPENAI_API_KEY || "";
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   if (!apiKey) throw new Error("openai_not_configured");
@@ -457,7 +492,7 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms }) {
       temperature: 0.4,
       stream: true,
       messages: [
-        { role: "system", content: buildSystemPrompt({ state, connectedPlatforms }) },
+        { role: "system", content: buildSystemPrompt({ state, connectedPlatforms, language }) },
         ...history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user", content: userContent },
       ],
@@ -490,7 +525,7 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms }) {
   }
 }
 
-async function* streamCrewAI({ message, history, state, connectedPlatforms, userId, sessionId }) {
+async function* streamCrewAI({ message, history, state, connectedPlatforms, userId, sessionId, language }) {
   const baseUrl = process.env.CREWAI_API_URL || "";
   if (!baseUrl) throw new Error("crewai_not_configured");
   const apiKey = process.env.CREWAI_API_KEY || "";
@@ -512,13 +547,8 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
       sessionId: String(sessionId ?? ""),
       message: inputText,
       history,
-      context: {
-        account: state.user,
-        integrations: state.integrations,
-        connectedPlatforms,
-        voiceProfile: state.voiceProfile,
-      },
-      systemPrompt: buildSystemPrompt({ state, connectedPlatforms }),
+      context: buildCrewContext({ state, connectedPlatforms, language, message: inputText }),
+      systemPrompt: "",
       postImages,
     }),
   });
@@ -550,16 +580,16 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
   }
 }
 
-async function* streamAgentReply({ message, history, state, userId, sessionId }) {
+async function* streamAgentReply({ message, history, state, userId, sessionId, language }) {
   const provider = (process.env.AI_PROVIDER || "crewai").toLowerCase();
-  aiLog("log", "streamAgentReply", { provider });
+  aiLog("log", "streamAgentReply", { provider, language });
   const connectedPlatforms = Object.entries(state.integrations || {})
     .filter(([, value]) => value?.connected)
     .map(([key]) => key);
   const normalizedHistory = normalizeHistory(history);
 
   if (provider === "openai") {
-    yield* streamOpenAI({ message, history: normalizedHistory, state, connectedPlatforms });
+    yield* streamOpenAI({ message, history: normalizedHistory, state, connectedPlatforms, language });
     return;
   }
 
@@ -572,6 +602,7 @@ async function* streamAgentReply({ message, history, state, userId, sessionId })
         connectedPlatforms,
         userId,
         sessionId,
+        language,
       });
       return;
     } catch (err) {
@@ -582,7 +613,7 @@ async function* streamAgentReply({ message, history, state, userId, sessionId })
       });
       if (!hasOpenAiKey) throw err;
       aiLog("log", "Falling back to OpenAI stream");
-      yield* streamOpenAI({ message, history: normalizedHistory, state, connectedPlatforms });
+      yield* streamOpenAI({ message, history: normalizedHistory, state, connectedPlatforms, language });
       return;
     }
   }

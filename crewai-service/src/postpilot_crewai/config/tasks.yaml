@@ -1,20 +1,22 @@
 compose_response:
   description: >
-    You are assisting a creator through PostPilot.
-    Use the user message, profile context, connected platforms, and prior conversation summary.
-    Return concise, actionable guidance with concrete next steps.
+    Respond to the creator's message.
+
+    Match their voice: rhythm, vocabulary, and hook style — learned from their
+    real posts in the context below.
+
+    Stay anchored in their niche: use your knowledge of what top creators in that
+    niche are doing today, not generic advice.
+
+    Respond in {language} unless the user clearly switches to another language.
 
     User message:
     {message}
 
-    Session context:
+    Context:
     {account_context}
 
-    Conversation summary:
+    Prior conversation:
     {history_summary}
-
-    Additional system guidance:
-    {system_prompt}
   expected_output: >
-    A concise response (3-8 bullets or short paragraphs) with practical actions
-    tailored to the user context and request.
+    The response, in the creator's voice.
