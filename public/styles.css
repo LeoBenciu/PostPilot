@@ -1130,7 +1130,8 @@ pre {
   color: #5f3742;
 }
 
-#onboardingModal input {
+#onboardingModal input,
+#onboardingModal select {
   height: 48px;
   border-radius: 12px;
   border: 1px solid #eac6cf;
@@ -1140,7 +1141,8 @@ pre {
   padding: 0 12px;
 }
 
-#onboardingModal input:focus {
+#onboardingModal input:focus,
+#onboardingModal select:focus {
   outline: none;
   border-color: #d50032;
   box-shadow: 0 0 0 3px rgba(213, 0, 50, 0.12);
@@ -1148,6 +1150,10 @@ pre {
 
 #onboardingModal input::placeholder {
   color: #a17a83;
+}
+
+#onboardingModal select {
+  color: #4c2832;
 }
 
 #onboardingModal form {
@@ -1298,6 +1304,7 @@ pre {
 .settings-main {
   padding: 10px 0 0;
   overflow-y: auto;
+  overflow-x: hidden;
   background: #fff8f9;
 }
 
@@ -1432,12 +1439,14 @@ pre {
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: center;
+  min-width: 0;
 }
 
 .connection-card {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   min-height: 48px;
   border: 1px solid #efc6ce;
   border-radius: 12px;
@@ -1464,6 +1473,9 @@ pre {
   font-weight: 600;
   font-size: 14px;
   line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .connection-handle {
@@ -1471,12 +1483,16 @@ pre {
   color: #88616b;
   font-size: 12px;
   line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .connection-btn {
   width: auto;
-  min-width: 148px;
-  white-space: nowrap;
+  min-width: 0;
+  white-space: normal;
+  padding-inline: 10px;
 }
 
 .connection-status.is-connected {

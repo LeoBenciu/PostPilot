@@ -921,6 +921,85 @@ function setPlaceholderIfExists(id, value) {
   if (el) el.placeholder = value;
 }
 
+const ONBOARDING_NICHE_OPTIONS = {
+  en: [
+    "Business & Entrepreneurship",
+    "Marketing & Social Media",
+    "Health & Wellness",
+    "Fitness & Sports",
+    "Education & Coaching",
+    "Beauty & Fashion",
+    "Travel & Lifestyle",
+    "Tech & AI",
+    "Personal Development",
+    "Other",
+  ],
+  ro: [
+    "Business & Antreprenoriat",
+    "Marketing & Social Media",
+    "Sanatate & Wellness",
+    "Fitness & Sport",
+    "Educatie & Coaching",
+    "Beauty & Fashion",
+    "Calatorii & Lifestyle",
+    "Tech & AI",
+    "Dezvoltare Personala",
+    "Altele",
+  ],
+};
+
+const ONBOARDING_OBJECTIVE_OPTIONS = {
+  en: [
+    "Grow audience",
+    "Generate leads",
+    "Increase sales",
+    "Build personal brand",
+    "Improve engagement",
+    "Post consistently",
+    "Launch a product/service",
+    "Monetize content",
+  ],
+  ro: [
+    "Crestere audienta",
+    "Generare lead-uri",
+    "Crestere vanzari",
+    "Construire brand personal",
+    "Crestere engagement",
+    "Postare constanta",
+    "Lansare produs/serviciu",
+    "Monetizare continut",
+  ],
+};
+
+function onboardingOptionsForLanguage(optionsMap) {
+  return optionsMap[currentLanguage] || optionsMap.en || [];
+}
+
+function populateSelectOptions(selectId, placeholder, options) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const previousValue = select.value;
+  select.innerHTML = "";
+
+  const placeholderOption = document.createElement("option");
+  placeholderOption.value = "";
+  placeholderOption.textContent = placeholder;
+  placeholderOption.disabled = true;
+  placeholderOption.selected = !previousValue;
+  select.appendChild(placeholderOption);
+
+  for (const label of options) {
+    const option = document.createElement("option");
+    option.value = label;
+    option.textContent = label;
+    if (previousValue && previousValue === label) {
+      option.selected = true;
+      placeholderOption.selected = false;
+    }
+    select.appendChild(option);
+  }
+}
+
 function setGoogleButtonLabel(button, label) {
   if (!button) return;
   const labelEl = button.querySelector("span");
@@ -1080,8 +1159,16 @@ function applyLanguage() {
   setTextIfExists("paymentFeature3", t("paymentFeature3"));
   setTextIfExists("paymentAgreeText", t("paymentAgree"));
   setTextIfExists("paymentSubmitBtn", t("paymentSubmit"));
-  setPlaceholderIfExists("onboardNiche", t("onboardPhNiche"));
-  setPlaceholderIfExists("onboardObjective", t("onboardPhObjective"));
+  populateSelectOptions(
+    "onboardNiche",
+    t("onboardPhNiche"),
+    onboardingOptionsForLanguage(ONBOARDING_NICHE_OPTIONS),
+  );
+  populateSelectOptions(
+    "onboardObjective",
+    t("onboardPhObjective"),
+    onboardingOptionsForLanguage(ONBOARDING_OBJECTIVE_OPTIONS),
+  );
 
   setTextIfExists("settingsModalTitle", t("settingsModalHeading"));
   setTextIfExists("settingsNavGeneral", t("tabGeneral"));

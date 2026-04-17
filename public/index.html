@@ -366,11 +366,15 @@
         <form id="onboardingForm" class="hidden">
           <div class="field">
             <label for="onboardNiche"><span id="onboardNicheLabel">Niche</span></label>
-            <input id="onboardNiche" placeholder="" required />
+            <select id="onboardNiche" required>
+              <option value="" selected disabled>Select your niche</option>
+            </select>
           </div>
           <div class="field">
             <label for="onboardObjective"><span id="onboardObjectiveLabel">Main objective</span></label>
-            <input id="onboardObjective" placeholder="" required />
+            <select id="onboardObjective" required>
+              <option value="" selected disabled>Select your main objective</option>
+            </select>
           </div>
           <button type="submit" id="onboardingFormSubmitBtn">Complete onboarding</button>
         </form>
