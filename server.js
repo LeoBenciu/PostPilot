@@ -1024,7 +1024,28 @@ const server = http.createServer(async (req, res) => {
         accessToken: finalAccessToken,
       });
       const state = bindStateToUser(await getStateForUser(user.id), user);
+
+      const lockedId = state.integrations[platform]?.lockedAccountId || null;
+      const lockedUsername = state.integrations[platform]?.lockedUsername || null;
+      const incomingId = String(profile.id || "").trim();
+      if (lockedId && incomingId && String(lockedId) !== incomingId) {
+        sendRedirect(
+          res,
+          integrationRedirectUrl(
+            platform,
+            false,
+            "account_mismatch",
+            lockedUsername || String(lockedId),
+          ),
+        );
+        return;
+      }
+
       state.integrations[platform].connected = true;
+      if (!state.integrations[platform].lockedAccountId && incomingId) {
+        state.integrations[platform].lockedAccountId = incomingId;
+        state.integrations[platform].lockedUsername = profile.username || null;
+      }
       state.integrations[platform].token = finalAccessToken;
       state.integrations[platform].refreshToken = token.refreshToken || null;
       state.integrations[platform].expiresIn = finalExpiresIn || null;
@@ -1427,7 +1448,43 @@ const server = http.createServer(async (req, res) => {
         platform,
         connected: state.integrations[platform].connected,
         authUrl,
+        lockedAccountId: state.integrations[platform].lockedAccountId || null,
+        lockedUsername: state.integrations[platform].lockedUsername || null,
       });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/integrations/disconnect") {
+    try {
+      const user = await requireAuth(req, res);
+      if (!user) return;
+      const state = bindStateToUser(await getStateForUser(user.id), user);
+      const body = await readBody(req);
+      const platform = normalizePlatform(body.platform);
+      if (!platform || !state.integrations[platform]) {
+        sendJson(res, 400, { error: "Unknown platform" });
+        return;
+      }
+      const integration = state.integrations[platform];
+      integration.connected = false;
+      integration.token = null;
+      integration.refreshToken = null;
+      integration.expiresIn = null;
+      integration.tokenExpiresAt = null;
+      integration.lastSyncAt = null;
+      if (integration.sync) {
+        integration.sync.status = "disconnected";
+        integration.sync.lastError = null;
+      }
+      state.posts = Array.isArray(state.posts)
+        ? state.posts.filter((p) => p.platform !== platform)
+        : [];
+      state.voiceProfile = buildVoiceProfile(state.posts);
+      await saveStateForUser(user.id, state);
+      sendJson(res, 200, accountSummary(state));
     } catch (err) {
       sendJson(res, 400, { error: err.message });
     }

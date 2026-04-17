@@ -297,6 +297,10 @@
               <p class="analytics-value" id="analyticsTotalComments">0</p>
             </article>
             <article class="analytics-stat-card">
+              <p class="analytics-label" id="labelTotalImpressions">Total impressions</p>
+              <p class="analytics-value" id="analyticsTotalImpressions">0</p>
+            </article>
+            <article class="analytics-stat-card">
               <p class="analytics-label" id="labelAvgEngagement">Avg engagement / post</p>
               <p class="analytics-value" id="analyticsAvgEngagement">0</p>
             </article>
@@ -467,8 +471,12 @@
                       <p id="settingsLinkedinHandle" class="connection-handle"></p>
                     </div>
                   </div>
-                  <button type="button" id="connectLinkedinBtn" class="secondary connection-btn">Connect account</button>
+                  <div class="connection-actions">
+                    <button type="button" id="connectLinkedinBtn" class="secondary connection-btn">Connect account</button>
+                    <button type="button" id="disconnectLinkedinBtn" class="secondary danger-btn connection-btn hidden">Disconnect</button>
+                  </div>
                 </div>
+                <p id="settingsLinkedinLockNote" class="setting-hint connection-lock-note hidden"></p>
               </div>
               <div class="setting-row">
                 <div>
@@ -483,8 +491,12 @@
                       <p id="settingsInstagramHandle" class="connection-handle"></p>
                     </div>
                   </div>
-                  <button type="button" id="connectInstagramBtn" class="secondary connection-btn">Connect account</button>
+                  <div class="connection-actions">
+                    <button type="button" id="connectInstagramBtn" class="secondary connection-btn">Connect account</button>
+                    <button type="button" id="disconnectInstagramBtn" class="secondary danger-btn connection-btn hidden">Disconnect</button>
+                  </div>
                 </div>
+                <p id="settingsInstagramLockNote" class="setting-hint connection-lock-note hidden"></p>
               </div>
             </section>
 

@@ -72,10 +72,20 @@ function selectPostsForMessage({ posts, message, max = 50 }) {
     .slice(0, 8)
     .map((x) => x.p);
 
+  const topByEngagementRate = [...posts]
+    .filter((p) => Number(p.impressions || 0) > 0)
+    .map((p) => ({
+      p,
+      score: (Number(p.likes || 0) + Number(p.comments || 0)) / Math.max(Number(p.impressions || 0), 1),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6)
+    .map((x) => x.p);
+
   const recent = sortedRecent.slice(0, 10);
   const merged = [];
   const seen = new Set();
-  for (const p of [...topByEngagement, ...recent]) {
+  for (const p of [...topByEngagementRate, ...topByEngagement, ...recent]) {
     const key = `${p.platform}:${p.postedAt}:${p.text}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -139,7 +149,7 @@ function buildSystemPrompt({ state, connectedPlatforms }) {
     "",
     "## What you can see",
     "- Profile: bio, followers, following count, post count, website",
-    "- Each post: media type (Photo/Video/Carousel/Reel), caption, date, likes, comments, permalink",
+    "- Each post: media type (Photo/Video/Carousel/Reel), caption, date, likes, comments, impressions (and when available: reach, saves, video views), permalink",
     "- When images are attached in the current request, you can see those post images.",
     "- For videos and reels, you see the thumbnail/cover frame, not the full video",
     "- Use what you see in the images to give specific visual feedback when the user asks about posts, visuals, or performance.",

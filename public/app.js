@@ -24,6 +24,8 @@ const manageBillingBtn = document.getElementById("manageBillingBtn");
 const cancelSubscriptionBtn = document.getElementById("cancelSubscriptionBtn");
 const connectLinkedinBtn = document.getElementById("connectLinkedinBtn");
 const connectInstagramBtn = document.getElementById("connectInstagramBtn");
+const disconnectLinkedinBtn = document.getElementById("disconnectLinkedinBtn");
+const disconnectInstagramBtn = document.getElementById("disconnectInstagramBtn");
 const languageSelect = document.getElementById("languageSelect");
 const googleSignupBtn = document.getElementById("googleSignupBtn");
 const googleSigninBtn = document.getElementById("googleSigninBtn");
@@ -111,6 +113,7 @@ const I18N = {
     analyticsTotalPosts: "Total posts",
     analyticsTotalLikes: "Total likes",
     analyticsTotalComments: "Total comments",
+    analyticsTotalImpressions: "Total impressions",
     analyticsAvgEngagement: "Avg engagement / post",
     analyticsEngagementTrend: "Engagement over time",
     analyticsPerformanceByType: "Performance by content type",
@@ -119,6 +122,7 @@ const I18N = {
     analyticsTopPosts: "Top posts by engagement",
     chartLikes: "Likes",
     chartComments: "Comments",
+    chartImpressions: "Impressions",
     chartPosts: "Posts",
     chartAvgEngagement: "Avg engagement",
     chartCaptionLengthAxis: "Caption length (chars)",
@@ -207,6 +211,12 @@ const I18N = {
     integrationConnectFailedPrefix: "Could not start account connection",
     integrationConnectedToast: "{platform} connected successfully.",
     integrationConnectErrorToast: "Could not connect {platform}: {error}",
+    disconnectIntegrationBtn: "Disconnect",
+    disconnectIntegrationConfirmTitle: "Disconnect {platform}?",
+    disconnectIntegrationConfirmBody: "You will be signed out of {platform}. You can reconnect later, but only with the same @{username} account.",
+    integrationLockedNote: "This profile is permanently linked to @{username}. You can only reconnect using the same account.",
+    integrationAccountMismatch: "Could not connect {platform}: this profile is linked to @{username}. Please reconnect using that account.",
+    disconnectedToast: "{platform} has been disconnected.",
   },
   ro: {
     language: "Limba",
@@ -379,6 +389,12 @@ const I18N = {
     integrationConnectFailedPrefix: "Nu am putut porni conectarea contului",
     integrationConnectedToast: "{platform} a fost conectat cu succes.",
     integrationConnectErrorToast: "Nu am putut conecta {platform}: {error}",
+    disconnectIntegrationBtn: "Deconecteaza",
+    disconnectIntegrationConfirmTitle: "Deconectezi {platform}?",
+    disconnectIntegrationConfirmBody: "Vei fi deconectat de la {platform}. Poti reconecta mai tarziu, dar doar cu acelasi cont @{username}.",
+    integrationLockedNote: "Acest profil este legat permanent de @{username}. Te poti reconecta doar cu acelasi cont.",
+    integrationAccountMismatch: "Nu am putut conecta {platform}: acest profil este legat de @{username}. Te rog foloseste acelasi cont.",
+    disconnectedToast: "{platform} a fost deconectat.",
   },
   it: {
     language: "Lingua",
@@ -540,6 +556,12 @@ const I18N = {
     checkoutCanceled: "Checkout annullato. Completa il pagamento per sbloccare il coach AI.",
     checkoutProcessing: "Pagamento inviato. Verifica dell'abbonamento in corso...",
     googleConnected: "Connesso con Google.",
+    disconnectIntegrationBtn: "Disconnetti",
+    disconnectIntegrationConfirmTitle: "Disconnettere {platform}?",
+    disconnectIntegrationConfirmBody: "Verrai disconnesso da {platform}. Puoi riconnetterti piu tardi, ma solo con lo stesso account @{username}.",
+    integrationLockedNote: "Questo profilo e collegato in modo permanente a @{username}. Puoi riconnetterti solo con lo stesso account.",
+    integrationAccountMismatch: "Impossibile connettere {platform}: questo profilo e collegato a @{username}. Usa lo stesso account.",
+    disconnectedToast: "{platform} e stato disconnesso.",
   },
   de: {
     language: "Sprache",
@@ -701,6 +723,12 @@ const I18N = {
     checkoutCanceled: "Checkout wurde abgebrochen. Schliesse die Zahlung ab, um den KI-Coach freizuschalten.",
     checkoutProcessing: "Zahlung eingegangen. Abonnement wird verifiziert...",
     googleConnected: "Mit Google verbunden.",
+    disconnectIntegrationBtn: "Trennen",
+    disconnectIntegrationConfirmTitle: "{platform} trennen?",
+    disconnectIntegrationConfirmBody: "Du wirst von {platform} getrennt. Du kannst dich spaeter wieder verbinden, aber nur mit demselben Konto @{username}.",
+    integrationLockedNote: "Dieses Profil ist dauerhaft mit @{username} verbunden. Du kannst dich nur mit demselben Konto erneut verbinden.",
+    integrationAccountMismatch: "{platform} konnte nicht verbunden werden: Dieses Profil gehoert zu @{username}. Bitte verwende dasselbe Konto.",
+    disconnectedToast: "{platform} wurde getrennt.",
   },
   fr: {
     language: "Langue",
@@ -862,6 +890,12 @@ const I18N = {
     checkoutCanceled: "Le checkout a ete annule. Finalisez le paiement pour debloquer le coach IA.",
     checkoutProcessing: "Paiement recu. Verification de l'abonnement en cours...",
     googleConnected: "Connecte avec Google.",
+    disconnectIntegrationBtn: "Deconnecter",
+    disconnectIntegrationConfirmTitle: "Deconnecter {platform} ?",
+    disconnectIntegrationConfirmBody: "Vous serez deconnecte de {platform}. Vous pourrez vous reconnecter plus tard, mais uniquement avec le meme compte @{username}.",
+    integrationLockedNote: "Ce profil est lie de maniere permanente a @{username}. Vous ne pouvez vous reconnecter qu'avec le meme compte.",
+    integrationAccountMismatch: "Impossible de connecter {platform} : ce profil est lie a @{username}. Veuillez utiliser le meme compte.",
+    disconnectedToast: "{platform} a ete deconnecte.",
   },
 };
 
@@ -995,6 +1029,7 @@ function applyLanguage() {
   setTextIfExists("labelTotalPosts", t("analyticsTotalPosts"));
   setTextIfExists("labelTotalLikes", t("analyticsTotalLikes"));
   setTextIfExists("labelTotalComments", t("analyticsTotalComments"));
+  setTextIfExists("labelTotalImpressions", t("analyticsTotalImpressions"));
   setTextIfExists("labelAvgEngagement", t("analyticsAvgEngagement"));
   setTextIfExists("titleEngagementTrend", t("analyticsEngagementTrend"));
   setTextIfExists("titlePerformanceByType", t("analyticsPerformanceByType"));
@@ -1357,11 +1392,13 @@ function renderStatCards(summary, posts) {
   const totalPosts = Object.values(summary.byPlatform || {}).reduce((a, p) => a + Number(p.posts || 0), 0);
   const totalLikes = Number(totals.likes || 0);
   const totalComments = Number(totals.comments || 0);
+  const totalImpressions = Number(totals.impressions || 0);
   const avgEngagement = totalPosts > 0 ? ((totalLikes + totalComments) / totalPosts).toFixed(1) : "0";
 
   setText("analyticsTotalPosts", Number(totalPosts).toLocaleString());
   setText("analyticsTotalLikes", totalLikes.toLocaleString());
   setText("analyticsTotalComments", totalComments.toLocaleString());
+  setText("analyticsTotalImpressions", totalImpressions.toLocaleString());
   setText("analyticsAvgEngagement", avgEngagement);
 }
 
@@ -1373,6 +1410,7 @@ function renderEngagementTrend(posts) {
   });
   const likes = sorted.map(p => Number(p.likes || 0));
   const comments = sorted.map(p => Number(p.comments || 0));
+  const impressions = sorted.map(p => Number(p.impressions || 0));
 
   destroyChart("engagementTrend");
   const ctx = document.getElementById("chartEngagementTrend");
@@ -1384,6 +1422,7 @@ function renderEngagementTrend(posts) {
       datasets: [
         { label: t("chartLikes"), data: likes, borderColor: CHART_COLORS.pink, backgroundColor: CHART_COLORS.pinkLight, fill: true, tension: 0.35, pointRadius: 3 },
         { label: t("chartComments"), data: comments, borderColor: CHART_COLORS.teal, backgroundColor: CHART_COLORS.tealLight, fill: true, tension: 0.35, pointRadius: 3 },
+        { label: t("chartImpressions"), data: impressions, borderColor: CHART_COLORS.plum, backgroundColor: CHART_COLORS.plumLight, fill: true, tension: 0.35, pointRadius: 3 },
       ],
     },
     options: { ...CHART_DEFAULTS },
@@ -1508,6 +1547,7 @@ function renderTopPosts(posts) {
   });
   const likesData = sorted.map(p => Number(p.likes || 0));
   const commentsData = sorted.map(p => Number(p.comments || 0));
+  const impressionsData = sorted.map(p => Number(p.impressions || 0));
 
   destroyChart("topPosts");
   const ctx = document.getElementById("chartTopPosts");
@@ -1519,6 +1559,7 @@ function renderTopPosts(posts) {
       datasets: [
         { label: t("chartLikes"), data: likesData, backgroundColor: CHART_COLORS.pink, borderRadius: 6 },
         { label: t("chartComments"), data: commentsData, backgroundColor: CHART_COLORS.teal, borderRadius: 6 },
+        { label: t("chartImpressions"), data: impressionsData, backgroundColor: CHART_COLORS.plum, borderRadius: 6 },
       ],
     },
     options: {
@@ -1555,13 +1596,18 @@ function applyIntegrationUi(platform, integration = {}) {
   const isLinkedin = platform === "linkedin";
   const connected = Boolean(integration.connected);
   const statusId = isLinkedin ? "settingsLinkedinStatus" : "settingsInstagramStatus";
-  const button = isLinkedin ? connectLinkedinBtn : connectInstagramBtn;
+  const connectBtn = isLinkedin ? connectLinkedinBtn : connectInstagramBtn;
+  const disconnectBtnEl = isLinkedin ? disconnectLinkedinBtn : disconnectInstagramBtn;
+  const lockNoteId = isLinkedin ? "settingsLinkedinLockNote" : "settingsInstagramLockNote";
   const profileId = isLinkedin ? "settingsLinkedinProfile" : "settingsInstagramProfile";
   const handleId = isLinkedin ? "settingsLinkedinHandle" : "settingsInstagramHandle";
   const avatarId = isLinkedin ? "settingsLinkedinAvatar" : "settingsInstagramAvatar";
   const baseName = isLinkedin ? "LinkedIn" : "Instagram";
   const username = String(integration.username || "").trim();
   const avatarUrl = String(integration.avatarUrl || "").trim();
+  const lockedUsername = String(integration.lockedUsername || "").trim();
+  const lockedId = String(integration.lockedAccountId || "").trim();
+  const hasLock = Boolean(lockedUsername || lockedId);
 
   setText(statusId, connected ? "Connected" : t("notConnected"));
   const statusEl = document.getElementById(statusId);
@@ -1584,7 +1630,24 @@ function applyIntegrationUi(platform, integration = {}) {
     `${baseName} profile avatar`,
   );
 
-  if (button) button.classList.toggle("hidden", connected);
+  if (connectBtn) connectBtn.classList.toggle("hidden", connected);
+  if (disconnectBtnEl) {
+    disconnectBtnEl.classList.toggle("hidden", !connected);
+    disconnectBtnEl.textContent = t("disconnectIntegrationBtn");
+  }
+
+  const lockEl = document.getElementById(lockNoteId);
+  if (lockEl) {
+    if (hasLock && !connected) {
+      lockEl.textContent = tf("integrationLockedNote", {
+        username: lockedUsername || lockedId,
+      });
+      lockEl.classList.remove("hidden");
+    } else {
+      lockEl.textContent = "";
+      lockEl.classList.add("hidden");
+    }
+  }
 }
 
 function applySettingsForm(data) {
@@ -1822,6 +1885,33 @@ googleSignupBtn.addEventListener("click", () => handleGoogleAuth("signup"));
 googleSigninBtn.addEventListener("click", () => handleGoogleAuth("signin"));
 connectLinkedinBtn?.addEventListener("click", () => connectPlatform("linkedin"));
 connectInstagramBtn?.addEventListener("click", () => connectPlatform("instagram"));
+
+async function disconnectPlatform(platform) {
+  const platformLabel = displayPlatform(platform);
+  const integration = accountState?.integrations?.[platform] || {};
+  const lockedName =
+    String(integration.lockedUsername || integration.username || "").replace(/^@/, "") || platformLabel;
+  const confirmBody = tf("disconnectIntegrationConfirmBody", {
+    platform: platformLabel,
+    username: lockedName,
+  });
+  const confirmTitle = tf("disconnectIntegrationConfirmTitle", { platform: platformLabel });
+  if (!window.confirm(`${confirmTitle}\n\n${confirmBody}`)) return;
+
+  try {
+    setText("settingsStatus", `${platformLabel}...`);
+    const data = await api("/api/integrations/disconnect", "POST", { platform });
+    accountState = data;
+    applySettingsForm(data);
+    setText("settingsStatus", "");
+    showToast(tf("disconnectedToast", { platform: platformLabel }));
+  } catch (err) {
+    setText("settingsStatus", `Error: ${err.message}`);
+  }
+}
+
+disconnectLinkedinBtn?.addEventListener("click", () => disconnectPlatform("linkedin"));
+disconnectInstagramBtn?.addEventListener("click", () => disconnectPlatform("instagram"));
 
 document.getElementById("composer").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -2093,10 +2183,17 @@ if (authQueryState.integrationAuth === "success" && authQueryState.integration) 
 
 if (authQueryState.integrationError && authQueryState.integration) {
   const platformLabel = displayPlatform(authQueryState.integration);
-  const errorDetail = authQueryState.integrationDetail
-    ? `${authQueryState.integrationError}: ${authQueryState.integrationDetail}`
-    : authQueryState.integrationError;
-  showToast(tf("integrationConnectErrorToast", { platform: platformLabel, error: errorDetail }));
+  let toastText;
+  if (authQueryState.integrationError === "account_mismatch") {
+    const lockedName = String(authQueryState.integrationDetail || "").replace(/^@/, "") || platformLabel;
+    toastText = tf("integrationAccountMismatch", { platform: platformLabel, username: lockedName });
+  } else {
+    const errorDetail = authQueryState.integrationDetail
+      ? `${authQueryState.integrationError}: ${authQueryState.integrationDetail}`
+      : authQueryState.integrationError;
+    toastText = tf("integrationConnectErrorToast", { platform: platformLabel, error: errorDetail });
+  }
+  showToast(toastText);
   clearAuthQueryParams();
 }
 

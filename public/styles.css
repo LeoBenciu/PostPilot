@@ -829,8 +829,22 @@ button:active {
 
 .analytics-stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
+}
+
+.connection-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.connection-lock-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #845660;
+  font-style: italic;
 }
 
 .analytics-stat-card {

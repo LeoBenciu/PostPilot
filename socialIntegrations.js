@@ -192,6 +192,7 @@ async function fetchInstagramProfile(accessToken) {
 
 async function fetchInstagramPostsAndAnalytics(accessToken) {
   const maxPosts = Number(process.env.POSTPILOT_MAX_POSTS_SYNC || 500);
+  const maxInsightPosts = Math.max(0, Number(process.env.POSTPILOT_INSTAGRAM_INSIGHTS_MAX_POSTS || 120));
   const pageSize = 50;
   const items = [];
   let after = "";
@@ -212,15 +213,38 @@ async function fetchInstagramPostsAndAnalytics(accessToken) {
     if (!after || page.length < pageSize) break;
   }
 
-  return items.slice(0, maxPosts).map((item) => {
+  const limited = items.slice(0, maxPosts);
+  const insightsById = await fetchInstagramInsightsBatch(accessToken, limited.slice(0, maxInsightPosts));
+
+  return limited.map((item) => {
     const type = String(item.media_type || "").toUpperCase();
     const isVideo = type === "VIDEO" || type === "REEL" || type === "REELS";
+    const insights = insightsById.get(item.id) || {};
+    const views = Number(insights.views || 0);
+    const rawImpressions = Number(insights.impressions || 0);
+    const impressions = rawImpressions || views;
+    const reach = Number(insights.reach || 0);
+    const saved = Number(insights.saved || 0);
+    const shares = Number(insights.shares || 0);
+    const totalInteractions = Number(insights.total_interactions || 0);
+    const videoViews = Number(insights.video_views || insights.plays || 0);
+    const avgWatchTime = Number(insights.ig_reels_avg_watch_time || 0);
+    const totalWatchTime = Number(insights.ig_reels_video_view_total_time || 0);
+    const engagementFromInsights = Number(insights.engagement || 0) || totalInteractions;
     return {
       platform: "instagram",
       text: item.caption || "",
       likes: Number(item.like_count || 0),
       comments: Number(item.comments_count || 0),
-      impressions: 0,
+      impressions,
+      reach,
+      saved,
+      shares,
+      totalInteractions,
+      videoViews,
+      avgWatchTime,
+      totalWatchTime,
+      engagementFromInsights,
       postedAt: item.timestamp || new Date().toISOString(),
       mediaType: item.media_type || "",
       permalink: item.permalink || "",
@@ -229,6 +253,130 @@ async function fetchInstagramPostsAndAnalytics(accessToken) {
       imageUrl: isVideo ? (item.thumbnail_url || "") : (item.media_url || ""),
     };
   });
+}
+
+function pickInstagramInsightMetricSets(mediaType) {
+  const upperType = String(mediaType || "").toUpperCase();
+  const isVideo = upperType === "VIDEO" || upperType === "REEL" || upperType === "REELS";
+
+  if (isVideo) {
+    return [
+      ["reach", "saved", "total_interactions", "shares", "views", "ig_reels_avg_watch_time", "ig_reels_video_view_total_time"],
+      ["reach", "saved", "total_interactions", "shares", "views"],
+      ["impressions", "reach", "saved", "video_views", "engagement"],
+      ["reach", "saved"],
+    ];
+  }
+  return [
+    ["reach", "saved", "total_interactions", "shares", "views"],
+    ["impressions", "reach", "saved", "engagement"],
+    ["reach", "saved"],
+  ];
+}
+
+function normalizeInsightValue(rawValue) {
+  if (typeof rawValue === "number") return rawValue;
+  if (Array.isArray(rawValue) && rawValue.length) {
+    const first = rawValue[0];
+    if (typeof first === "number") return first;
+    if (first && typeof first.value === "number") return first.value;
+  }
+  return 0;
+}
+
+async function fetchInsightsFromHost({ host, mediaId, metrics, accessToken }) {
+  const url =
+    `https://${host}/v21.0/${encodeURIComponent(mediaId)}/insights` +
+    `?metric=${encodeURIComponent(metrics.join(","))}` +
+    `&access_token=${encodeURIComponent(accessToken)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "");
+    throw new Error(`${host}:${res.status}:${errorText.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  const out = {};
+  for (const row of Array.isArray(data?.data) ? data.data : []) {
+    const name = String(row?.name || "").trim();
+    if (!name) continue;
+    out[name] = normalizeInsightValue(row?.values);
+  }
+  return out;
+}
+
+async function fetchInsightsForMedia({ mediaId, mediaType, accessToken }) {
+  const metricSets = pickInstagramInsightMetricSets(mediaType);
+  const hosts = ["graph.instagram.com", "graph.facebook.com"];
+  const merged = {};
+  let sawAnyData = false;
+  let permissionBlocked = false;
+
+  for (const metrics of metricSets) {
+    let obtained = null;
+    for (const host of hosts) {
+      try {
+        obtained = await fetchInsightsFromHost({ host, mediaId, metrics, accessToken });
+        break;
+      } catch (err) {
+        const detail = String(err?.message || err);
+        if (detail.includes(":190:") || detail.includes(":10:") || detail.includes(":200:")) {
+          permissionBlocked = true;
+          break;
+        }
+      }
+    }
+    if (permissionBlocked) break;
+    if (obtained && Object.keys(obtained).length) {
+      sawAnyData = true;
+      for (const [k, v] of Object.entries(obtained)) {
+        if (merged[k] == null) merged[k] = v;
+      }
+    }
+  }
+
+  if (permissionBlocked && !sawAnyData) {
+    const err = new Error("instagram_insights_permission_blocked");
+    err.permissionBlocked = true;
+    throw err;
+  }
+  return merged;
+}
+
+async function fetchInstagramInsightsBatch(accessToken, mediaItems) {
+  const byId = new Map();
+  if (!Array.isArray(mediaItems) || !mediaItems.length) return byId;
+  const concurrency = Math.max(1, Number(process.env.POSTPILOT_INSTAGRAM_INSIGHTS_CONCURRENCY || 4));
+  let index = 0;
+  let blocked = false;
+
+  async function worker() {
+    while (true) {
+      const current = index;
+      index += 1;
+      if (current >= mediaItems.length || blocked) return;
+      const item = mediaItems[current];
+      const mediaId = String(item?.id || "");
+      if (!mediaId) continue;
+      try {
+        const insights = await fetchInsightsForMedia({
+          mediaId,
+          mediaType: item?.media_type,
+          accessToken,
+        });
+        byId.set(mediaId, insights);
+      } catch (err) {
+        if (err?.permissionBlocked) {
+          console.warn(`[PostPilot][IG] Insights permission blocked; stopping batch at ${current + 1}/${mediaItems.length}`);
+          blocked = true;
+        }
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, mediaItems.length) }, () => worker()),
+  );
+  return byId;
 }
 
 async function fetchPlatformProfile({ platform, accessToken }) {
