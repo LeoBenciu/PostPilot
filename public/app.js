@@ -96,6 +96,7 @@ const I18N = {
     legalPrivacy: "Privacy",
     legalTerms: "Terms",
     legalCookies: "Cookies",
+    supportLabel: "Support",
     chatSubtitle: "Your creator growth assistant",
     chatInputPlaceholder: "Message PostPilot Agent",
     suggestionsLabel: "Suggestions",
@@ -261,6 +262,7 @@ const I18N = {
     legalPrivacy: "Confidentialitate",
     legalTerms: "Termeni",
     legalCookies: "Cookie-uri",
+    supportLabel: "Suport",
     chatSubtitle: "Asistentul tau pentru crestere",
     chatInputPlaceholder: "Mesaj catre PostPilot Agent",
     suggestionsLabel: "Sugestii",
@@ -424,6 +426,7 @@ const I18N = {
     legalPrivacy: "Privacy",
     legalTerms: "Termini",
     legalCookies: "Cookie",
+    supportLabel: "Supporto",
     chatSubtitle: "Il tuo assistente per la crescita creator",
     chatInputPlaceholder: "Messaggio per PostPilot Agent",
     suggestionsLabel: "Suggerimenti",
@@ -578,6 +581,7 @@ const I18N = {
     legalPrivacy: "Datenschutz",
     legalTerms: "AGB",
     legalCookies: "Cookies",
+    supportLabel: "Support",
     chatSubtitle: "Dein Assistent fuer Creator-Wachstum",
     chatInputPlaceholder: "Nachricht an PostPilot Agent",
     suggestionsLabel: "Vorschlaege",
@@ -732,6 +736,7 @@ const I18N = {
     legalPrivacy: "Confidentialite",
     legalTerms: "Conditions",
     legalCookies: "Cookies",
+    supportLabel: "Support",
     chatSubtitle: "Votre assistant de croissance createur",
     chatInputPlaceholder: "Message a PostPilot Agent",
     suggestionsLabel: "Suggestions",
@@ -951,6 +956,8 @@ function applyLanguage() {
   setTextIfExists("legalPrivacyLinkApp", t("legalPrivacy"));
   setTextIfExists("legalTermsLinkApp", t("legalTerms"));
   setTextIfExists("legalCookiesLinkApp", t("legalCookies"));
+  setTextIfExists("supportTitleLanding", t("supportLabel"));
+  setTextIfExists("supportTitleApp", `${t("supportLabel")}:`);
   setTextIfExists("disconnectConfirmTitle", t("disconnectConfirmTitle"));
   setTextIfExists("disconnectConfirmBody", t("disconnectConfirmBody"));
   setTextIfExists("disconnectCancelBtn", t("disconnectConfirmCancel"));

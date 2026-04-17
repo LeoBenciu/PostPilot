@@ -364,6 +364,34 @@ body {
   justify-content: center;
 }
 
+.support-contact {
+  margin-top: 8px;
+}
+
+.support-contact a {
+  color: #8a1f49;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.support-contact a:hover {
+  text-decoration: underline;
+}
+
+.support-contact-landing {
+  text-align: center;
+}
+
+.support-contact-app {
+  padding: 0 20px 10px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid #f2d8de;
+}
+
 .legal-links-app {
   justify-content: flex-end;
   align-items: center;
@@ -1573,6 +1601,12 @@ pre {
 
   .legal-links-app a {
     font-size: 10px;
+  }
+
+  .support-contact-app {
+    font-size: 10px;
+    padding: 0 14px 8px;
+    gap: 4px;
   }
 
   .agent-toolbar {

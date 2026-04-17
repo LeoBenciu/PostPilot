@@ -9,6 +9,7 @@ const I18N = {
     navPrivacy: "Privacy Policy",
     navTerms: "Terms of Service",
     navCookies: "Cookie Policy",
+    supportPhones: "Support phones:",
     updated: "Last updated: April 16, 2026",
     privacy: {
       title: "PostPilot - Privacy Policy",
@@ -89,6 +90,7 @@ const I18N = {
     navPrivacy: "Politica de confidentialitate",
     navTerms: "Termeni si conditii",
     navCookies: "Politica de cookie-uri",
+    supportPhones: "Telefoane suport:",
     updated: "Ultima actualizare: 16 aprilie 2026",
     privacy: {
       title: "PostPilot - Politica de confidentialitate",
@@ -169,6 +171,7 @@ const I18N = {
     navPrivacy: "Privacy Policy",
     navTerms: "Termini di servizio",
     navCookies: "Cookie Policy",
+    supportPhones: "Telefoni supporto:",
     updated: "Ultimo aggiornamento: 16 aprile 2026",
     privacy: {
       title: "PostPilot - Privacy Policy",
@@ -249,6 +252,7 @@ const I18N = {
     navPrivacy: "Datenschutz",
     navTerms: "Nutzungsbedingungen",
     navCookies: "Cookie-Richtlinie",
+    supportPhones: "Support-Telefone:",
     updated: "Letzte Aktualisierung: 16. April 2026",
     privacy: {
       title: "PostPilot - Datenschutz",
@@ -329,6 +333,7 @@ const I18N = {
     navPrivacy: "Confidentialite",
     navTerms: "Conditions d'utilisation",
     navCookies: "Politique des cookies",
+    supportPhones: "Telephones support :",
     updated: "Derniere mise a jour : 16 avril 2026",
     privacy: {
       title: "PostPilot - Politique de confidentialite",
@@ -435,6 +440,7 @@ function applyLanguage(lang) {
   setText("navPrivacyBottom", t("navPrivacy"));
   setText("navTermsBottom", t("navTerms"));
   setText("navCookiesBottom", t("navCookies"));
+  setText("supportPhonesLabel", t("supportPhones"));
   setText("updatedAt", t("updated"));
   setText("pageTitle", t(`${page}.h1`));
   setText("intro", t(`${page}.intro`));
