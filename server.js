@@ -41,7 +41,7 @@ const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 14);
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID || "";
-const STRIPE_MONTHLY_EUR_CENTS = Number(process.env.STRIPE_MONTHLY_EUR_CENTS || 3000);
+const STRIPE_MONTHLY_EUR_CENTS = Number(process.env.STRIPE_MONTHLY_EUR_CENTS || 2900);
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
 function sendJson(res, statusCode, payload) {
@@ -675,7 +675,7 @@ function agentGuardReply(state) {
     return { content: "Complete onboarding in Settings so I can personalize your strategy and voice.", action: "onboarding_required" };
   }
   if (!isPaymentComplete(state)) {
-    return { content: "Payment is required before using the AI coach. Please complete your EUR 30/month subscription.", action: "payment_required" };
+    return { content: "Payment is required before using the AI coach. Please complete your 29 Euro/month subscription.", action: "payment_required" };
   }
   const connected = activePlatforms(state);
   if (!connected.length) {
@@ -1612,7 +1612,7 @@ const server = http.createServer(async (req, res) => {
       const sessionId = body.sessionId || "default";
       if (!isPaymentComplete(state)) {
         sendJson(res, 402, {
-          error: "Payment required. Complete your EUR 30/month subscription to use the AI coach.",
+          error: "Payment required. Complete your 29 Euro/month subscription to use the AI coach.",
           action: "payment_required",
         });
         return;
