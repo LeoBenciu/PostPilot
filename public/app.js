@@ -165,9 +165,15 @@ const I18N = {
     tabGeneral: "General",
     tabAccount: "Account",
     tabConnections: "Connections",
+    tabSupport: "Support",
     panelGeneral: "General",
     panelAccount: "Account",
     panelConnections: "Connections",
+    panelSupport: "Support",
+    supportEmailTitle: "Support email",
+    supportEmailHint: "Write us anytime for account or billing issues.",
+    supportPhoneTitle: "Support phone",
+    supportPhoneHint: "For urgent requests, call this number.",
     settingsNicheHint: "Your core content angle and audience.",
     settingsObjectiveHint: "Main growth outcome for this quarter.",
     onboardingKicker: "Get Started",
@@ -331,9 +337,15 @@ const I18N = {
     tabGeneral: "General",
     tabAccount: "Cont",
     tabConnections: "Conexiuni",
+    tabSupport: "Suport",
     panelGeneral: "General",
     panelAccount: "Cont",
     panelConnections: "Conexiuni",
+    panelSupport: "Suport",
+    supportEmailTitle: "Email suport",
+    supportEmailHint: "Scrie-ne oricand pentru probleme de cont sau facturare.",
+    supportPhoneTitle: "Telefon suport",
+    supportPhoneHint: "Pentru solicitari urgente, suna la acest numar.",
     settingsNicheHint: "Unghiul tau de continut si publicul tinta.",
     settingsObjectiveHint: "Rezultatul principal de crestere pentru acest trimestru.",
     onboardingKicker: "Incepe acum",
@@ -495,9 +507,15 @@ const I18N = {
     tabGeneral: "Generale",
     tabAccount: "Account",
     tabConnections: "Connessioni",
+    tabSupport: "Supporto",
     panelGeneral: "Generale",
     panelAccount: "Account",
     panelConnections: "Connessioni",
+    panelSupport: "Supporto",
+    supportEmailTitle: "Email supporto",
+    supportEmailHint: "Scrivici in qualsiasi momento per problemi account o fatturazione.",
+    supportPhoneTitle: "Telefono supporto",
+    supportPhoneHint: "Per richieste urgenti, chiama questo numero.",
     settingsNicheHint: "Angolo dei contenuti e pubblico di riferimento.",
     settingsObjectiveHint: "Risultato di crescita principale per questo trimestre.",
     onboardingKicker: "Inizia ora",
@@ -650,9 +668,15 @@ const I18N = {
     tabGeneral: "Allgemein",
     tabAccount: "Konto",
     tabConnections: "Verbindungen",
+    tabSupport: "Support",
     panelGeneral: "Allgemein",
     panelAccount: "Konto",
     panelConnections: "Verbindungen",
+    panelSupport: "Support",
+    supportEmailTitle: "Support E-Mail",
+    supportEmailHint: "Schreib uns jederzeit bei Konto- oder Zahlungsproblemen.",
+    supportPhoneTitle: "Support-Telefon",
+    supportPhoneHint: "Bei dringenden Anliegen ruf diese Nummer an.",
     settingsNicheHint: "Dein Content-Fokus und deine Zielgruppe.",
     settingsObjectiveHint: "Das wichtigste Wachstumsziel fuer dieses Quartal.",
     onboardingKicker: "Loslegen",
@@ -805,9 +829,15 @@ const I18N = {
     tabGeneral: "General",
     tabAccount: "Compte",
     tabConnections: "Connexions",
+    tabSupport: "Support",
     panelGeneral: "General",
     panelAccount: "Compte",
     panelConnections: "Connexions",
+    panelSupport: "Support",
+    supportEmailTitle: "Email support",
+    supportEmailHint: "Ecrivez-nous a tout moment pour les problemes de compte ou facturation.",
+    supportPhoneTitle: "Telephone support",
+    supportPhoneHint: "Pour les demandes urgentes, appelez ce numero.",
     settingsNicheHint: "Votre angle de contenu et votre audience.",
     settingsObjectiveHint: "Le principal objectif de croissance pour ce trimestre.",
     onboardingKicker: "Commencer",
@@ -957,7 +987,6 @@ function applyLanguage() {
   setTextIfExists("legalTermsLinkApp", t("legalTerms"));
   setTextIfExists("legalCookiesLinkApp", t("legalCookies"));
   setTextIfExists("supportTitleLanding", t("supportLabel"));
-  setTextIfExists("supportTitleApp", `${t("supportLabel")}:`);
   setTextIfExists("disconnectConfirmTitle", t("disconnectConfirmTitle"));
   setTextIfExists("disconnectConfirmBody", t("disconnectConfirmBody"));
   setTextIfExists("disconnectCancelBtn", t("disconnectConfirmCancel"));
@@ -1023,6 +1052,7 @@ function applyLanguage() {
   setTextIfExists("settingsNavGeneral", t("tabGeneral"));
   setTextIfExists("settingsNavAccount", t("tabAccount"));
   setTextIfExists("settingsNavConnections", t("tabConnections"));
+  setTextIfExists("settingsNavSupport", t("tabSupport"));
   setTextIfExists("settingsPanelGeneralTitle", t("panelGeneral"));
   setTextIfExists("settingsNicheTitle", t("nicheLabel"));
   setTextIfExists("settingsNicheHint", t("settingsNicheHint"));
@@ -1032,6 +1062,11 @@ function applyLanguage() {
   setTextIfExists("settingsNameTitle", t("shortName"));
   setTextIfExists("settingsEmailTitle", t("shortEmail"));
   setTextIfExists("settingsPanelConnectionsTitle", t("panelConnections"));
+  setTextIfExists("settingsPanelSupportTitle", t("panelSupport"));
+  setTextIfExists("supportEmailLabel", t("supportEmailTitle"));
+  setTextIfExists("supportEmailHint", t("supportEmailHint"));
+  setTextIfExists("supportPhoneLabel", t("supportPhoneTitle"));
+  setTextIfExists("supportPhoneHint", t("supportPhoneHint"));
   setTextIfExists("settingsLinkedinTitle", t("linkedinUsername"));
   setTextIfExists("settingsInstagramTitle", t("instagramUsername"));
   setTextIfExists("settingsLinkedinStatus", t("notConnected"));

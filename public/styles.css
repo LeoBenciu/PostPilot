@@ -382,16 +382,6 @@ body {
   text-align: center;
 }
 
-.support-contact-app {
-  padding: 0 20px 10px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  border-bottom: 1px solid #f2d8de;
-}
-
 .legal-links-app {
   justify-content: flex-end;
   align-items: center;
@@ -1338,6 +1328,28 @@ pre {
   color: var(--text);
 }
 
+.support-contact-card {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.support-contact-card a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #efc6ce;
+  border-radius: 12px;
+  background: #fff;
+  color: #8a1f49;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.support-contact-card a:hover {
+  text-decoration: underline;
+}
+
 .settings-actions {
   padding: 14px 18px 18px;
   border-top: 1px solid #f0c7ce;
@@ -1603,12 +1615,6 @@ pre {
     font-size: 10px;
   }
 
-  .support-contact-app {
-    font-size: 10px;
-    padding: 0 14px 8px;
-    gap: 4px;
-  }
-
   .agent-toolbar {
     top: 8px;
     right: 12px;
@@ -1742,6 +1748,10 @@ pre {
   .setting-row {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .support-contact-card {
+    justify-content: flex-start;
   }
 
   .billing-actions {
