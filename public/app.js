@@ -1302,6 +1302,104 @@ function clearFeedback() {
   showFeedback(signinFeedback, "");
 }
 
+function escapeHtml(raw) {
+  return String(raw || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function sanitizeUrl(rawUrl) {
+  try {
+    const url = new URL(String(rawUrl || "").trim());
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.toString();
+  } catch (_e) {
+    return null;
+  }
+}
+
+function renderInlineMarkdown(raw) {
+  let html = escapeHtml(raw);
+  html = html.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  html = html.replace(/\[([^\]\n]+)\]\(([^)\n]+)\)/g, (_match, label, url) => {
+    const safe = sanitizeUrl(url);
+    if (!safe) return label;
+    return `<a href="${safe}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+  });
+  html = html.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  return html;
+}
+
+function renderMarkdown(raw) {
+  const lines = String(raw || "").replace(/\r\n/g, "\n").split("\n");
+  const blocks = [];
+  let paragraph = [];
+  let listType = "";
+  let listItems = [];
+
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    const content = paragraph.join("<br>");
+    blocks.push(`<p>${content}</p>`);
+    paragraph = [];
+  };
+
+  const flushList = () => {
+    if (!listType || !listItems.length) return;
+    blocks.push(`<${listType}>${listItems.map((i) => `<li>${i}</li>`).join("")}</${listType}>`);
+    listType = "";
+    listItems = [];
+  };
+
+  for (const line of lines) {
+    const headingMatch = line.match(/^\s{0,3}(#{1,3})\s+(.+)$/);
+    if (headingMatch) {
+      flushParagraph();
+      flushList();
+      const level = headingMatch[1].length;
+      blocks.push(`<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`);
+      continue;
+    }
+
+    const unorderedMatch = line.match(/^\s*[-*]\s+(.+)$/);
+    if (unorderedMatch) {
+      flushParagraph();
+      if (listType && listType !== "ul") flushList();
+      listType = "ul";
+      listItems.push(renderInlineMarkdown(unorderedMatch[1]));
+      continue;
+    }
+
+    const orderedMatch = line.match(/^\s*\d+\.\s+(.+)$/);
+    if (orderedMatch) {
+      flushParagraph();
+      if (listType && listType !== "ol") flushList();
+      listType = "ol";
+      listItems.push(renderInlineMarkdown(orderedMatch[1]));
+      continue;
+    }
+
+    if (!line.trim()) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    flushList();
+    paragraph.push(renderInlineMarkdown(line));
+  }
+
+  flushParagraph();
+  flushList();
+
+  if (!blocks.length) return "<p></p>";
+  return blocks.join("");
+}
+
 function createMsgRow(role) {
   const row = document.createElement("div");
   row.className = `msg-row ${role}`;
@@ -1318,7 +1416,7 @@ function createMsgRow(role) {
 function addMessage(role, content) {
   const messages = document.getElementById("messages");
   const { row, bubble } = createMsgRow(role);
-  bubble.textContent = content;
+  bubble.innerHTML = renderMarkdown(content);
   messages.appendChild(row);
   messages.scrollTop = messages.scrollHeight;
 }
@@ -1347,15 +1445,18 @@ function addStreamingMessage() {
   const cursor = document.createElement("span");
   cursor.className = "streaming-cursor";
   bubble.appendChild(cursor);
+  let rawText = "";
   messages.appendChild(row);
   messages.scrollTop = messages.scrollHeight;
   return {
     append(token) {
+      rawText += String(token || "");
       bubble.insertBefore(document.createTextNode(token), cursor);
       messages.scrollTop = messages.scrollHeight;
     },
     finish() {
       cursor.remove();
+      bubble.innerHTML = renderMarkdown(rawText);
     },
     element: bubble,
   };

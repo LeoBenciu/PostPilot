@@ -583,9 +583,39 @@ body {
   padding: 13px 16px;
   line-height: 1.65;
   font-size: 14.5px;
-  white-space: pre-wrap;
+  white-space: normal;
   word-break: break-word;
   max-width: 78%;
+}
+
+.msg-bubble p,
+.msg-bubble ul,
+.msg-bubble ol,
+.msg-bubble h1,
+.msg-bubble h2,
+.msg-bubble h3 {
+  margin: 0 0 10px;
+}
+
+.msg-bubble p:last-child,
+.msg-bubble ul:last-child,
+.msg-bubble ol:last-child,
+.msg-bubble h1:last-child,
+.msg-bubble h2:last-child,
+.msg-bubble h3:last-child {
+  margin-bottom: 0;
+}
+
+.msg-bubble ul,
+.msg-bubble ol {
+  padding-left: 18px;
+}
+
+.msg-bubble code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.92em;
+  padding: 1px 5px;
+  border-radius: 6px;
 }
 
 .msg-row.assistant .msg-bubble {
@@ -596,10 +626,30 @@ body {
   box-shadow: 0 2px 10px rgba(120, 28, 50, 0.05);
 }
 
+.msg-row.assistant .msg-bubble code {
+  background: #f8eef1;
+  border: 1px solid #efd8de;
+}
+
+.msg-row.assistant .msg-bubble a {
+  color: #9a1e47;
+  text-decoration: underline;
+}
+
 .msg-row.user .msg-bubble {
   background: #c7002e;
   border-radius: 18px 4px 18px 18px;
   color: #fff;
+}
+
+.msg-row.user .msg-bubble code {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.msg-row.user .msg-bubble a {
+  color: #fff;
+  text-decoration: underline;
 }
 
 .streaming-cursor {
