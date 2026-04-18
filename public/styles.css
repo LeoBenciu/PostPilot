@@ -504,9 +504,10 @@ body {
 }
 
 .agent-view {
-  display: grid;
-  grid-template-rows: 1fr auto;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
+  flex: 1;
   position: relative;
 }
 
@@ -538,6 +539,8 @@ body {
 
 #agentView .messages {
   padding-top: 72px;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .messages {
@@ -683,6 +686,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .composer.composer--busy {
@@ -2360,7 +2364,7 @@ pre {
 .home-scores,
 .agent-scores {
   display: flex;
-  gap: 1.25rem;
+  gap: 0.55rem;
   justify-content: center;
   align-items: center;
   margin-top: 0.25rem;
@@ -2369,6 +2373,7 @@ pre {
 
 .agent-scores {
   padding: 1rem 1rem 0.5rem;
+  flex-shrink: 0;
 }
 
 .agent-scores.is-compact {
@@ -3014,7 +3019,7 @@ pre {
   }
 
   .agent-scores {
-    gap: 0.9rem;
+    gap: 0.45rem;
   }
 
   .score-ring {
@@ -3035,13 +3040,6 @@ pre {
 /* ============================================================
    Agent empty state (replaces the old Home dashboard)
    ============================================================ */
-
-.agent-view {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  padding: 0;
-}
 
 .agent-empty {
   display: flex;
@@ -3099,7 +3097,7 @@ pre {
 .suggest-hero-thumb {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: 20px;
   background: linear-gradient(135deg, #ff8a5c 0%, #ff4b75 45%, #d50032 100%);
   display: inline-flex;
   align-items: center;
@@ -3119,27 +3117,29 @@ pre {
 }
 
 .suggest-chip-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
   width: 100%;
-  max-width: 560px;
+  max-width: 720px;
+  align-items: stretch;
 }
 
 .suggest-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.55rem;
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 0.4rem 1.1rem 0.4rem 0.4rem;
+  padding: 0.4rem 0.65rem 0.4rem 0.4rem;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: clamp(0.78rem, 1.6vw, 0.92rem);
   color: var(--text);
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
   width: 100%;
+  min-width: 0;
   justify-content: flex-start;
 }
 
@@ -3152,7 +3152,7 @@ pre {
 .suggest-chip-thumb {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3178,6 +3178,20 @@ pre {
 
 .suggest-chip-label {
   letter-spacing: -0.005em;
+  text-align: left;
+  line-height: 1.2;
+}
+
+@media (max-width: 720px) {
+  .suggest-chip-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 380px) {
+  .suggest-chip-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Agent toolbar */
