@@ -112,6 +112,21 @@ const I18N = {
     homePromptPostIdeas: "Give me 5 post ideas tailored to my niche and recent performance.",
     homePromptFindVoice: "Help me find my voice. What's my edge as a creator?",
     homePromptViralIdea: "Give me one viral content idea for today, tailored to my niche and audience.",
+    scoreModalSectionWhat: "What is it?",
+    scoreModalSectionDrivers: "What's driving your score?",
+    scoreMetaMomentumName: "Momentum",
+    scoreMetaMomentumWhat:
+      "Your Momentum score gives you a clear pulse on your creative drive. It blends how consistently you show up with how your audience responds, so you always know if you're moving forward.",
+    scoreMetaMomentumDrivers:
+      'The combination of your Consistency & Growth scores, guiding you toward "Am I on track?"',
+    scoreMetaConsistencyName: "Consistency",
+    scoreMetaConsistencyWhat:
+      "Consistency reflects your commitment to showing up and publishing. It's the rhythm that helps you build habits that compound over time.",
+    scoreMetaConsistencyDrivers: "How often you post each week and how steady that cadence is over time.",
+    scoreMetaGrowthName: "Growth",
+    scoreMetaGrowthWhat:
+      "Growth highlights the progress of your effort online. It captures how your content lands with your audience and the momentum you're building along the way.",
+    scoreMetaGrowthDrivers: "Your engagement and reach trends, plus the actions you take to improve.",
     chatInputPlaceholder: "Message PostPilot Agent",
     suggestionsLabel: "Suggestions",
     suggestions: [
@@ -311,6 +326,23 @@ const I18N = {
       "Ajuta-ma sa imi gasesc vocea. Care e atuul meu ca si creator?",
     homePromptViralIdea:
       "Da-mi o idee virala de continut pentru azi, adaptata nisei si audientei mele.",
+    scoreModalSectionWhat: "Ce inseamna?",
+    scoreModalSectionDrivers: "Ce influenteaza scorul tau?",
+    scoreMetaMomentumName: "Momentum",
+    scoreMetaMomentumWhat:
+      "Scorul de Momentum iti arata cat de activ esti creativ. Combina cat de constant postezi cu felul in care reactioneaza audienta, ca sa stii daca mergi inainte.",
+    scoreMetaMomentumDrivers:
+      "Combinatia scorurilor de Consistenta si Crestere — raspunsul la intrebarea «Sunt pe drumul bun?»",
+    scoreMetaConsistencyName: "Consistenta",
+    scoreMetaConsistencyWhat:
+      "Consistenta reflecta angajamentul tau de a aparea si publica. Este ritmul care te ajuta sa construiesti obiceiuri care se acumuleaza in timp.",
+    scoreMetaConsistencyDrivers:
+      "Cat de des postezi pe saptamana si cat de stabil ramane acest ritm in timp.",
+    scoreMetaGrowthName: "Crestere",
+    scoreMetaGrowthWhat:
+      "Cresterea pune in lumina progresul tau online. Arata cum prinde continutul la public si ce impuls construiesti.",
+    scoreMetaGrowthDrivers:
+      "Trendurile de engagement si reach, plus actiunile pe care le iei ca sa imbunatatesti.",
     chatInputPlaceholder: "Mesaj catre PostPilot Agent",
     suggestionsLabel: "Sugestii",
     suggestions: [
@@ -506,6 +538,22 @@ const I18N = {
       "Aiutami a trovare la mia voce. Qual e il mio punto di forza come creator?",
     homePromptViralIdea:
       "Dammi un'idea di contenuto virale per oggi, adatta alla mia nicchia e al mio pubblico.",
+    scoreModalSectionWhat: "Cos'e?",
+    scoreModalSectionDrivers: "Cosa muove il tuo punteggio?",
+    scoreMetaMomentumName: "Momentum",
+    scoreMetaMomentumWhat:
+      "Il punteggio Momentum misura la tua spinta creativa. Unisce quanto sei costante a come reagisce il pubblico, cosi sai se stai avanzando.",
+    scoreMetaMomentumDrivers:
+      "La combinazione dei punteggi Coerenza e Crescita: ti aiuta a capire «Sono sulla strada giusta?»",
+    scoreMetaConsistencyName: "Coerenza",
+    scoreMetaConsistencyWhat:
+      "La coerenza riflette quanto ti impegni a pubblicare. E il ritmo che ti aiuta a creare abitudini che si accumulano nel tempo.",
+    scoreMetaConsistencyDrivers:
+      "Quanto spesso posti a settimana e quanto e stabile quel ritmo nel tempo.",
+    scoreMetaGrowthName: "Crescita",
+    scoreMetaGrowthWhat:
+      "La crescita mette in luce i progressi online. Mostra come il contenuto arriva al pubblico e che slancio stai costruendo.",
+    scoreMetaGrowthDrivers: "Tendenze di engagement e reach, piu le azioni che fai per migliorare.",
     chatInputPlaceholder: "Messaggio per PostPilot Agent",
     suggestionsLabel: "Suggerimenti",
     suggestions: [
@@ -692,6 +740,22 @@ const I18N = {
       "Hilf mir, meine Stimme zu finden. Was ist meine Staerke als Creator?",
     homePromptViralIdea:
       "Gib mir eine virale Content-Idee fuer heute, passend zu meiner Nische und Zielgruppe.",
+    scoreModalSectionWhat: "Was ist das?",
+    scoreModalSectionDrivers: "Was beeinflusst deinen Score?",
+    scoreMetaMomentumName: "Momentum",
+    scoreMetaMomentumWhat:
+      "Der Momentum-Score zeigt deine kreative Dynamik. Er verbindet, wie regelmaessig du postest, mit der Reaktion deiner Zielgruppe.",
+    scoreMetaMomentumDrivers:
+      "Die Kombination aus Konsistenz- und Wachstums-Score — die Antwort auf «Bin ich auf Kurs?»",
+    scoreMetaConsistencyName: "Konsistenz",
+    scoreMetaConsistencyWhat:
+      "Konsistenz zeigt dein Engagement, sichtbar zu sein und zu veroeffentlichen. Das ist der Rhythmus fuer Gewohnheiten, die sich mit der Zeit aufbauen.",
+    scoreMetaConsistencyDrivers:
+      "Wie oft du pro Woche postest und wie stabil dieser Rhythmus bleibt.",
+    scoreMetaGrowthName: "Wachstum",
+    scoreMetaGrowthWhat:
+      "Wachstum zeigt deinen Fortschritt online. Es zeigt, wie dein Content ankommt und welchen Schwung du aufbaust.",
+    scoreMetaGrowthDrivers: "Engagement- und Reichweiten-Trends plus deine Schritte zur Verbesserung.",
     chatInputPlaceholder: "Nachricht an PostPilot Agent",
     suggestionsLabel: "Vorschlaege",
     suggestions: [
@@ -878,6 +942,22 @@ const I18N = {
       "Aide-moi a trouver ma voix. Quel est mon avantage en tant que createur ?",
     homePromptViralIdea:
       "Donne-moi une idee de contenu virale pour aujourd'hui, adaptee a ma niche et a mon audience.",
+    scoreModalSectionWhat: "Qu'est-ce que c'est ?",
+    scoreModalSectionDrivers: "Qu'est-ce qui influence ton score ?",
+    scoreMetaMomentumName: "Momentum",
+    scoreMetaMomentumWhat:
+      "Le score Momentum mesure ton elan creatif. Il combine ta regularite et la reaction du public pour voir si tu avances.",
+    scoreMetaMomentumDrivers:
+      "La combinaison des scores Regularite et Croissance — pour repondre a « Est-ce que je suis sur la bonne voie ? »",
+    scoreMetaConsistencyName: "Regularite",
+    scoreMetaConsistencyWhat:
+      "La regularite reflete ton engagement a publier. C'est le rythme qui aide a creer des habitudes qui se cumulent.",
+    scoreMetaConsistencyDrivers:
+      "La frequence de tes posts par semaine et la stabilite de ce rythme dans le temps.",
+    scoreMetaGrowthName: "Croissance",
+    scoreMetaGrowthWhat:
+      "La croissance met en avant tes progres en ligne. Elle montre comment ton contenu arrive au public et l'elan que tu construis.",
+    scoreMetaGrowthDrivers: "Les tendances d'engagement et de portee, plus les actions que tu prends pour ameliorer.",
     chatInputPlaceholder: "Message a PostPilot Agent",
     suggestionsLabel: "Suggestions",
     suggestions: [
@@ -1296,6 +1376,13 @@ function applyLanguage() {
     renderHomeDashboard(creatorProfile);
   } else {
     setTextIfExists("agentGreeting", t("agentEmptyGreetingGeneric"));
+  }
+
+  setTextIfExists("scoreModalWhatTitle", t("scoreModalSectionWhat"));
+  setTextIfExists("scoreModalDriversTitle", t("scoreModalSectionDrivers"));
+  const scoreModalEl = document.getElementById("scoreModal");
+  if (lastOpenScoreKey && creatorProfile && scoreModalEl && !scoreModalEl.classList.contains("hidden")) {
+    openScoreModal(lastOpenScoreKey);
   }
 
   syncOnboardingLanguage();
@@ -2320,9 +2407,6 @@ analyticsViewBtn?.addEventListener("click", async () => {
 document.getElementById("obConnectInstagramBtn")?.addEventListener("click", () => {
   connectPlatform("instagram");
 });
-document.getElementById("obConnectLinkedinBtn")?.addEventListener("click", () => {
-  connectPlatform("linkedin");
-});
 document.getElementById("obConnectLogoutBtn")?.addEventListener("click", () => {
   performDisconnect();
 });
@@ -2518,30 +2602,19 @@ if (suggestionsBtn && suggestionsPopup) {
    ============================================================ */
 
 let creatorProfile = null;
+let lastOpenScoreKey = null;
 
-const SCORE_META = {
-  momentum: {
-    name: "Momentum",
-    icon: "⚡",
-    what:
-      "Your Momentum score gives you a clear pulse on your creative drive. It blends how consistently you show up with how your audience responds, so you always know if you're moving forward.",
-    drivers: "The combination of your Consistency & Growth scores, guiding you toward \"Am I on track?\"",
-  },
-  consistency: {
-    name: "Consistency",
-    icon: "🗓",
-    what:
-      "Consistency reflects your commitment to showing up and publishing. It's the rhythm that helps you build habits that compound over time.",
-    drivers: "How often you post each week and how steady that cadence is over time.",
-  },
-  growth: {
-    name: "Growth",
-    icon: "📈",
-    what:
-      "Growth highlights the progress of your effort online. It captures how your content lands with your audience and the momentum you're building along the way.",
-    drivers: "Your engagement and reach trends, plus the actions you take to improve.",
-  },
-};
+function getScoreMeta(scoreKey) {
+  const icons = { momentum: "⚡", consistency: "🗓", growth: "📈" };
+  if (!icons[scoreKey]) return null;
+  const cap = scoreKey.charAt(0).toUpperCase() + scoreKey.slice(1);
+  return {
+    icon: icons[scoreKey],
+    name: t(`scoreMeta${cap}Name`),
+    what: t(`scoreMeta${cap}What`),
+    drivers: t(`scoreMeta${cap}Drivers`),
+  };
+}
 
 async function loadCreatorProfile() {
   try {
@@ -2579,11 +2652,14 @@ function renderHomeDashboard(profile) {
 }
 
 function openScoreModal(scoreKey) {
-  const meta = SCORE_META[scoreKey];
+  const meta = getScoreMeta(scoreKey);
   if (!meta || !creatorProfile) return;
+  lastOpenScoreKey = scoreKey;
   const value = Math.max(0, Math.min(100, Number(creatorProfile.scores?.[scoreKey] || 0)));
   const modal = document.getElementById("scoreModal");
   if (!modal) return;
+  setTextIfExists("scoreModalWhatTitle", t("scoreModalSectionWhat"));
+  setTextIfExists("scoreModalDriversTitle", t("scoreModalSectionDrivers"));
   document.getElementById("scoreModalIcon").textContent = meta.icon;
   document.getElementById("scoreModalName").textContent = meta.name;
   const fill = document.getElementById("scoreModalBarFill");
@@ -2595,6 +2671,7 @@ function openScoreModal(scoreKey) {
 }
 
 function closeScoreModal() {
+  lastOpenScoreKey = null;
   document.getElementById("scoreModal")?.classList.add("hidden");
 }
 
