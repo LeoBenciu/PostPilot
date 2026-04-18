@@ -54,6 +54,55 @@ function sendRedirect(res, location) {
   res.end();
 }
 
+// iOS Universal Links hijack server-side 302s to instagram.com / linkedin.com
+// and open them in the native app, where the OAuth path (/oauth/authorize) is
+// parsed as a username → "profile not found". Rendering an HTML shim that
+// triggers the navigation from JS (script-initiated, no user gesture) keeps
+// the flow inside the browser.
+function sendJsRedirect(res, location) {
+  const escaped = String(location)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Redirecting…</title>
+<style>
+  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #fff7f9; color: #1f0d12; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; text-align: center; }
+  .card { max-width: 360px; }
+  .spinner { width: 32px; height: 32px; border: 3px solid #f3d5d8; border-top-color: #d50032; border-radius: 50%; margin: 0 auto 16px; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  a { color: #d50032; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="spinner"></div>
+  <p>Redirecting to login…</p>
+  <p><a id="manual" href="${escaped}">Tap here if you aren't redirected</a></p>
+</div>
+<script>
+  // Script-initiated replace() keeps the flow in Safari on iOS,
+  // bypassing Universal Links that would open the native app.
+  setTimeout(function () {
+    try { window.location.replace(${JSON.stringify(location)}); }
+    catch (e) { window.location.href = ${JSON.stringify(location)}; }
+  }, 50);
+</script>
+</body>
+</html>`;
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "no-store",
+  });
+  res.end(html);
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
@@ -1243,7 +1292,7 @@ const server = http.createServer(async (req, res) => {
       });
       const redirectUri = `${requestOrigin(req)}/auth/${platform}/callback`;
       const authUrl = buildAuthUrl({ platform, redirectUri, state: stateToken });
-      sendRedirect(res, authUrl);
+      sendJsRedirect(res, authUrl);
     } catch (err) {
       const platform = pathname.endsWith("linkedin") ? "linkedin" : "instagram";
       sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_start_failed", err.message));
