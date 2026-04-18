@@ -2369,7 +2369,29 @@ function displayPlatform(platform) {
   return "Social";
 }
 
+function isMobileDevice() {
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+}
+
 async function connectPlatform(platform) {
+  // On mobile, navigating the current tab to instagram.com (or linkedin.com)
+  // triggers iOS Universal Links / Android App Links, which hand the URL to
+  // the native app. If the app isn't logged in — or the account isn't eligible
+  // for the OAuth scope — the user sees a cryptic error and is stuck.
+  //
+  // Opening the OAuth start URL in a new tab from a synchronous click handler
+  // keeps the flow inside the browser (Safari / Chrome) so the user can sign
+  // in with their credentials on the web, which is what we want here.
+  if (isMobileDevice()) {
+    setText("settingsStatus", tf("integrationRedirecting"));
+    const startUrl = `/auth/${platform}`;
+    const newWindow = window.open(startUrl, "_blank", "noopener,noreferrer");
+    if (!newWindow) {
+      window.location.assign(startUrl);
+    }
+    return;
+  }
+
   try {
     setText("settingsStatus", tf("integrationRedirecting"));
     const data = await api("/api/integrations/connect", "POST", { platform });
