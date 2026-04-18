@@ -80,6 +80,35 @@ function truncate(text, limit) {
   return `${raw.slice(0, limit)}...`;
 }
 
+function isAnthropicModel(model) {
+  return String(model || "").toLowerCase().startsWith("claude");
+}
+
+function resolveDirectModel() {
+  return process.env.OPENAI_MODEL || "gpt-4o-mini";
+}
+
+// Anthropic's Messages API expects images as {type:"image", source:{...}} rather
+// than OpenAI's {type:"image_url", image_url:{url}}. Our vision pipeline produces
+// base64 data URIs — split them into media_type + raw base64 for Anthropic.
+function convertVisionContentToAnthropic(content) {
+  if (!Array.isArray(content)) return content;
+  return content.map((block) => {
+    if (block?.type === "image_url") {
+      const url = block.image_url?.url || "";
+      const m = url.match(/^data:([^;]+);base64,(.+)$/);
+      if (m) {
+        return {
+          type: "image",
+          source: { type: "base64", media_type: m[1], data: m[2] },
+        };
+      }
+      return { type: "image", source: { type: "url", url } };
+    }
+    return block;
+  });
+}
+
 function normalizeHistory(history) {
   if (!Array.isArray(history)) return [];
   return history
@@ -630,6 +659,141 @@ async function callOpenAI({ message, history, state, connectedPlatforms, languag
   };
 }
 
+async function callAnthropic({ message, history, state, connectedPlatforms, language }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY || "";
+  const model = resolveDirectModel();
+  if (!apiKey) {
+    aiLog("error", "Anthropic skipped: ANTHROPIC_API_KEY not set");
+    throw new Error("anthropic_not_configured");
+  }
+
+  const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  state._lastUserMessageForPrompt = inputText;
+  const useVision = shouldUseVisionForMessage(inputText);
+  const postImages = useVision ? await collectPostImages(state.posts) : [];
+  aiLog("log", "Anthropic vision routing", { useVision, count: postImages.length });
+  const openaiStyleUserContent = buildVisionUserMessage(inputText, postImages);
+  const userContent = Array.isArray(openaiStyleUserContent)
+    ? convertVisionContentToAnthropic(openaiStyleUserContent)
+    : [{ type: "text", text: openaiStyleUserContent }];
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 2048,
+      temperature: 0.4,
+      system: buildSystemPrompt({ state, connectedPlatforms, language }),
+      messages: [
+        ...history.map((m) => ({ role: m.role, content: m.content })),
+        { role: "user", content: userContent },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const errBody = truncate(await res.text(), 400);
+    aiLog("error", "Anthropic HTTP error", { status: res.status, bodyPreview: errBody });
+    throw new Error(`anthropic_request_failed_${res.status}`);
+  }
+  const data = await res.json();
+  const content = (data?.content || [])
+    .filter((b) => b?.type === "text")
+    .map((b) => b.text)
+    .join("");
+  if (!content) throw new Error("anthropic_empty_response");
+  return {
+    content: truncate(content, DEFAULT_MAX_OUTPUT_CHARS),
+    action: "ai_reply",
+    provider: "anthropic",
+  };
+}
+
+async function* streamAnthropic({ message, history, state, connectedPlatforms, language }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY || "";
+  const model = resolveDirectModel();
+  if (!apiKey) throw new Error("anthropic_not_configured");
+
+  const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
+  state._lastUserMessageForPrompt = inputText;
+  const useVision = shouldUseVisionForMessage(inputText);
+  const postImages = useVision ? await collectPostImages(state.posts) : [];
+  aiLog("log", "Anthropic vision routing for stream", { useVision, count: postImages.length });
+  const openaiStyleUserContent = buildVisionUserMessage(inputText, postImages);
+  const userContent = Array.isArray(openaiStyleUserContent)
+    ? convertVisionContentToAnthropic(openaiStyleUserContent)
+    : [{ type: "text", text: openaiStyleUserContent }];
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 2048,
+      temperature: 0.4,
+      stream: true,
+      system: buildSystemPrompt({ state, connectedPlatforms, language }),
+      messages: [
+        ...history.map((m) => ({ role: m.role, content: m.content })),
+        { role: "user", content: userContent },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const errBody = truncate(await res.text(), 400);
+    aiLog("error", "Anthropic stream HTTP error", { status: res.status, bodyPreview: errBody });
+    throw new Error(`anthropic_request_failed_${res.status}`);
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for await (const chunk of res.body) {
+    buffer += decoder.decode(chunk, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith("data: ")) continue;
+      const payload = trimmed.slice(6);
+      if (payload === "[DONE]") return;
+      try {
+        const parsed = JSON.parse(payload);
+        if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
+          const token = parsed.delta.text;
+          if (token) yield token;
+        } else if (parsed.type === "message_stop") {
+          return;
+        }
+      } catch (_e) { /* skip malformed SSE line */ }
+    }
+  }
+}
+
+async function callDirectLLM(params) {
+  const model = resolveDirectModel();
+  if (isAnthropicModel(model)) return callAnthropic(params);
+  return callOpenAI(params);
+}
+
+async function* streamDirectLLM(params) {
+  const model = resolveDirectModel();
+  if (isAnthropicModel(model)) {
+    yield* streamAnthropic(params);
+    return;
+  }
+  yield* streamOpenAI(params);
+}
+
 async function callCrewAI({ message, history, state, connectedPlatforms, userId, sessionId, language }) {
   const baseUrl = process.env.CREWAI_API_URL || "";
   if (!baseUrl) {
@@ -720,7 +884,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId, 
   const normalizedHistory = normalizeHistory(history);
 
   if (provider === "openai") {
-    return callOpenAI({
+    return callDirectLLM({
       message,
       history: normalizedHistory,
       state,
@@ -741,18 +905,22 @@ async function generateAgentReply({ message, history, state, userId, sessionId, 
         language,
       });
     } catch (err) {
-      const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
+      const directModel = resolveDirectModel();
+      const directProvider = isAnthropicModel(directModel) ? "anthropic" : "openai";
+      const hasDirectKey = directProvider === "anthropic"
+        ? Boolean(process.env.ANTHROPIC_API_KEY)
+        : Boolean(process.env.OPENAI_API_KEY);
       const reason = String(err?.message || err);
       console.error(
         `[PostPilot][AI] ⚠️ FALLBACK: CrewAI unreachable (${reason}). ` +
-          `The /chat request is being served by the direct OpenAI path using ` +
-          `the YAML-backed system prompt. ` +
-          (hasOpenAiKey
+          `The /chat request is being served by the direct ${directProvider} path ` +
+          `(model: ${directModel}) using the YAML-backed system prompt. ` +
+          (hasDirectKey
             ? "Start the Python service (uvicorn ... --port 8000) to restore CrewAI orchestration."
-            : "OPENAI_API_KEY missing — request will fail."),
+            : `${directProvider.toUpperCase()}_API_KEY missing — request will fail.`),
       );
-      if (!hasOpenAiKey) throw err;
-      return callOpenAI({
+      if (!hasDirectKey) throw err;
+      return callDirectLLM({
         message,
         history: normalizedHistory,
         state,
@@ -885,7 +1053,7 @@ async function* streamAgentReply({ message, history, state, userId, sessionId, l
   const normalizedHistory = normalizeHistory(history);
 
   if (provider === "openai") {
-    yield* streamOpenAI({ message, history: normalizedHistory, state, connectedPlatforms, language });
+    yield* streamDirectLLM({ message, history: normalizedHistory, state, connectedPlatforms, language });
     return;
   }
 
@@ -902,18 +1070,22 @@ async function* streamAgentReply({ message, history, state, userId, sessionId, l
       });
       return;
     } catch (err) {
-      const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
+      const directModel = resolveDirectModel();
+      const directProvider = isAnthropicModel(directModel) ? "anthropic" : "openai";
+      const hasDirectKey = directProvider === "anthropic"
+        ? Boolean(process.env.ANTHROPIC_API_KEY)
+        : Boolean(process.env.OPENAI_API_KEY);
       const reason = String(err?.message || err);
       console.error(
         `[PostPilot][AI] ⚠️ FALLBACK: CrewAI stream unreachable (${reason}). ` +
-          `The /chat/stream request is being served by the direct OpenAI path using ` +
-          `the YAML-backed system prompt. ` +
-          (hasOpenAiKey
+          `The /chat/stream request is being served by the direct ${directProvider} path ` +
+          `(model: ${directModel}) using the YAML-backed system prompt. ` +
+          (hasDirectKey
             ? "Start the Python service (uvicorn ... --port 8000) to restore CrewAI orchestration."
-            : "OPENAI_API_KEY missing — stream will fail."),
+            : `${directProvider.toUpperCase()}_API_KEY missing — stream will fail.`),
       );
-      if (!hasOpenAiKey) throw err;
-      yield* streamOpenAI({ message, history: normalizedHistory, state, connectedPlatforms, language });
+      if (!hasDirectKey) throw err;
+      yield* streamDirectLLM({ message, history: normalizedHistory, state, connectedPlatforms, language });
       return;
     }
   }

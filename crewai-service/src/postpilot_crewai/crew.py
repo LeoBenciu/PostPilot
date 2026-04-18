@@ -199,7 +199,15 @@ class PostPilotCrew:
 
     def _llm(self) -> LLM:
         model = os.getenv("POSTPILOT_CREW_MODEL", "gpt-4o-mini")
-        api_key = os.getenv("OPENAI_API_KEY", "")
+        # LiteLLM (under CrewAI's LLM wrapper) dispatches providers by model prefix.
+        # Claude models need an explicit `anthropic/` prefix and the Anthropic key;
+        # OpenAI models stay bare with the OpenAI key.
+        if model.lower().startswith("claude"):
+            api_key = os.getenv("ANTHROPIC_API_KEY", "")
+            if not model.lower().startswith("anthropic/"):
+                model = f"anthropic/{model}"
+        else:
+            api_key = os.getenv("OPENAI_API_KEY", "")
         return LLM(model=model, api_key=api_key)
 
     @agent

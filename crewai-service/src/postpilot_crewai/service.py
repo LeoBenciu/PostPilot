@@ -120,29 +120,73 @@ def chat(request: Request, payload: ChatRequest) -> ChatResponse:
             raise HTTPException(status_code=500, detail=f"crewai_service_error: {err}") from err
 
 
+def _is_anthropic_model(model: str) -> bool:
+    return str(model or "").lower().startswith("claude")
+
+
+def _openai_to_anthropic_user_content(content) -> list[dict]:
+    """Reshape OpenAI-style multimodal user content into Anthropic blocks."""
+    if isinstance(content, str):
+        return [{"type": "text", "text": content}]
+    out: list[dict] = []
+    for block in content or []:
+        btype = block.get("type")
+        if btype == "text":
+            out.append({"type": "text", "text": block.get("text", "")})
+        elif btype == "image_url":
+            url = (block.get("image_url") or {}).get("url", "")
+            if url.startswith("data:") and ";base64," in url:
+                header, data = url.split(",", 1)
+                media_type = header[5:].split(";", 1)[0] or "image/jpeg"
+                out.append(
+                    {
+                        "type": "image",
+                        "source": {"type": "base64", "media_type": media_type, "data": data},
+                    }
+                )
+            elif url:
+                out.append({"type": "image", "source": {"type": "url", "url": url}})
+    return out
+
+
 @app.post("/chat/stream")
 async def chat_stream(request: Request, payload: ChatRequest) -> StreamingResponse:
     """SSE endpoint.
 
     YAML (agents.yaml + tasks.yaml) is the single source of truth for the prompt.
     Context from the Node app is formatted into readable sections (profile, accounts,
-    posts) and injected into the task description before being sent to OpenAI.
+    posts) and injected into the task description before being sent to the LLM.
+    Routes to Anthropic when POSTPILOT_CREW_MODEL starts with "claude", otherwise
+    uses OpenAI.
     """
     distinct_id = request.headers.get("X-POSTHOG-DISTINCT-ID") or payload.userId
     session_id = request.headers.get("X-POSTHOG-SESSION-ID") or payload.sessionId
 
-    try:
-        from openai import AsyncOpenAI
-    except ImportError:
-        raise HTTPException(
-            status_code=500,
-            detail="openai package not installed in crewai-service; pip install openai",
-        )
-
-    api_key = os.getenv("OPENAI_API_KEY", "")
     model = os.getenv("POSTPILOT_CREW_MODEL", "gpt-4o-mini")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set")
+    use_anthropic = _is_anthropic_model(model)
+
+    if use_anthropic:
+        api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not set")
+        try:
+            from anthropic import AsyncAnthropic
+        except ImportError:
+            raise HTTPException(
+                status_code=500,
+                detail="anthropic package not installed in crewai-service; pip install anthropic",
+            )
+    else:
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set")
+        try:
+            from openai import AsyncOpenAI
+        except ImportError:
+            raise HTTPException(
+                status_code=500,
+                detail="openai package not installed in crewai-service; pip install openai",
+            )
 
     context = payload.context or {}
     history = payload.history or []
@@ -173,31 +217,24 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
                 f"likes: {img.likes}, comments: {img.comments}\n"
                 f'Caption: "{img.caption}"'
             )
-        user_content: list[dict] = [
+        openai_user_content: list[dict] = [
             {"type": "text", "text": f"{image_context}\n\nUser message: {payload.message[:4000]}"},
         ]
         for img in post_images:
             if img.url:
-                user_content.append(
+                openai_user_content.append(
                     {"type": "image_url", "image_url": {"url": img.url, "detail": "low"}}
                 )
-        user_message = {"role": "user", "content": user_content}
     else:
-        user_message = {"role": "user", "content": payload.message[:4000]}
+        openai_user_content = payload.message[:4000]
 
-    messages = [
-        {"role": "system", "content": system_prompt},
-        *history_msgs,
-        user_message,
-    ]
-
-    client = AsyncOpenAI(api_key=api_key)
+    provider = "anthropic" if use_anthropic else "openai"
 
     posthog_client.capture(
         "chat stream started",
         distinct_id=distinct_id,
         properties={
-            "provider": "openai",
+            "provider": provider,
             "model": model,
             "has_images": len(payload.postImages) > 0,
             "history_length": len(payload.history),
@@ -205,37 +242,72 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
         },
     )
 
-    async def generate() -> AsyncGenerator[str, None]:
-        try:
-            stream = await client.chat.completions.create(
-                model=model,
-                temperature=0.4,
-                messages=messages,
-                stream=True,
-            )
-            async for chunk in stream:
-                delta = chunk.choices[0].delta if chunk.choices else None
-                if delta and delta.content:
-                    yield f"data: {json.dumps({'token': delta.content})}\n\n"
-            posthog_client.capture(
-                "chat stream completed",
-                distinct_id=distinct_id,
-                properties={
-                    "provider": "openai",
-                    "model": model,
-                },
-            )
-            yield f"data: {json.dumps({'done': True})}\n\n"
-        except Exception as exc:
-            posthog_client.capture(
-                "chat stream failed",
-                distinct_id=distinct_id,
-                properties={
-                    "provider": "openai",
-                    "error_type": type(exc).__name__,
-                },
-            )
-            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+    if use_anthropic:
+        anthropic_user_content = _openai_to_anthropic_user_content(openai_user_content)
+        anthropic_messages = [
+            *history_msgs,
+            {"role": "user", "content": anthropic_user_content},
+        ]
+        client = AsyncAnthropic(api_key=api_key)
+
+        async def generate() -> AsyncGenerator[str, None]:
+            try:
+                async with client.messages.stream(
+                    model=model,
+                    max_tokens=2048,
+                    temperature=0.4,
+                    system=system_prompt,
+                    messages=anthropic_messages,
+                ) as stream:
+                    async for text in stream.text_stream:
+                        if text:
+                            yield f"data: {json.dumps({'token': text})}\n\n"
+                posthog_client.capture(
+                    "chat stream completed",
+                    distinct_id=distinct_id,
+                    properties={"provider": "anthropic", "model": model},
+                )
+                yield f"data: {json.dumps({'done': True})}\n\n"
+            except Exception as exc:
+                posthog_client.capture(
+                    "chat stream failed",
+                    distinct_id=distinct_id,
+                    properties={"provider": "anthropic", "error_type": type(exc).__name__},
+                )
+                yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+    else:
+        openai_messages = [
+            {"role": "system", "content": system_prompt},
+            *history_msgs,
+            {"role": "user", "content": openai_user_content},
+        ]
+        client = AsyncOpenAI(api_key=api_key)
+
+        async def generate() -> AsyncGenerator[str, None]:
+            try:
+                stream = await client.chat.completions.create(
+                    model=model,
+                    temperature=0.4,
+                    messages=openai_messages,
+                    stream=True,
+                )
+                async for chunk in stream:
+                    delta = chunk.choices[0].delta if chunk.choices else None
+                    if delta and delta.content:
+                        yield f"data: {json.dumps({'token': delta.content})}\n\n"
+                posthog_client.capture(
+                    "chat stream completed",
+                    distinct_id=distinct_id,
+                    properties={"provider": "openai", "model": model},
+                )
+                yield f"data: {json.dumps({'done': True})}\n\n"
+            except Exception as exc:
+                posthog_client.capture(
+                    "chat stream failed",
+                    distinct_id=distinct_id,
+                    properties={"provider": "openai", "error_type": type(exc).__name__},
+                )
+                yield f"data: {json.dumps({'error': str(exc)})}\n\n"
 
     return StreamingResponse(
         generate(),
