@@ -1302,7 +1302,15 @@ const server = http.createServer(async (req, res) => {
       });
       const redirectUri = `${requestOrigin(req)}/auth/${platform}/callback`;
       const authUrl = buildAuthUrl({ platform, redirectUri, state: stateToken });
-      sendJsRedirect(res, authUrl);
+      // iOS Safari aggressively triggers Universal Links on server-side 302s
+      // to instagram.com, which opens the native app with a spurious
+      // "profile not found" error. The JS shim mitigates this by navigating
+      // from a script context. On every other browser a plain 302 gives a
+      // cleaner UX without the intermediate "Redirecting…" page.
+      const ua = String(req.headers["user-agent"] || "");
+      const isIos = /iPhone|iPad|iPod/i.test(ua);
+      if (isIos) sendJsRedirect(res, authUrl);
+      else sendRedirect(res, authUrl);
     } catch (err) {
       const platform = pathname.endsWith("linkedin") ? "linkedin" : "instagram";
       sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_start_failed", err.message));
