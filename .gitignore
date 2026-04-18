@@ -1,3 +1,37 @@
+# Secrets
 .env
 crewai-service/.env
+.env.local
+.env.*.local
 
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python (crewai-service)
+crewai-service/.venv/
+crewai-service/**/__pycache__/
+crewai-service/**/*.pyc
+*.egg-info/
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Build / coverage
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Logs
+*.log

@@ -229,11 +229,7 @@
     <div class="app-shell hidden" id="chatApp">
       <aside class="sidebar">
         <div class="sidebar-top-nav">
-          <button id="homeViewBtn" class="secondary sidebar-view-btn active">
-            <span aria-hidden="true" class="btn-icon">⌂</span>
-            <span id="homeViewBtnLabel">Home</span>
-          </button>
-          <button id="agentViewBtn" class="secondary sidebar-view-btn">
+          <button id="agentViewBtn" class="secondary sidebar-view-btn active">
             <span aria-hidden="true" class="btn-icon">✦</span>
             <span id="agentViewBtnLabel">Coach</span>
           </button>
@@ -259,14 +255,9 @@
             <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span>Agent</span></h1>
             <p id="chatHeaderSubtitle">Your creator growth assistant</p>
           </div>
-          <div class="legal-links legal-links-app">
-            <a href="/privacy.html" id="legalPrivacyLinkApp" target="_blank" rel="noopener noreferrer">Privacy</a>
-            <a href="/terms.html" id="legalTermsLinkApp" target="_blank" rel="noopener noreferrer">Terms</a>
-            <a href="/cookies.html" id="legalCookiesLinkApp" target="_blank" rel="noopener noreferrer">Cookies</a>
-          </div>
         </header>
-        <section id="homeView" class="app-view home-view">
-          <div class="home-scores" id="homeScores">
+        <section id="agentView" class="app-view agent-view">
+          <div class="agent-scores" id="agentScores">
             <button type="button" class="score-chip" data-score="momentum" aria-label="Momentum score details">
               <span class="score-ring" style="--pct: 0">
                 <span class="score-ring-value" data-score-value="momentum">0</span>
@@ -287,114 +278,41 @@
             </button>
           </div>
 
-          <div class="home-hero">
-            <h2 class="home-greeting" id="homeGreeting">Welcome back, let's slay the day</h2>
-            <button type="button" class="home-feature-chip" id="viralIdeaChip">
-              <span class="home-feature-icon" aria-hidden="true">🔥</span>
-              <span id="viralIdeaChipLabel">Viral idea of the day</span>
-            </button>
-            <div class="home-chip-row">
-              <button type="button" class="home-chip" data-prompt="weekly-plan">
-                <span class="home-chip-icon" aria-hidden="true">Aa</span>
-                <span id="homeChipWeeklyPlanLabel">Weekly content plan</span>
-              </button>
-              <button type="button" class="home-chip" data-prompt="motivate">
-                <span class="home-chip-icon" aria-hidden="true">💪</span>
-                <span id="homeChipMotivateLabel">Motivate me</span>
-              </button>
-              <button type="button" class="home-chip" data-prompt="post-ideas">
-                <span class="home-chip-icon" aria-hidden="true">💡</span>
-                <span id="homeChipPostIdeasLabel">Post ideas</span>
-              </button>
-              <button type="button" class="home-chip" data-prompt="find-voice">
-                <span class="home-chip-icon" aria-hidden="true">🎤</span>
-                <span id="homeChipFindVoiceLabel">Find my voice</span>
-              </button>
-            </div>
-          </div>
-
-          <form id="homeComposer" class="home-composer" autocomplete="off">
-            <input
-              id="homeMessageInput"
-              type="text"
-              name="postpilot-home-message"
-              enterkeyhint="send"
-              placeholder="Ask anything"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="none"
-              spellcheck="false"
-              aria-label="Ask PostPilot anything"
-            />
-            <button type="submit" id="homeSendBtn" class="home-send-btn" aria-label="Send">
-              <span aria-hidden="true">↑</span>
-            </button>
-          </form>
-
-          <div class="home-cta-banner" id="homeCtaBanner">
-            <div class="home-cta-text">
-              <p class="home-cta-title" id="homeCtaTitle">Create my 30-Day Content Calendar</p>
-              <p class="home-cta-sub" id="homeCtaSub">Have PostPilot become your new Head of Content</p>
-            </div>
-            <span class="home-cta-arrow" aria-hidden="true">→</span>
-          </div>
-        </section>
-
-        <section id="scanView" class="app-view scan-view hidden">
-          <div class="scan-inner">
-            <div class="scan-avatar-wrap">
-              <div class="scan-glow" aria-hidden="true"></div>
-              <img id="scanAvatar" class="scan-avatar" alt="Your profile" src="" />
-            </div>
-            <p id="scanHandle" class="scan-handle"></p>
-            <div class="scan-badge" id="scanBadge">
-              <span id="scanBadgeCount">0</span><span class="scan-badge-heart" aria-hidden="true">❤</span>
-            </div>
-            <h2 class="scan-title" id="scanTitle">Scanning your profile...</h2>
-            <div class="scan-progress" aria-hidden="true">
-              <span class="scan-progress-bar"></span>
-            </div>
-          </div>
-        </section>
-
-        <section id="edgeView" class="app-view edge-view hidden">
-          <div class="edge-inner">
-            <img id="edgeAvatar" class="edge-avatar" alt="Your profile" src="" />
-            <h2 class="edge-title">
-              <span id="edgeFirstName">friend</span><span id="edgeTitleSuffix">, you've got an edge</span>
-            </h2>
-
-            <div class="edge-cards">
-              <article class="edge-card edge-card-super">
-                <span class="edge-card-kicker" id="edgeSuperKicker">🔥 Your Superpower</span>
-                <h3 class="edge-card-title">
-                  <span id="edgeSuperTitle1">What you're</span> <em id="edgeSuperTitle2">crushing</em>
-                </h3>
-                <ul class="edge-card-list" id="edgeSuperList"></ul>
-              </article>
-              <article class="edge-card edge-card-unlock">
-                <span class="edge-card-kicker" id="edgeUnlockKicker">🚀 Your Unlock</span>
-                <h3 class="edge-card-title">
-                  <span id="edgeUnlockTitle1">Your untapped</span> <em id="edgeUnlockTitle2">potential</em>
-                </h3>
-                <ul class="edge-card-list" id="edgeUnlockList"></ul>
-              </article>
-            </div>
-
-            <button type="button" class="edge-cta" id="edgeStartBtn">
-              <span id="edgeStartBtnLabel">Start Creating with PostPilot</span>
-            </button>
-            <p class="edge-trial-note" id="edgeTrialNote">FREE for 14 days</p>
-          </div>
-        </section>
-
-        <section id="agentView" class="app-view agent-view hidden">
           <div class="agent-toolbar">
-            <button id="resetChatBtn" class="secondary agent-reset-btn">
+            <button id="resetChatBtn" class="secondary agent-reset-btn hidden">
               <span aria-hidden="true" class="btn-icon">↺</span>
               <span id="resetChatBtnLabel">Reset chat</span>
             </button>
           </div>
+
+          <div class="agent-empty" id="agentEmptyState">
+            <h2 class="agent-greeting" id="agentGreeting">Welcome back, let's slay the day 💪</h2>
+            <button type="button" class="suggest-hero-chip" id="viralIdeaChip">
+              <span class="suggest-hero-thumb" aria-hidden="true">
+                <span class="suggest-hero-emoji">🔥</span>
+              </span>
+              <span class="suggest-hero-label" id="viralIdeaChipLabel">Viral idea of the day</span>
+            </button>
+            <div class="suggest-chip-row">
+              <button type="button" class="suggest-chip suggest-chip-1" data-prompt="weekly-plan">
+                <span class="suggest-chip-thumb" aria-hidden="true"><span>Aa</span></span>
+                <span class="suggest-chip-label" id="homeChipWeeklyPlanLabel">Weekly content plan</span>
+              </button>
+              <button type="button" class="suggest-chip suggest-chip-2" data-prompt="motivate">
+                <span class="suggest-chip-thumb" aria-hidden="true"><span>💪</span></span>
+                <span class="suggest-chip-label" id="homeChipMotivateLabel">Motivate me</span>
+              </button>
+              <button type="button" class="suggest-chip suggest-chip-3" data-prompt="post-ideas">
+                <span class="suggest-chip-thumb" aria-hidden="true"><span>💡</span></span>
+                <span class="suggest-chip-label" id="homeChipPostIdeasLabel">Post ideas</span>
+              </button>
+              <button type="button" class="suggest-chip suggest-chip-4" data-prompt="find-voice">
+                <span class="suggest-chip-thumb" aria-hidden="true"><span>🎤</span></span>
+                <span class="suggest-chip-label" id="homeChipFindVoiceLabel">Find my voice</span>
+              </button>
+            </div>
+          </div>
+
           <section id="messages" class="messages"></section>
 
           <form id="composer" class="composer" autocomplete="off">
@@ -471,72 +389,150 @@
       </main>
     </div>
 
-    <div id="onboardingModal" class="modal hidden">
-      <div class="modal-card">
-        <button class="modal-close" id="closeOnboarding" type="button" aria-label="Close onboarding form">×</button>
-        <div class="onboarding-head">
-          <p class="onboarding-kicker" id="onboardingKicker">Get Started</p>
-          <h2 id="onboardingTitle">Create your account</h2>
-          <p id="onboardingSubtitle">Set up your creator profile to unlock your AI agent.</p>
+    <div id="onboardFlow" class="onboard-flow hidden">
+      <section id="obConnectView" class="onboard-view onboard-connect">
+        <div class="onboard-connect-inner">
+          <img src="/logo.png" alt="PostPilot" class="onboard-logo" />
+          <h1 class="onboard-connect-title" id="obConnectTitle">
+            Connect your Instagram<br>to get started
+          </h1>
+          <p class="onboard-connect-sub" id="obConnectSub">
+            So I can analyze your content and coach you personally for your audience.
+          </p>
+          <button type="button" id="obConnectInstagramBtn" class="ig-gradient-btn">
+            <span class="ig-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2.5" y="2.5" width="19" height="19" rx="5" />
+                <circle cx="12" cy="12" r="4.2" />
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+              </svg>
+            </span>
+            <span id="obConnectInstagramLabel">Connect Instagram</span>
+          </button>
+          <button type="button" id="obConnectLinkedinBtn" class="onboard-linkedin-alt">
+            <span id="obConnectLinkedinLabel">or connect LinkedIn instead</span>
+          </button>
+          <button type="button" id="obConnectLogoutBtn" class="onboard-footer-logout" aria-label="Log out">
+            <span id="obConnectLogoutLabel">Log out</span>
+          </button>
         </div>
-        <div class="onboarding-progress" aria-hidden="true">
-          <span class="step-dot"></span>
-          <span class="step-dot"></span>
-          <span class="step-dot"></span>
+      </section>
+
+      <section id="obScanView" class="onboard-view onboard-scan hidden">
+        <div class="onboard-scan-inner">
+          <div class="scan-avatar-wrap">
+            <div class="scan-glow" aria-hidden="true"></div>
+            <img id="obScanAvatar" class="scan-avatar" alt="Your profile" src="" />
+          </div>
+          <p id="obScanHandle" class="scan-handle"></p>
+          <div class="scan-stat-row">
+            <div class="scan-stat">
+              <span class="scan-stat-value" id="obScanPosts">0</span>
+              <span class="scan-stat-label" id="obScanPostsLabel">posts</span>
+            </div>
+            <div class="scan-stat">
+              <span class="scan-stat-value" id="obScanLikes">0</span>
+              <span class="scan-stat-label" id="obScanLikesLabel">likes</span>
+            </div>
+            <div class="scan-stat">
+              <span class="scan-stat-value" id="obScanReach">0</span>
+              <span class="scan-stat-label" id="obScanReachLabel">reach</span>
+            </div>
+          </div>
+          <div class="scan-posts-preview" id="obScanPostsPreview"></div>
+          <h2 class="scan-title" id="obScanTitle">Scanning your profile...</h2>
+          <p class="scan-step-label" id="obScanStepLabel">Analyzing posts</p>
+          <div class="scan-progress" aria-hidden="true">
+            <span class="scan-progress-bar" id="obScanProgressBar"></span>
+          </div>
         </div>
-        <div id="onboardingExplainer" class="onboarding-explainer">
-          <h3 id="onboardingExplainerTitle">What PostPilot does</h3>
-          <p id="onboardingExplainerBody">Analyzes your content, identifies growth patterns, and gives practical weekly actions, drafts, and feedback.</p>
+      </section>
+
+      <section id="obEdgeView" class="onboard-view onboard-edge hidden">
+        <div class="edge-inner">
+          <img id="edgeAvatar" class="edge-avatar" alt="Your profile" src="" />
+          <h2 class="edge-title">
+            <span id="edgeFirstName">friend</span><span id="edgeTitleSuffix">, you've got an edge</span>
+          </h2>
+          <div class="edge-cards">
+            <article class="edge-card edge-card-super">
+              <span class="edge-card-kicker" id="edgeSuperKicker">🔥 Your Superpower</span>
+              <h3 class="edge-card-title">
+                <span id="edgeSuperTitle1">What you're</span> <em id="edgeSuperTitle2">crushing</em>
+              </h3>
+              <ul class="edge-card-list" id="edgeSuperList"></ul>
+            </article>
+            <article class="edge-card edge-card-unlock">
+              <span class="edge-card-kicker" id="edgeUnlockKicker">🚀 Your Unlock</span>
+              <h3 class="edge-card-title">
+                <span id="edgeUnlockTitle1">Your untapped</span> <em id="edgeUnlockTitle2">potential</em>
+              </h3>
+              <ul class="edge-card-list" id="edgeUnlockList"></ul>
+            </article>
+          </div>
+          <button type="button" class="edge-cta" id="edgeStartBtn">
+            <span id="edgeStartBtnLabel">Start Creating with PostPilot</span>
+          </button>
+          <p class="edge-trial-note" id="edgeTrialNote">FREE for 14 days</p>
         </div>
+      </section>
 
-        <form id="accountForm">
-          <div class="field">
-            <label for="accountName"><span id="accountFormNameLabel">Name</span></label>
-            <input id="accountName" placeholder="" />
-          </div>
-          <div class="field">
-            <label for="accountEmail"><span id="accountFormEmailLabel">Email</span></label>
-            <input id="accountEmail" placeholder="" />
-          </div>
-          <button type="submit" id="accountFormSubmitBtn">Create account</button>
-        </form>
-
-        <form id="onboardingForm" class="hidden">
-          <div class="field">
-            <label for="onboardNiche"><span id="onboardNicheLabel">Niche</span></label>
-            <select id="onboardNiche" required>
-              <option value="" selected disabled>Select your niche</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="onboardObjective"><span id="onboardObjectiveLabel">Main objective</span></label>
-            <select id="onboardObjective" required>
-              <option value="" selected disabled>Select your main objective</option>
-            </select>
-          </div>
-          <button type="submit" id="onboardingFormSubmitBtn">Complete onboarding</button>
-        </form>
-
-        <form id="paymentForm" class="hidden">
-          <div class="payment-box">
-            <p class="payment-label" id="paymentPlanLabel">PostPilot Pro</p>
-            <h3 id="paymentActivateTitle">Activate your subscription</h3>
-            <p class="payment-price"><strong>29 Euro</strong><span id="paymentPriceSuffix"> / month</span></p>
-            <ul>
-              <li id="paymentFeature1">Full AI coaching chat access</li>
-              <li id="paymentFeature2">Content strategy and draft generation</li>
-              <li id="paymentFeature3">Weekly planning and performance insights</li>
+      <section id="obPaymentView" class="onboard-view onboard-payment hidden">
+        <div class="onboard-payment-inner">
+          <img src="/logo.png" alt="PostPilot" class="onboard-payment-logo" />
+          <h1 class="onboard-payment-title" id="obPaymentTitle">
+            Get full <em>access</em><br>free for <em>14 days</em>
+          </h1>
+          <div class="plan-card">
+            <span class="plan-card-badge" id="obPaymentFreeBadge">14 DAYS FREE</span>
+            <div class="plan-card-header">
+              <span class="plan-card-name" id="obPaymentPlanName">Monthly</span>
+              <span class="plan-card-price">€29<span class="plan-card-price-period" id="obPaymentPeriodLabel">/mo</span></span>
+            </div>
+            <ul class="plan-card-perks">
+              <li>
+                <span id="obPaymentPerkCancel">Cancel anytime</span>
+                <span class="plan-card-check" aria-hidden="true">✓</span>
+              </li>
+              <li>
+                <span id="obPaymentPerkMoney">30-day money-back guarantee</span>
+                <span class="plan-card-check" aria-hidden="true">✓</span>
+              </li>
             </ul>
-            <label class="checkbox-row payment-confirm-row">
-              <input id="paymentConfirm" type="checkbox" />
-              <span id="paymentAgreeText">I agree to start a monthly 29 Euro subscription.</span>
-            </label>
           </div>
-          <button type="submit" id="paymentSubmitBtn">Complete payment</button>
-        </form>
+          <p class="plan-trial-end" id="obPaymentTrialEnd">Enjoy PostPilot free until May 2</p>
+          <button type="button" class="onboard-payment-cta" id="obPaymentStartBtn">
+            <span id="obPaymentStartLabel">Start Free Trial</span>
+          </button>
+          <p class="plan-login-info">
+            <span id="obPaymentLoggedInLabel">Logged in as:</span>
+            <span id="obPaymentLoggedInEmail"></span>
+          </p>
+          <button type="button" class="plan-logout-link" id="obPaymentLogoutBtn">
+            <span id="obPaymentLogoutLabel">Log out</span>
+          </button>
+          <p id="obPaymentError" class="form-error"></p>
+        </div>
+      </section>
+    </div>
 
-        <p id="onboardingError" class="form-error"></p>
-      </div>
+    <div class="legacy-forms hidden" aria-hidden="true">
+      <form id="accountForm">
+        <input id="accountName" />
+        <input id="accountEmail" />
+        <button type="submit" id="accountFormSubmitBtn"></button>
+      </form>
+      <form id="onboardingForm">
+        <select id="onboardNiche"><option value="creator" selected></option></select>
+        <select id="onboardObjective"><option value="growth" selected></option></select>
+        <button type="submit" id="onboardingFormSubmitBtn"></button>
+      </form>
+      <form id="paymentForm">
+        <input id="paymentConfirm" type="checkbox" checked />
+        <button type="submit" id="paymentSubmitBtn"></button>
+      </form>
+      <p id="onboardingError" class="form-error"></p>
+      <button id="closeOnboarding" type="button"></button>
     </div>
 
     <div id="settingsModal" class="modal hidden">
@@ -660,6 +656,17 @@
                 </div>
                 <div class="support-contact-card">
                   <a id="supportPhoneSettings" href="tel:+40725176707">+4 0725 176 707</a>
+                </div>
+              </div>
+              <div class="setting-row settings-legal-row">
+                <div>
+                  <p class="setting-title" id="settingsLegalTitle">Legal</p>
+                  <p class="setting-hint" id="settingsLegalHint">Privacy policy, terms of service, and cookie policy.</p>
+                </div>
+                <div class="legal-links legal-links-settings">
+                  <a href="/privacy.html" id="legalPrivacyLinkApp" target="_blank" rel="noopener noreferrer">Privacy</a>
+                  <a href="/terms.html" id="legalTermsLinkApp" target="_blank" rel="noopener noreferrer">Terms</a>
+                  <a href="/cookies.html" id="legalCookiesLinkApp" target="_blank" rel="noopener noreferrer">Cookies</a>
                 </div>
               </div>
             </section>

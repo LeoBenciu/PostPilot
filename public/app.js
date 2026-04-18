@@ -33,7 +33,7 @@ const disconnectConfirmModal = document.getElementById("disconnectConfirmModal")
 const disconnectCancelBtn = document.getElementById("disconnectCancelBtn");
 const disconnectConfirmBtn = document.getElementById("disconnectConfirmBtn");
 const authToast = document.getElementById("authToast");
-const onboardingModal = document.getElementById("onboardingModal");
+const onboardingModal = document.getElementById("onboardFlow");
 let onboardingHideTimer = null;
 let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || "en";
 
@@ -174,6 +174,8 @@ const I18N = {
     panelAccount: "Account",
     panelConnections: "Connections",
     panelSupport: "Support",
+    settingsLegalTitle: "Legal",
+    settingsLegalHint: "Privacy policy, terms of service, and cookie policy.",
     supportEmailTitle: "Support email",
     supportEmailHint: "Write us anytime for account or billing issues.",
     supportPhoneTitle: "Support phone",
@@ -352,6 +354,8 @@ const I18N = {
     panelAccount: "Cont",
     panelConnections: "Conexiuni",
     panelSupport: "Suport",
+    settingsLegalTitle: "Legal",
+    settingsLegalHint: "Politica de confidentialitate, termeni si politica de cookie-uri.",
     supportEmailTitle: "Email suport",
     supportEmailHint: "Scrie-ne oricand pentru probleme de cont sau facturare.",
     supportPhoneTitle: "Telefon suport",
@@ -528,6 +532,8 @@ const I18N = {
     panelAccount: "Account",
     panelConnections: "Connessioni",
     panelSupport: "Supporto",
+    settingsLegalTitle: "Legale",
+    settingsLegalHint: "Privacy, termini di servizio e cookie policy.",
     supportEmailTitle: "Email supporto",
     supportEmailHint: "Scrivici in qualsiasi momento per problemi account o fatturazione.",
     supportPhoneTitle: "Telefono supporto",
@@ -695,6 +701,8 @@ const I18N = {
     panelAccount: "Konto",
     panelConnections: "Verbindungen",
     panelSupport: "Support",
+    settingsLegalTitle: "Rechtliches",
+    settingsLegalHint: "Datenschutz, Nutzungsbedingungen und Cookie-Richtlinie.",
     supportEmailTitle: "Support E-Mail",
     supportEmailHint: "Schreib uns jederzeit bei Konto- oder Zahlungsproblemen.",
     supportPhoneTitle: "Support-Telefon",
@@ -862,6 +870,8 @@ const I18N = {
     panelAccount: "Compte",
     panelConnections: "Connexions",
     panelSupport: "Support",
+    settingsLegalTitle: "Mentions legales",
+    settingsLegalHint: "Confidentialite, conditions et politique des cookies.",
     supportEmailTitle: "Email support",
     supportEmailHint: "Ecrivez-nous a tout moment pour les problemes de compte ou facturation.",
     supportPhoneTitle: "Telephone support",
@@ -1011,12 +1021,11 @@ function setGoogleButtonLabel(button, label) {
 }
 
 function syncOnboardingLanguage() {
-  const modal = document.getElementById("onboardingModal");
-  if (!modal || modal.classList.contains("hidden")) return;
-  const isCreate = !document.getElementById("accountForm").classList.contains("hidden");
-  const isOnboarding = !document.getElementById("onboardingForm").classList.contains("hidden");
-  const mode = isCreate ? "create" : isOnboarding ? "onboarding" : "payment";
-  setOnboardingMode(mode);
+  // Full-page onboarding uses static markup for its language-neutral steps;
+  // re-render the payment step so localized date strings refresh.
+  const flow = document.getElementById("onboardFlow");
+  if (!flow || flow.classList.contains("hidden")) return;
+  if (flow.getAttribute("data-step") === "payment") renderPaymentStep();
 }
 
 function applyLanguage() {
@@ -1189,6 +1198,8 @@ function applyLanguage() {
   setTextIfExists("supportEmailHint", t("supportEmailHint"));
   setTextIfExists("supportPhoneLabel", t("supportPhoneTitle"));
   setTextIfExists("supportPhoneHint", t("supportPhoneHint"));
+  setTextIfExists("settingsLegalTitle", t("settingsLegalTitle"));
+  setTextIfExists("settingsLegalHint", t("settingsLegalHint"));
   setTextIfExists("settingsLinkedinTitle", t("linkedinUsername"));
   setTextIfExists("settingsInstagramTitle", t("instagramUsername"));
   setTextIfExists("settingsLinkedinStatus", t("notConnected"));
@@ -1265,7 +1276,10 @@ function setHidden(id, hidden) {
   document.getElementById(id).classList.toggle("hidden", hidden);
 }
 
-function showOnboardingModal() {
+const ONBOARD_STEPS = ["connect", "scan", "edge", "payment"];
+
+function showOnboardStep(step) {
+  if (!onboardingModal) return;
   if (onboardingHideTimer) {
     window.clearTimeout(onboardingHideTimer);
     onboardingHideTimer = null;
@@ -1274,9 +1288,28 @@ function showOnboardingModal() {
   window.requestAnimationFrame(() => {
     onboardingModal.classList.add("is-open");
   });
+  onboardingModal.setAttribute("data-step", step);
+  const map = {
+    connect: "obConnectView",
+    scan: "obScanView",
+    edge: "obEdgeView",
+    payment: "obPaymentView",
+  };
+  ONBOARD_STEPS.forEach((key) => {
+    const el = document.getElementById(map[key]);
+    if (el) el.classList.toggle("hidden", key !== step);
+  });
+  if (chatApp) chatApp.classList.add("is-onboarding");
+}
+
+function showOnboardingModal() {
+  if (!onboardingModal) return;
+  const currentStep = onboardingModal.getAttribute("data-step") || "connect";
+  showOnboardStep(currentStep);
 }
 
 function hideOnboardingModal() {
+  if (!onboardingModal) return;
   onboardingModal.classList.remove("is-open");
   if (onboardingHideTimer) {
     window.clearTimeout(onboardingHideTimer);
@@ -1285,6 +1318,7 @@ function hideOnboardingModal() {
     onboardingModal.classList.add("hidden");
     onboardingHideTimer = null;
   }, 220);
+  if (chatApp) chatApp.classList.remove("is-onboarding");
 }
 
 function showToast(message) {
@@ -1419,6 +1453,7 @@ function addMessage(role, content) {
   bubble.innerHTML = renderMarkdown(content);
   messages.appendChild(row);
   messages.scrollTop = messages.scrollHeight;
+  refreshAgentEmptyState();
 }
 
 function renderConversation(conversation = []) {
@@ -1429,9 +1464,7 @@ function renderConversation(conversation = []) {
     if (!item || (item.role !== "assistant" && item.role !== "user")) continue;
     addMessage(item.role, String(item.content || ""));
   }
-  if (!conversation.length) {
-    addMessage("assistant", t("initialAssistant"));
-  }
+  refreshAgentEmptyState();
 }
 
 async function loadConversationFromServer() {
@@ -1536,21 +1569,28 @@ function sendPrompt(text) {
 
 function setActiveView(view) {
   const views = {
-    home: document.getElementById("homeView"),
     agent: document.getElementById("agentView"),
     analytics: document.getElementById("analyticsView"),
-    scan: document.getElementById("scanView"),
-    edge: document.getElementById("edgeView"),
   };
   Object.entries(views).forEach(([name, el]) => {
     if (!el) return;
     el.classList.toggle("hidden", name !== view);
   });
-  const homeBtn = document.getElementById("homeViewBtn");
-  homeBtn?.classList.toggle("active", view === "home");
   agentViewBtn?.classList.toggle("active", view === "agent");
   analyticsViewBtn?.classList.toggle("active", view === "analytics");
-  if (resetChatBtn) resetChatBtn.classList.toggle("hidden", view !== "agent");
+  refreshAgentEmptyState();
+}
+
+function refreshAgentEmptyState() {
+  const messagesEl = document.getElementById("messages");
+  const emptyEl = document.getElementById("agentEmptyState");
+  const scoresEl = document.getElementById("agentScores");
+  if (!messagesEl || !emptyEl) return;
+  const hasMessages = messagesEl.children.length > 0;
+  emptyEl.classList.toggle("hidden", hasMessages);
+  messagesEl.classList.toggle("hidden", !hasMessages);
+  if (scoresEl) scoresEl.classList.toggle("is-compact", hasMessages);
+  if (resetChatBtn) resetChatBtn.classList.toggle("hidden", !hasMessages);
 }
 
 const analyticsCharts = {};
@@ -1867,21 +1907,17 @@ function applySettingsForm(data) {
 }
 
 function setOnboardingMode(mode) {
-  const isCreate = mode === "create";
-  const isOnboarding = mode === "onboarding";
-  const isPayment = mode === "payment";
-  setHidden("accountForm", !isCreate);
-  setHidden("onboardingForm", !isOnboarding);
-  setHidden("paymentForm", !isPayment);
-  if (isCreate) {
-    document.getElementById("onboardingTitle").textContent = t("onboardingCreateTitle");
-    document.getElementById("onboardingSubtitle").textContent = t("onboardingCreateSubtitle");
-  } else if (isOnboarding) {
-    document.getElementById("onboardingTitle").textContent = t("onboardingFormTitle");
-    document.getElementById("onboardingSubtitle").textContent = t("onboardingFormSubtitle");
-  } else {
-    document.getElementById("onboardingTitle").textContent = t("paymentModeTitle");
-    document.getElementById("onboardingSubtitle").textContent = t("paymentModeSubtitle");
+  // Map legacy modes to new full-page steps.
+  // "create" and "onboarding" both funnel into the Instagram-connect gate now
+  // because the name/email step is handled by signup and niche/objective are gone.
+  if (mode === "create" || mode === "onboarding") {
+    showOnboardStep("connect");
+    return;
+  }
+  if (mode === "payment") {
+    showOnboardStep("payment");
+    renderPaymentStep();
+    return;
   }
 }
 
@@ -1889,25 +1925,46 @@ function paymentCompleted() {
   return Boolean(accountState?.payment?.completed);
 }
 
+function hasAnyIntegrationConnected(data) {
+  const integrations = data?.integrations || {};
+  return Boolean(integrations.instagram?.connected || integrations.linkedin?.connected);
+}
+
+function renderPaymentStep() {
+  const email = accountState?.user?.email || "";
+  setText("obPaymentLoggedInEmail", email);
+  const trialEndEl = document.getElementById("obPaymentTrialEnd");
+  if (trialEndEl) {
+    const end = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    const formatted = end.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+    trialEndEl.textContent = `Enjoy PostPilot free until ${formatted}`;
+  }
+}
+
+let suppressOnboardRouting = false;
+
 async function loadAccountState() {
   accountState = await api("/api/account");
   applySettingsForm(accountState);
 
+  if (suppressOnboardRouting) return;
+
   if (!accountState.user?.createdAt) {
-    showOnboardingModal();
-    setOnboardingMode("create");
+    // Rare edge case: no account yet. Send user back to landing signup.
+    hideOnboardingModal();
+    chatApp.classList.add("hidden");
+    authGate.classList.remove("hidden");
     return;
   }
 
-  if (!accountState.onboarding?.completed) {
-    showOnboardingModal();
-    setOnboardingMode("onboarding");
+  if (!hasAnyIntegrationConnected(accountState)) {
+    showOnboardStep("connect");
     return;
   }
 
   if (!paymentCompleted()) {
-    showOnboardingModal();
-    setOnboardingMode("payment");
+    showOnboardStep("payment");
+    renderPaymentStep();
     return;
   }
 
@@ -2067,17 +2124,9 @@ signinModal.addEventListener("click", (event) => {
   if (event.target === signinModal) signinModal.classList.add("hidden");
 });
 
-onboardingModal.addEventListener("click", (event) => {
-  if (event.target === onboardingModal) {
-    if (!paymentCompleted()) {
-      setText("onboardingError", t("paymentCompleteToContinue"));
-      setOnboardingMode("payment");
-      showOnboardingModal();
-      return;
-    }
-    setText("onboardingError", "");
-    hideOnboardingModal();
-  }
+onboardingModal?.addEventListener("click", (event) => {
+  // Full-page flow: never dismiss on backdrop click.
+  void event;
 });
 
 disconnectConfirmModal?.addEventListener("click", (event) => {
@@ -2162,7 +2211,7 @@ resetChatBtn?.addEventListener("click", async () => {
     await api("/api/agent/conversation/reset", "POST", { sessionId });
     const messages = document.getElementById("messages");
     messages.innerHTML = "";
-    addMessage("assistant", t("newChatStarted"));
+    refreshAgentEmptyState();
   } catch (err) {
     showToast(`Could not reset chat: ${err.message}`);
   }
@@ -2177,10 +2226,20 @@ analyticsViewBtn?.addEventListener("click", async () => {
   await loadAnalyticsView();
 });
 
-const homeViewBtnEl = document.getElementById("homeViewBtn");
-homeViewBtnEl?.addEventListener("click", async () => {
-  setActiveView("home");
-  if (!creatorProfile) await loadCreatorProfile();
+document.getElementById("obConnectInstagramBtn")?.addEventListener("click", () => {
+  connectPlatform("instagram");
+});
+document.getElementById("obConnectLinkedinBtn")?.addEventListener("click", () => {
+  connectPlatform("linkedin");
+});
+document.getElementById("obConnectLogoutBtn")?.addEventListener("click", () => {
+  performDisconnect();
+});
+document.getElementById("obPaymentLogoutBtn")?.addEventListener("click", () => {
+  performDisconnect();
+});
+document.getElementById("obPaymentStartBtn")?.addEventListener("click", () => {
+  document.getElementById("paymentForm")?.requestSubmit();
 });
 
 document.getElementById("settingsBtn").addEventListener("click", async () => {
@@ -2245,8 +2304,12 @@ document.getElementById("paymentForm").addEventListener("submit", async (event) 
   const confirmed = document.getElementById("paymentConfirm").checked;
   if (!confirmed) {
     setText("onboardingError", t("paymentConfirmTerms"));
+    setText("obPaymentError", t("paymentConfirmTerms"));
     return;
   }
+  setText("obPaymentError", "");
+  const startBtn = document.getElementById("obPaymentStartBtn");
+  if (startBtn) startBtn.disabled = true;
   try {
     const data = await api("/api/payment/create-checkout-session", "POST", { plan: "monthly" });
     if (!data.checkoutUrl) {
@@ -2255,6 +2318,8 @@ document.getElementById("paymentForm").addEventListener("submit", async (event) 
     window.location.assign(data.checkoutUrl);
   } catch (err) {
     setText("onboardingError", err.message);
+    setText("obPaymentError", err.message);
+    if (startBtn) startBtn.disabled = false;
   }
 });
 
@@ -2411,10 +2476,11 @@ function renderHomeDashboard(profile) {
   });
 
   const firstName = profile.user?.firstName || profile.user?.name?.split(" ")[0] || "";
-  const greetingEl = document.getElementById("homeGreeting");
+  const greetingEl = document.getElementById("agentGreeting");
   if (greetingEl) {
-    const base = t("homeGreetingBase") || "Welcome back, let's slay the day";
-    greetingEl.textContent = firstName ? `Welcome back ${firstName}, let's slay the day 💪` : `${base} 💪`;
+    greetingEl.textContent = firstName
+      ? `Welcome back ${firstName}, let's slay the day 💪`
+      : "Welcome back, let's slay the day 💪";
   }
 }
 
@@ -2468,53 +2534,77 @@ function sendHomePrompt(promptKey, fallbackText) {
   document.getElementById("composer")?.requestSubmit();
 }
 
-document.querySelectorAll(".home-chip[data-prompt]").forEach((btn) => {
+document.querySelectorAll(".suggest-chip[data-prompt]").forEach((btn) => {
   btn.addEventListener("click", () => sendHomePrompt(btn.getAttribute("data-prompt")));
 });
 
 document.getElementById("viralIdeaChip")?.addEventListener("click", () => sendHomePrompt("viral-idea"));
 
-document.getElementById("homeComposer")?.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const input = document.getElementById("homeMessageInput");
-  const value = String(input?.value || "").trim();
-  if (!value) return;
-  setActiveView("agent");
-  const chatInput = document.getElementById("messageInput");
-  if (chatInput) chatInput.value = value;
-  if (input) input.value = "";
-  document.getElementById("composer")?.requestSubmit();
-});
-
-document.getElementById("homeCtaBanner")?.addEventListener("click", () => {
-  sendHomePrompt(
-    "",
-    "Create my 30-Day Content Calendar. Become my new Head of Content and plan themes, hooks, and formats for the next 30 days.",
-  );
-});
-
 /* ============================================================
    Scan + Edge results flow (post-connect onboarding)
    ============================================================ */
 
-function renderScanView(profile) {
+function formatCompactNumber(num) {
+  const n = Number(num) || 0;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}K`;
+  return String(n);
+}
+
+async function renderScanView(profile) {
   const avatar = String(profile?.primary?.avatarUrl || "").trim();
   const handle = String(profile?.primary?.handle || "").trim();
-  const followers = Number(profile?.primary?.followerCount || 0);
-  const avatarEl = document.getElementById("scanAvatar");
+  const avatarEl = document.getElementById("obScanAvatar");
   const fallbackAvatar = handle
     ? `https://ui-avatars.com/api/?name=${encodeURIComponent(handle)}&background=f7c6c7&color=7f002d&bold=true&size=176`
     : "/logo.png";
   if (avatarEl) avatarEl.src = avatar || fallbackAvatar;
-  setText("scanHandle", handle ? `@${handle}` : "");
-  const badgeCount = document.getElementById("scanBadgeCount");
-  if (badgeCount) badgeCount.textContent = followers > 0 ? formatCompactNumber(followers) : String(profile?.postsCount || 0);
-}
+  setText("obScanHandle", handle ? `@${handle}` : "");
 
-function formatCompactNumber(num) {
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(num >= 10_000 ? 0 : 1)}K`;
-  return String(num);
+  const metrics = profile?.metrics || {};
+  setText("obScanPosts", formatCompactNumber(profile?.postsCount || 0));
+  setText("obScanLikes", formatCompactNumber(metrics.totalLikes || 0));
+  setText("obScanReach", formatCompactNumber(metrics.totalViews || metrics.totalReach || 0));
+
+  const previewEl = document.getElementById("obScanPostsPreview");
+  if (previewEl) {
+    previewEl.innerHTML = "";
+    try {
+      const data = await api("/api/posts/recent?limit=6");
+      const posts = Array.isArray(data?.posts) ? data.posts : [];
+      const withImages = posts.filter((p) => p.imageUrl || p.thumbnailUrl || p.mediaUrl).slice(0, 4);
+      if (!withImages.length) {
+        for (let i = 0; i < 4; i += 1) {
+          const skel = document.createElement("div");
+          skel.className = "scan-preview-tile scan-preview-skeleton";
+          previewEl.appendChild(skel);
+        }
+      } else {
+        withImages.forEach((post, idx) => {
+          const tile = document.createElement("div");
+          tile.className = "scan-preview-tile";
+          tile.style.animationDelay = `${idx * 120}ms`;
+          const src = post.imageUrl || post.thumbnailUrl || post.mediaUrl;
+          if (src) {
+            const img = document.createElement("img");
+            img.src = src;
+            img.alt = "";
+            img.loading = "lazy";
+            img.referrerPolicy = "no-referrer";
+            tile.appendChild(img);
+          }
+          const meta = document.createElement("span");
+          meta.className = "scan-preview-meta";
+          const likes = Number(post.likes || 0);
+          meta.textContent = `❤ ${formatCompactNumber(likes)}`;
+          tile.appendChild(meta);
+          previewEl.appendChild(tile);
+        });
+      }
+    } catch (_err) {
+      // Non-blocking - preview tiles are optional enhancement.
+    }
+  }
 }
 
 function renderEdgeView(profile) {
@@ -2550,23 +2640,47 @@ function renderEdgeView(profile) {
 async function startScanFlow() {
   const profile = await loadCreatorProfile();
   if (!profile?.hasAnyConnection) {
-    setActiveView("home");
+    showOnboardStep("connect");
     return;
   }
-  renderScanView(profile);
-  setActiveView("scan");
-  await new Promise((r) => window.setTimeout(r, 2600));
+  showOnboardStep("scan");
+  await renderScanView(profile);
+  const progressBar = document.getElementById("obScanProgressBar");
+  if (progressBar) {
+    progressBar.style.transition = "none";
+    progressBar.style.width = "0%";
+    window.requestAnimationFrame(() => {
+      progressBar.style.transition = "width 3000ms ease-out";
+      progressBar.style.width = "100%";
+    });
+  }
+  const stepLabelEl = document.getElementById("obScanStepLabel");
+  const steps = ["Analyzing posts", "Reading captions", "Measuring reach", "Finding your edge"];
+  let stepIdx = 0;
+  const stepTimer = window.setInterval(() => {
+    stepIdx = Math.min(steps.length - 1, stepIdx + 1);
+    if (stepLabelEl) stepLabelEl.textContent = steps[stepIdx];
+  }, 750);
+
+  await new Promise((r) => window.setTimeout(r, 3100));
+  window.clearInterval(stepTimer);
   renderEdgeView(profile);
-  setActiveView("edge");
+  showOnboardStep("edge");
 }
 
 document.getElementById("edgeStartBtn")?.addEventListener("click", () => {
-  setActiveView("home");
+  if (!paymentCompleted()) {
+    showOnboardStep("payment");
+    renderPaymentStep();
+  } else {
+    hideOnboardingModal();
+    setActiveView("agent");
+  }
 });
 
 renderConversation([]);
 applyLanguage();
-setActiveView("home");
+setActiveView("agent");
 
 const authQueryState = getAuthQueryState();
 let handledFreshGoogleAuth = false;
@@ -2595,10 +2709,16 @@ if (authQueryState.integrationAuth === "success" && authQueryState.integration) 
   const platformLabel = displayPlatform(authQueryState.integration);
   showToast(tf("integrationConnectedToast", { platform: platformLabel }));
   clearAuthQueryParams();
-  // Trigger the Stanley-style scan → edge results flow after a fresh connect.
+  // Suppress automatic routing so the scan/edge flow owns the screen.
+  suppressOnboardRouting = true;
+  showOnboardStep("scan");
   window.setTimeout(() => {
-    startScanFlow().catch(() => {});
-  }, 600);
+    startScanFlow()
+      .catch(() => {})
+      .finally(() => {
+        suppressOnboardRouting = false;
+      });
+  }, 400);
 }
 
 if (authQueryState.integrationError && authQueryState.integration) {

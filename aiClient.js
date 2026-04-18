@@ -1,5 +1,70 @@
+const fs = require("fs");
+const path = require("path");
+const YAML = require("yaml");
+
 const DEFAULT_MAX_INPUT_CHARS = 4000;
 const DEFAULT_MAX_OUTPUT_CHARS = 6000;
+
+const YAML_CONFIG_DIR = path.join(
+  __dirname,
+  "crewai-service",
+  "src",
+  "postpilot_crewai",
+  "config",
+);
+
+const LANGUAGE_NAMES = {
+  en: "English",
+  ro: "Romanian",
+  it: "Italian",
+  de: "German",
+  fr: "French",
+  es: "Spanish",
+  pt: "Portuguese",
+};
+
+function resolveLanguageName(code) {
+  const key = String(code || "en").toLowerCase().slice(0, 2);
+  return LANGUAGE_NAMES[key] || "English";
+}
+
+function collapseWhitespace(s) {
+  return String(s || "").replace(/\s+/g, " ").trim();
+}
+
+// YAML cache keyed on file mtimes so edits to agents.yaml / tasks.yaml
+// are picked up without a server restart, but we don't re-parse on every
+// request either.
+let _yamlCache = null;
+
+function loadPromptConfig() {
+  const agentsPath = path.join(YAML_CONFIG_DIR, "agents.yaml");
+  const tasksPath = path.join(YAML_CONFIG_DIR, "tasks.yaml");
+  try {
+    const agentsStat = fs.statSync(agentsPath);
+    const tasksStat = fs.statSync(tasksPath);
+    if (
+      _yamlCache &&
+      _yamlCache.mtimes.agents === agentsStat.mtimeMs &&
+      _yamlCache.mtimes.tasks === tasksStat.mtimeMs
+    ) {
+      return _yamlCache;
+    }
+    const agents = YAML.parse(fs.readFileSync(agentsPath, "utf8")) || {};
+    const tasks = YAML.parse(fs.readFileSync(tasksPath, "utf8")) || {};
+    _yamlCache = {
+      mtimes: { agents: agentsStat.mtimeMs, tasks: tasksStat.mtimeMs },
+      agents,
+      tasks,
+    };
+    return _yamlCache;
+  } catch (err) {
+    // Surface loudly — if the YAML files disappear we want to know in logs,
+    // not silently fall back to a different prompt.
+    console.error("[PostPilot][AI] ⚠️ Failed to load prompt YAML", String(err?.message || err));
+    return null;
+  }
+}
 
 function safeJsonParse(text, fallback = null) {
   try {
@@ -116,60 +181,175 @@ function summarizeIntegrations(integrations) {
   return lines.length ? lines.join("\n") : "No platforms connected.";
 }
 
-function buildSystemPrompt({ state, connectedPlatforms, language }) {
-  const niche = state.user?.niche || "creator growth";
-  const objective = state.user?.objective || "audience growth";
-  const voice = state.voiceProfile || {};
-  const tone = voice.tone || "clear and direct";
-  const signatureWords = (voice.signatureWords || []).slice(0, 8).join(", ");
-  const avgSentenceLen = voice.avgSentenceLength || "";
-  const ctaStyle = voice.ctaStyle || "";
-  const favoredOpeners = (voice.favoredOpeners || []).join("; ");
+// ---------------------------------------------------------------------------
+// Context formatters — 1:1 port of crewai-service/.../crew.py so the Node
+// fallback produces the same system prompt the CrewAI service would produce.
+// ---------------------------------------------------------------------------
 
-  const langCode = String(language || "").toLowerCase().slice(0, 2) || "en";
-  const sections = [
-    "You are PostPilot, an AI content coach for creators.",
-    `Respond in the user's UI language (ISO code: ${langCode}) unless the user clearly switches language.`,
-    "",
-    "## Creator profile",
-    `- Niche: ${niche}`,
-    `- Primary objective: ${objective}`,
-    `- Connected platforms: ${connectedPlatforms.join(", ") || "none"}`,
-    "",
-    "## Connected accounts",
-    summarizeIntegrations(state.integrations),
-    "",
-    "## Voice profile (derived from their posts)",
-    `- Tone: ${tone}`,
-    signatureWords ? `- Signature words: ${signatureWords}` : "",
-    avgSentenceLen ? `- Avg sentence length: ${avgSentenceLen} words` : "",
-    ctaStyle ? `- CTA style: ${ctaStyle}` : "",
-    favoredOpeners ? `- Favored openers: ${favoredOpeners}` : "",
-    "",
-    "## Recent posts (with performance)",
-    summarizePosts(selectPostsForMessage({ posts: state.posts, message: state._lastUserMessageForPrompt || "" })),
-    "",
-    "## What you can see",
-    "- Profile: bio, followers, following count, post count, website",
-    "- Each post: media type (Photo/Video/Carousel/Reel), caption, date, likes, comments, impressions (and when available: reach, saves, video views), permalink",
-    "- When images are attached in the current request, you can see those post images.",
-    "- For videos and reels, you see the thumbnail/cover frame, not the full video",
-    "- Use what you see in the images to give specific visual feedback when the user asks about posts, visuals, or performance.",
-    "- If the user asks a generic message (e.g. hello), respond to that directly and do not force image analysis.",
-    "",
-    "## Guardrails",
-    "- Never claim to have executed external actions unless explicitly confirmed.",
-    "- If asked for unsafe, illegal, or deceptive content, refuse briefly and offer a safe alternative.",
-    "- Use concise practical steps and avoid filler.",
-    "- When uncertain, ask one focused clarifying question.",
-    "- Reference the user's actual post data, performance metrics, and visual content when giving advice.",
-    "- When discussing posts, always mention the media type (photo, video, reel, carousel).",
-    "- Describe specific visual elements you observe: lighting, composition, text overlays, facial expressions, branding elements, color palette.",
-    "- For videos/reels, note that you only see the cover frame/thumbnail, not the full video. Ask the user to describe the video content if needed.",
-    "- Match the user's voice tone and style when drafting content.",
+function formatProfileSection(ctx) {
+  const account = ctx.account || {};
+  const firstName = ctx.firstName || "";
+  const niche = account.niche || "(not set)";
+  const objective = account.objective || "(not set)";
+  const platforms = ctx.connectedPlatforms || [];
+  const lines = [];
+  if (firstName) lines.push(`First name (use when greeting): ${firstName}`);
+  lines.push(`Niche: ${niche}`);
+  lines.push(`Primary objective: ${objective}`);
+  lines.push(`Connected platforms: ${platforms.length ? platforms.join(", ") : "none"}`);
+  return lines.join("\n");
+}
+
+function formatIntegrationsSection(ctx) {
+  const integrations = ctx.integrations || {};
+  const lines = [];
+  for (const [platform, info] of Object.entries(integrations)) {
+    if (!info || !info.connected) continue;
+    const username = info.username || "(unknown)";
+    let line = `- ${platform}: @${username}`;
+    if (info.displayName) line += ` (${info.displayName})`;
+    if (info.followersCount != null) line += ` | ${info.followersCount} followers`;
+    if (info.mediaCount != null) line += ` | ${info.mediaCount} posts`;
+    if (info.bio) line += `\n  Bio: "${truncate(info.bio, 200)}"`;
+    lines.push(line);
+  }
+  return lines.length ? lines.join("\n") : "No connected accounts.";
+}
+
+function formatStatsSection(ctx) {
+  const stats = ctx.stats || {};
+  if (!stats || !stats.totalPosts) return "No aggregated stats yet (no posts synced).";
+  const lines = [
+    `Total posts synced: ${stats.totalPosts}`,
+    `Posts in last 30 days: ${stats.postsLast30Days} | last 90 days: ${stats.postsLast90Days}`,
   ];
+  if (stats.daysSinceLastPost != null) {
+    lines.push(`Days since last post: ${stats.daysSinceLastPost}`);
+  }
+  lines.push(
+    `Posts with zero comments: ${stats.postsWithZeroComments}/${stats.totalPosts} (${stats.postsWithZeroCommentsPct}%)`,
+  );
+  lines.push(`Average per post: ${stats.avgLikes} likes, ${stats.avgComments} comments`);
+  if (stats.avgEngagementRate != null) {
+    lines.push(`Average engagement rate: ${stats.avgEngagementRate}%`);
+  }
+  const topER = stats.topPostByEngagementRate;
+  if (topER) {
+    lines.push(
+      `Best post by engagement rate: ${topER.engagementRate}% (${topER.type}, ${topER.likes} likes, ${topER.comments} comments, ${topER.impressions} views)`,
+    );
+    if (topER.text) lines.push(`  Caption: "${topER.text}"`);
+  }
+  const topViews = stats.topPostByViews;
+  if (topViews) {
+    lines.push(
+      `Most-viewed post: ${topViews.impressions} views (${topViews.type}, ${topViews.likes} likes, ${topViews.comments} comments)`,
+    );
+    if (topViews.text) lines.push(`  Caption: "${topViews.text}"`);
+  }
+  return lines.join("\n");
+}
 
-  return sections.filter(Boolean).join("\n");
+function formatPostsSection(ctx, limit = 12) {
+  const posts = ctx.posts || [];
+  if (!posts.length) return "No posts synced yet.";
+  return posts
+    .slice(0, limit)
+    .map((p, i) => {
+      const parts = [`${p.likes} likes`, `${p.comments} comments`];
+      if (p.impressions) parts.push(`${p.impressions} views`);
+      if (p.reach) parts.push(`${p.reach} reach`);
+      if (p.saved) parts.push(`${p.saved} saved`);
+      if (p.shares) parts.push(`${p.shares} shares`);
+      if (p.videoViews) parts.push(`${p.videoViews} video views`);
+      if (p.engagementRate != null) parts.push(`ER ${p.engagementRate}%`);
+      const text = p.text || "(no caption)";
+      return `[${i + 1}] ${p.type || "Post"} — ${p.postedAt || "unknown date"} — ${parts.join(", ")}\n"${text}"`;
+    })
+    .join("\n\n");
+}
+
+function formatAccountContext(ctx) {
+  return [
+    "=== Profile ===",
+    formatProfileSection(ctx),
+    "",
+    "=== Connected accounts ===",
+    formatIntegrationsSection(ctx),
+    "",
+    "=== Account stats (cite these numbers when relevant) ===",
+    formatStatsSection(ctx),
+    "",
+    "=== Top / recent posts (the creator's real voice) ===",
+    formatPostsSection(ctx),
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// buildSystemPrompt — YAML-backed. Reads agents.yaml + tasks.yaml from
+// crewai-service/.../config/ so the Node fallback (direct-to-OpenAI path)
+// uses the same prompt the CrewAI service uses. No more silent drift.
+// ---------------------------------------------------------------------------
+
+function buildSystemPrompt({ state, connectedPlatforms, language }) {
+  const config = loadPromptConfig();
+  const ctx = buildCrewContext({
+    state,
+    connectedPlatforms,
+    language,
+    message: state._lastUserMessageForPrompt || "",
+  });
+  const accountContext = formatAccountContext(ctx);
+  const languageName = resolveLanguageName(language);
+
+  if (!config) {
+    // Ultimate safety net: YAML unreadable. Ship a minimal but still
+    // on-persona prompt rather than the old hardcoded one.
+    return [
+      "You are PostPilot, the creator's personal content coach.",
+      "Warm, direct, grounded in the creator's real data.",
+      `Respond in ${languageName} unless the user clearly switches language.`,
+      "",
+      accountContext,
+    ].join("\n");
+  }
+
+  const strategist = config.agents?.strategist || {};
+  const role = collapseWhitespace(strategist.role);
+  const goal = collapseWhitespace(strategist.goal);
+  const backstory = collapseWhitespace(strategist.backstory);
+
+  const task = config.tasks?.compose_response || {};
+  let description = String(task.description || "");
+
+  // In the OpenAI chat format the current message and prior turns are sent as
+  // native chat messages, so we strip the YAML trailer that injects them
+  // textually ("User message: {message}" / "Prior conversation:
+  // {history_summary}"). The rest of the task description (rules, closing,
+  // first-message behavior, ...) stays in the system prompt.
+  const trailerIdx = description.search(/\n\s*User message:\s*/);
+  if (trailerIdx !== -1) description = description.slice(0, trailerIdx);
+
+  description = description
+    .replaceAll("{language}", languageName)
+    .replaceAll("{account_context}", "")
+    .replaceAll("{message}", "")
+    .replaceAll("{history_summary}", "");
+
+  return [
+    `You are ${role}.`,
+    "",
+    `Goal: ${goal}`,
+    "",
+    `Backstory: ${backstory}`,
+    "",
+    description.trim(),
+    "",
+    "=== Account data to ground every response ===",
+    accountContext,
+  ]
+    .filter((line) => line !== undefined && line !== null)
+    .join("\n");
 }
 
 /**
@@ -562,12 +742,16 @@ async function generateAgentReply({ message, history, state, userId, sessionId, 
       });
     } catch (err) {
       const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
-      aiLog("error", "CrewAI request failed; evaluating OpenAI fallback", {
-        reason: String(err?.message || err),
-        hasOpenAiKey,
-      });
+      const reason = String(err?.message || err);
+      console.error(
+        `[PostPilot][AI] ⚠️ FALLBACK: CrewAI unreachable (${reason}). ` +
+          `The /chat request is being served by the direct OpenAI path using ` +
+          `the YAML-backed system prompt. ` +
+          (hasOpenAiKey
+            ? "Start the Python service (uvicorn ... --port 8000) to restore CrewAI orchestration."
+            : "OPENAI_API_KEY missing — request will fail."),
+      );
       if (!hasOpenAiKey) throw err;
-      aiLog("log", "Falling back to OpenAI request");
       return callOpenAI({
         message,
         history: normalizedHistory,
@@ -719,12 +903,16 @@ async function* streamAgentReply({ message, history, state, userId, sessionId, l
       return;
     } catch (err) {
       const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
-      aiLog("error", "CrewAI stream failed; evaluating OpenAI fallback", {
-        reason: String(err?.message || err),
-        hasOpenAiKey,
-      });
+      const reason = String(err?.message || err);
+      console.error(
+        `[PostPilot][AI] ⚠️ FALLBACK: CrewAI stream unreachable (${reason}). ` +
+          `The /chat/stream request is being served by the direct OpenAI path using ` +
+          `the YAML-backed system prompt. ` +
+          (hasOpenAiKey
+            ? "Start the Python service (uvicorn ... --port 8000) to restore CrewAI orchestration."
+            : "OPENAI_API_KEY missing — stream will fail."),
+      );
       if (!hasOpenAiKey) throw err;
-      aiLog("log", "Falling back to OpenAI stream");
       yield* streamOpenAI({ message, history: normalizedHistory, state, connectedPlatforms, language });
       return;
     }

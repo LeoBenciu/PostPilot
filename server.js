@@ -615,11 +615,11 @@ async function resolveUserIdFromStripeEventObject(obj) {
   }
 }
 
-function onboardingMissingFields(state) {
-  const missing = [];
-  if (!state.user.niche || !state.user.niche.trim()) missing.push("niche");
-  if (!state.user.objective || !state.user.objective.trim()) missing.push("objective");
-  return missing;
+function onboardingMissingFields(_state) {
+  // Niche and objective are no longer required. Onboarding is considered
+  // complete as soon as the user account exists; the UI gates on integration
+  // connection and payment next.
+  return [];
 }
 
 function isPaymentComplete(state) {
