@@ -36,14 +36,69 @@ def _truncate(value: Any, limit: int) -> str:
 
 def _format_account(context: dict[str, Any]) -> str:
     account = context.get("account") or {}
+    first_name = context.get("firstName") or ""
     niche = account.get("niche") or "(not set)"
     objective = account.get("objective") or "(not set)"
     platforms = context.get("connectedPlatforms") or []
-    return (
-        f"Niche: {niche}\n"
-        f"Primary objective: {objective}\n"
-        f"Connected platforms: {', '.join(platforms) if platforms else 'none'}"
+    lines = []
+    if first_name:
+        lines.append(f"First name (use when greeting): {first_name}")
+    lines.append(f"Niche: {niche}")
+    lines.append(f"Primary objective: {objective}")
+    lines.append(f"Connected platforms: {', '.join(platforms) if platforms else 'none'}")
+    return "\n".join(lines)
+
+
+def _format_stats(context: dict[str, Any]) -> str:
+    stats = context.get("stats") or {}
+    if not stats or not stats.get("totalPosts"):
+        return "No aggregated stats yet (no posts synced)."
+    total = stats.get("totalPosts") or 0
+    last_30 = stats.get("postsLast30Days") or 0
+    last_90 = stats.get("postsLast90Days") or 0
+    days_since = stats.get("daysSinceLastPost")
+    zero_comments = stats.get("postsWithZeroComments") or 0
+    zero_comments_pct = stats.get("postsWithZeroCommentsPct") or 0
+    avg_er = stats.get("avgEngagementRate")
+    avg_likes = stats.get("avgLikes") or 0
+    avg_comments = stats.get("avgComments") or 0
+
+    lines = [
+        f"Total posts synced: {total}",
+        f"Posts in last 30 days: {last_30} | last 90 days: {last_90}",
+    ]
+    if days_since is not None:
+        lines.append(f"Days since last post: {days_since}")
+    lines.append(
+        f"Posts with zero comments: {zero_comments}/{total} ({zero_comments_pct}%)"
     )
+    lines.append(f"Average per post: {avg_likes} likes, {avg_comments} comments")
+    if avg_er is not None:
+        lines.append(f"Average engagement rate: {avg_er}%")
+
+    top_er = stats.get("topPostByEngagementRate")
+    if top_er:
+        lines.append(
+            f"Best post by engagement rate: {top_er.get('engagementRate')}% "
+            f"({top_er.get('type')}, {top_er.get('likes')} likes, "
+            f"{top_er.get('comments')} comments, {top_er.get('impressions')} views)"
+        )
+        text = _truncate(top_er.get("text"), 160)
+        if text:
+            lines.append(f'  Caption: "{text}"')
+
+    top_views = stats.get("topPostByViews")
+    if top_views:
+        lines.append(
+            f"Most-viewed post: {top_views.get('impressions')} views "
+            f"({top_views.get('type')}, {top_views.get('likes')} likes, "
+            f"{top_views.get('comments')} comments)"
+        )
+        text = _truncate(top_views.get("text"), 160)
+        if text:
+            lines.append(f'  Caption: "{text}"')
+
+    return "\n".join(lines)
 
 
 def _format_integrations(context: dict[str, Any]) -> str:
@@ -85,6 +140,7 @@ def _format_posts(context: dict[str, Any], limit: int = 12) -> str:
         saved = p.get("saved") or 0
         shares = p.get("shares") or 0
         video_views = p.get("videoViews") or 0
+        er = p.get("engagementRate")
         perf_parts = [f"{likes} likes", f"{comments} comments"]
         if impressions:
             perf_parts.append(f"{impressions} views")
@@ -96,6 +152,8 @@ def _format_posts(context: dict[str, Any], limit: int = 12) -> str:
             perf_parts.append(f"{shares} shares")
         if video_views:
             perf_parts.append(f"{video_views} video views")
+        if er is not None:
+            perf_parts.append(f"ER {er}%")
         text = _truncate(p.get("text"), 500) or "(no caption)"
         items.append(
             f"[{i + 1}] {ptype} — {posted} — " + ", ".join(perf_parts) + f"\n\"{text}\""
@@ -109,6 +167,8 @@ def _format_account_context(context: dict[str, Any]) -> str:
         f"{_format_account(context)}\n\n"
         "=== Connected accounts ===\n"
         f"{_format_integrations(context)}\n\n"
+        "=== Account stats (cite these numbers when relevant) ===\n"
+        f"{_format_stats(context)}\n\n"
         "=== Top / recent posts (the creator's real voice) ===\n"
         f"{_format_posts(context)}"
     )

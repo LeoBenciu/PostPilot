@@ -257,6 +257,115 @@ function aiLog(level, message, data = undefined) {
   else console.log(line);
 }
 
+function computeEngagementRate(p) {
+  const impressions = Number(p.impressions || 0);
+  if (impressions <= 0) return null;
+  const interactions = Number(p.likes || 0) + Number(p.comments || 0) + Number(p.saved || 0) + Number(p.shares || 0);
+  return Math.round((interactions / impressions) * 10000) / 100;
+}
+
+function extractFirstName(state) {
+  const candidates = [
+    state?.user?.name,
+    state?.integrations?.instagram?.displayName,
+    state?.integrations?.linkedin?.displayName,
+    state?.integrations?.instagram?.username,
+  ];
+  for (const raw of candidates) {
+    const text = String(raw || "").trim();
+    if (!text) continue;
+    const first = text.split(/[\s._-]+/)[0];
+    if (first && first.length >= 2) {
+      return first.charAt(0).toUpperCase() + first.slice(1);
+    }
+  }
+  return "";
+}
+
+function computeAccountStats(allPosts) {
+  const posts = Array.isArray(allPosts) ? allPosts : [];
+  if (!posts.length) {
+    return {
+      totalPosts: 0,
+      postsLast30Days: 0,
+      postsLast90Days: 0,
+      daysSinceLastPost: null,
+      postsWithZeroComments: 0,
+      postsWithZeroCommentsPct: 0,
+      avgEngagementRate: null,
+      avgLikes: 0,
+      avgComments: 0,
+      topPostByEngagementRate: null,
+      topPostByViews: null,
+    };
+  }
+  const now = Date.now();
+  const day = 1000 * 60 * 60 * 24;
+  let last = 0;
+  let zeroComments = 0;
+  let last30 = 0;
+  let last90 = 0;
+  const ers = [];
+  let likesSum = 0;
+  let commentsSum = 0;
+  let topER = null;
+  let topViews = null;
+  for (const p of posts) {
+    const t = p.postedAt ? new Date(p.postedAt).getTime() : 0;
+    if (t > last) last = t;
+    if (now - t <= 30 * day) last30 += 1;
+    if (now - t <= 90 * day) last90 += 1;
+    if ((Number(p.comments || 0)) === 0) zeroComments += 1;
+    likesSum += Number(p.likes || 0);
+    commentsSum += Number(p.comments || 0);
+    const er = computeEngagementRate(p);
+    if (er != null) {
+      ers.push(er);
+      if (!topER || er > topER.engagementRate) {
+        topER = { ...p, engagementRate: er };
+      }
+    }
+    const views = Number(p.impressions || p.videoViews || 0);
+    if (views > 0 && (!topViews || views > Number(topViews.impressions || topViews.videoViews || 0))) {
+      topViews = p;
+    }
+  }
+  const avgER = ers.length ? Math.round((ers.reduce((a, b) => a + b, 0) / ers.length) * 100) / 100 : null;
+  const daysSinceLast = last ? Math.round((now - last) / day) : null;
+  return {
+    totalPosts: posts.length,
+    postsLast30Days: last30,
+    postsLast90Days: last90,
+    daysSinceLastPost: daysSinceLast,
+    postsWithZeroComments: zeroComments,
+    postsWithZeroCommentsPct: Math.round((zeroComments / posts.length) * 100),
+    avgEngagementRate: avgER,
+    avgLikes: Math.round(likesSum / posts.length),
+    avgComments: Math.round(commentsSum / posts.length),
+    topPostByEngagementRate: topER
+      ? {
+          type: formatMediaType(topER.mediaType || ""),
+          postedAt: topER.postedAt || "",
+          likes: Number(topER.likes || 0),
+          comments: Number(topER.comments || 0),
+          impressions: Number(topER.impressions || 0),
+          engagementRate: topER.engagementRate,
+          text: truncate(topER.text || "", 200),
+        }
+      : null,
+    topPostByViews: topViews
+      ? {
+          type: formatMediaType(topViews.mediaType || ""),
+          postedAt: topViews.postedAt || "",
+          likes: Number(topViews.likes || 0),
+          comments: Number(topViews.comments || 0),
+          impressions: Number(topViews.impressions || topViews.videoViews || 0),
+          text: truncate(topViews.text || "", 200),
+        }
+      : null,
+  };
+}
+
 /**
  * Builds the data-only context sent to the CrewAI service.
  * CrewAI's YAML (agents.yaml + tasks.yaml) is the prompt source of truth;
@@ -279,15 +388,18 @@ function buildCrewContext({ state, connectedPlatforms, language, message }) {
     saved: Number(p.saved || 0),
     shares: Number(p.shares || 0),
     videoViews: Number(p.videoViews || 0),
+    engagementRate: computeEngagementRate(p),
     text: truncate(p.text || "", 500),
     permalink: p.permalink || "",
   }));
   return {
     account: state.user || {},
+    firstName: extractFirstName(state),
     integrations: state.integrations || {},
     connectedPlatforms,
     voiceProfile: state.voiceProfile || {},
     posts,
+    stats: computeAccountStats(state.posts),
     language: String(language || "").toLowerCase().slice(0, 2) || "en",
   };
 }
