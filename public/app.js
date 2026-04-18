@@ -27,6 +27,7 @@ const connectInstagramBtn = document.getElementById("connectInstagramBtn");
 const disconnectLinkedinBtn = document.getElementById("disconnectLinkedinBtn");
 const disconnectInstagramBtn = document.getElementById("disconnectInstagramBtn");
 const languageSelect = document.getElementById("languageSelect");
+const languageSelectOnboard = document.getElementById("languageSelectOnboard");
 const googleSignupBtn = document.getElementById("googleSignupBtn");
 const googleSigninBtn = document.getElementById("googleSigninBtn");
 const disconnectConfirmModal = document.getElementById("disconnectConfirmModal");
@@ -127,6 +128,34 @@ const I18N = {
     scoreMetaGrowthWhat:
       "Growth highlights the progress of your effort online. It captures how your content lands with your audience and the momentum you're building along the way.",
     scoreMetaGrowthDrivers: "Your engagement and reach trends, plus the actions you take to improve.",
+    onboardConnectTitle: "Connect your Instagram to get started",
+    onboardConnectSub: "So I can analyze your content and coach you personally for your audience.",
+    onboardConnectInstagram: "Connect Instagram",
+    onboardConnectLogout: "Log out",
+    onboardScanPosts: "posts",
+    onboardScanLikes: "likes",
+    onboardScanReach: "reach",
+    onboardScanTitle: "Scanning your profile...",
+    onboardScanStep1: "Analyzing posts",
+    onboardScanStep2: "Reading captions",
+    onboardScanStep3: "Measuring reach",
+    onboardScanStep4: "Finding your edge",
+    onboardEdgeTitleSuffix: ", you've got an edge",
+    onboardEdgeSuperKicker: "🔥 Your Superpower",
+    onboardEdgeUnlockKicker: "🚀 Your Unlock",
+    onboardEdgeSuperLine1: "What you're",
+    onboardEdgeSuperLine2: "crushing",
+    onboardEdgeUnlockLine1: "Your untapped",
+    onboardEdgeUnlockLine2: "potential",
+    onboardEdgeCta: "Continue",
+    onboardPaymentTitle: "Activate your plan",
+    onboardPaymentSubtitle: "Subscribe to unlock the AI coach and analytics.",
+    onboardPaymentPlanName: "Monthly",
+    onboardPaymentPeriod: "/mo",
+    onboardPaymentPerkCancel: "Cancel anytime",
+    onboardPaymentPerkMoney: "30-day money-back guarantee",
+    onboardPaymentCta: "Continue to checkout",
+    onboardPaymentLoggedInAs: "Logged in as:",
     chatInputPlaceholder: "Message PostPilot Agent",
     suggestionsLabel: "Suggestions",
     suggestions: [
@@ -343,6 +372,35 @@ const I18N = {
       "Cresterea pune in lumina progresul tau online. Arata cum prinde continutul la public si ce impuls construiesti.",
     scoreMetaGrowthDrivers:
       "Trendurile de engagement si reach, plus actiunile pe care le iei ca sa imbunatatesti.",
+    onboardConnectTitle: "Conecteaza Instagram ca sa incepi",
+    onboardConnectSub:
+      "Ca sa analizez continutul tau si sa te coachuiesc personal pentru audienta ta.",
+    onboardConnectInstagram: "Conecteaza Instagram",
+    onboardConnectLogout: "Deconectare",
+    onboardScanPosts: "postari",
+    onboardScanLikes: "aprecieri",
+    onboardScanReach: "reach",
+    onboardScanTitle: "Iti scanam profilul...",
+    onboardScanStep1: "Analizam postarile",
+    onboardScanStep2: "Citim descrierile",
+    onboardScanStep3: "Masuram reach-ul",
+    onboardScanStep4: "Iti gasim atuul",
+    onboardEdgeTitleSuffix: ", ai un atuu",
+    onboardEdgeSuperKicker: "🔥 Superputerea ta",
+    onboardEdgeUnlockKicker: "🚀 Potentialul tau",
+    onboardEdgeSuperLine1: "Ce",
+    onboardEdgeSuperLine2: "reusesti",
+    onboardEdgeUnlockLine1: "Potentialul",
+    onboardEdgeUnlockLine2: "nefolosit",
+    onboardEdgeCta: "Continua",
+    onboardPaymentTitle: "Activeaza-ti planul",
+    onboardPaymentSubtitle: "Aboneaza-te ca sa deblochezi coach-ul AI si analizele complete.",
+    onboardPaymentPlanName: "Lunar",
+    onboardPaymentPeriod: "/luna",
+    onboardPaymentPerkCancel: "Anuleaza oricand",
+    onboardPaymentPerkMoney: "Garantie returnare bani 30 zile",
+    onboardPaymentCta: "Continua catre plata",
+    onboardPaymentLoggedInAs: "Autentificat ca:",
     chatInputPlaceholder: "Mesaj catre PostPilot Agent",
     suggestionsLabel: "Sugestii",
     suggestions: [
@@ -554,6 +612,35 @@ const I18N = {
     scoreMetaGrowthWhat:
       "La crescita mette in luce i progressi online. Mostra come il contenuto arriva al pubblico e che slancio stai costruendo.",
     scoreMetaGrowthDrivers: "Tendenze di engagement e reach, piu le azioni che fai per migliorare.",
+    onboardConnectTitle: "Collega Instagram per iniziare",
+    onboardConnectSub:
+      "Così posso analizzare i tuoi contenuti e accompagnarti in modo personalizzato per il tuo pubblico.",
+    onboardConnectInstagram: "Collega Instagram",
+    onboardConnectLogout: "Esci",
+    onboardScanPosts: "post",
+    onboardScanLikes: "like",
+    onboardScanReach: "reach",
+    onboardScanTitle: "Scansione del profilo...",
+    onboardScanStep1: "Analisi dei post",
+    onboardScanStep2: "Lettura delle didascalie",
+    onboardScanStep3: "Misurazione della reach",
+    onboardScanStep4: "Alla ricerca del tuo vantaggio",
+    onboardEdgeTitleSuffix: ", hai un vantaggio",
+    onboardEdgeSuperKicker: "🔥 Il tuo superpotere",
+    onboardEdgeUnlockKicker: "🚀 Il tuo potenziale",
+    onboardEdgeSuperLine1: "Cosa stai",
+    onboardEdgeSuperLine2: "dominando",
+    onboardEdgeUnlockLine1: "Il potenziale",
+    onboardEdgeUnlockLine2: "in espansione",
+    onboardEdgeCta: "Continua",
+    onboardPaymentTitle: "Attiva il tuo piano",
+    onboardPaymentSubtitle: "Abbonati per sbloccare il coach IA e le analisi complete.",
+    onboardPaymentPlanName: "Mensile",
+    onboardPaymentPeriod: "/mese",
+    onboardPaymentPerkCancel: "Cancella quando vuoi",
+    onboardPaymentPerkMoney: "Garanzia soddisfatti o rimborsati 30 giorni",
+    onboardPaymentCta: "Vai al checkout",
+    onboardPaymentLoggedInAs: "Accesso come:",
     chatInputPlaceholder: "Messaggio per PostPilot Agent",
     suggestionsLabel: "Suggerimenti",
     suggestions: [
@@ -756,6 +843,35 @@ const I18N = {
     scoreMetaGrowthWhat:
       "Wachstum zeigt deinen Fortschritt online. Es zeigt, wie dein Content ankommt und welchen Schwung du aufbaust.",
     scoreMetaGrowthDrivers: "Engagement- und Reichweiten-Trends plus deine Schritte zur Verbesserung.",
+    onboardConnectTitle: "Verbinde Instagram, um zu starten",
+    onboardConnectSub:
+      "So kann ich deinen Content analysieren und dich persoenlich fuer deine Zielgruppe coachen.",
+    onboardConnectInstagram: "Instagram verbinden",
+    onboardConnectLogout: "Abmelden",
+    onboardScanPosts: "Posts",
+    onboardScanLikes: "Likes",
+    onboardScanReach: "Reach",
+    onboardScanTitle: "Profil wird gescannt...",
+    onboardScanStep1: "Posts werden analysiert",
+    onboardScanStep2: "Bildunterschriften werden gelesen",
+    onboardScanStep3: "Reichweite wird gemessen",
+    onboardScanStep4: "Dein Vorteil wird gesucht",
+    onboardEdgeTitleSuffix: ", du hast einen Vorteil",
+    onboardEdgeSuperKicker: "🔥 Deine Superkraft",
+    onboardEdgeUnlockKicker: "🚀 Dein Potenzial",
+    onboardEdgeSuperLine1: "Was du",
+    onboardEdgeSuperLine2: "richtig gut kannst",
+    onboardEdgeUnlockLine1: "Ungehobenes",
+    onboardEdgeUnlockLine2: "Potenzial",
+    onboardEdgeCta: "Weiter",
+    onboardPaymentTitle: "Plan aktivieren",
+    onboardPaymentSubtitle: "Abonniere, um den KI-Coach und alle Analysen freizuschalten.",
+    onboardPaymentPlanName: "Monatlich",
+    onboardPaymentPeriod: "/Monat",
+    onboardPaymentPerkCancel: "Jederzeit kuendbar",
+    onboardPaymentPerkMoney: "30-Tage-Geld-zurueck-Garantie",
+    onboardPaymentCta: "Weiter zur Kasse",
+    onboardPaymentLoggedInAs: "Angemeldet als:",
     chatInputPlaceholder: "Nachricht an PostPilot Agent",
     suggestionsLabel: "Vorschlaege",
     suggestions: [
@@ -958,6 +1074,35 @@ const I18N = {
     scoreMetaGrowthWhat:
       "La croissance met en avant tes progres en ligne. Elle montre comment ton contenu arrive au public et l'elan que tu construis.",
     scoreMetaGrowthDrivers: "Les tendances d'engagement et de portee, plus les actions que tu prends pour ameliorer.",
+    onboardConnectTitle: "Connecte Instagram pour commencer",
+    onboardConnectSub:
+      "Pour que j'analyse ton contenu et te coach personnellement pour ton audience.",
+    onboardConnectInstagram: "Connecter Instagram",
+    onboardConnectLogout: "Deconnexion",
+    onboardScanPosts: "posts",
+    onboardScanLikes: "j'aime",
+    onboardScanReach: "portee",
+    onboardScanTitle: "Analyse de ton profil...",
+    onboardScanStep1: "Analyse des posts",
+    onboardScanStep2: "Lecture des legendes",
+    onboardScanStep3: "Mesure de la portee",
+    onboardScanStep4: "Recherche de ton avantage",
+    onboardEdgeTitleSuffix: ", tu as un avantage",
+    onboardEdgeSuperKicker: "🔥 Ta superforce",
+    onboardEdgeUnlockKicker: "🚀 Ton potentiel",
+    onboardEdgeSuperLine1: "Ce que tu",
+    onboardEdgeSuperLine2: "maitrises",
+    onboardEdgeUnlockLine1: "Ton potentiel",
+    onboardEdgeUnlockLine2: "inexploite",
+    onboardEdgeCta: "Continuer",
+    onboardPaymentTitle: "Active ton offre",
+    onboardPaymentSubtitle: "Abonne-toi pour debloquer le coach IA et les analyses completes.",
+    onboardPaymentPlanName: "Mensuel",
+    onboardPaymentPeriod: "/mois",
+    onboardPaymentPerkCancel: "Annule a tout moment",
+    onboardPaymentPerkMoney: "Garantie satisfait ou rembourse 30 jours",
+    onboardPaymentCta: "Aller au paiement",
+    onboardPaymentLoggedInAs: "Connecte en tant que :",
     chatInputPlaceholder: "Message a PostPilot Agent",
     suggestionsLabel: "Suggestions",
     suggestions: [
@@ -1191,6 +1336,7 @@ function syncOnboardingLanguage() {
 function applyLanguage() {
   document.documentElement.lang = currentLanguage;
   if (languageSelect) languageSelect.value = currentLanguage;
+  if (languageSelectOnboard) languageSelectOnboard.value = currentLanguage;
 
   setTextIfExists("languageLabel", t("language"));
   setTextIfExists("heroBadge", t("heroBadge"));
@@ -1279,6 +1425,33 @@ function applyLanguage() {
   setTextIfExists("homeChipMotivateLabel", t("chipMotivate"));
   setTextIfExists("homeChipPostIdeasLabel", t("chipPostIdeas"));
   setTextIfExists("homeChipFindVoiceLabel", t("chipFindVoice"));
+  setTextIfExists("languageLabelOnboard", t("language"));
+  setTextIfExists("obConnectTitle", t("onboardConnectTitle"));
+  setTextIfExists("obConnectSub", t("onboardConnectSub"));
+  setTextIfExists("obConnectInstagramLabel", t("onboardConnectInstagram"));
+  setTextIfExists("obConnectLogoutLabel", t("onboardConnectLogout"));
+  setTextIfExists("obScanPostsLabel", t("onboardScanPosts"));
+  setTextIfExists("obScanLikesLabel", t("onboardScanLikes"));
+  setTextIfExists("obScanReachLabel", t("onboardScanReach"));
+  setTextIfExists("obScanTitle", t("onboardScanTitle"));
+  setTextIfExists("obScanStepLabel", t("onboardScanStep1"));
+  setTextIfExists("edgeTitleSuffix", t("onboardEdgeTitleSuffix"));
+  setTextIfExists("edgeSuperKicker", t("onboardEdgeSuperKicker"));
+  setTextIfExists("edgeUnlockKicker", t("onboardEdgeUnlockKicker"));
+  setTextIfExists("edgeSuperTitle1", t("onboardEdgeSuperLine1"));
+  setTextIfExists("edgeSuperTitle2", t("onboardEdgeSuperLine2"));
+  setTextIfExists("edgeUnlockTitle1", t("onboardEdgeUnlockLine1"));
+  setTextIfExists("edgeUnlockTitle2", t("onboardEdgeUnlockLine2"));
+  setTextIfExists("edgeStartBtnLabel", t("onboardEdgeCta"));
+  setTextIfExists("obPaymentTitle", t("onboardPaymentTitle"));
+  setTextIfExists("obPaymentSubtitle", t("onboardPaymentSubtitle"));
+  setTextIfExists("obPaymentPlanName", t("onboardPaymentPlanName"));
+  setTextIfExists("obPaymentPeriodLabel", t("onboardPaymentPeriod"));
+  setTextIfExists("obPaymentPerkCancel", t("onboardPaymentPerkCancel"));
+  setTextIfExists("obPaymentPerkMoney", t("onboardPaymentPerkMoney"));
+  setTextIfExists("obPaymentStartLabel", t("onboardPaymentCta"));
+  setTextIfExists("obPaymentLoggedInLabel", t("onboardPaymentLoggedInAs"));
+  setTextIfExists("obPaymentLogoutLabel", t("onboardConnectLogout"));
   setTextIfExists("labelTotalPosts", t("analyticsTotalPosts"));
   setTextIfExists("labelTotalLikes", t("analyticsTotalLikes"));
   setTextIfExists("labelTotalComments", t("analyticsTotalComments"));
@@ -1392,6 +1565,14 @@ function applyLanguage() {
 if (languageSelect) {
   languageSelect.addEventListener("change", () => {
     currentLanguage = languageSelect.value;
+    localStorage.setItem(LANGUAGE_KEY, currentLanguage);
+    applyLanguage();
+  });
+}
+
+if (languageSelectOnboard) {
+  languageSelectOnboard.addEventListener("change", () => {
+    currentLanguage = languageSelectOnboard.value;
     localStorage.setItem(LANGUAGE_KEY, currentLanguage);
     applyLanguage();
   });
@@ -2111,12 +2292,6 @@ function hasAnyIntegrationConnected(data) {
 function renderPaymentStep() {
   const email = accountState?.user?.email || "";
   setText("obPaymentLoggedInEmail", email);
-  const trialEndEl = document.getElementById("obPaymentTrialEnd");
-  if (trialEndEl) {
-    const end = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-    const formatted = end.toLocaleDateString(undefined, { month: "long", day: "numeric" });
-    trialEndEl.textContent = `Enjoy PostPilot free until ${formatted}`;
-  }
 }
 
 let suppressOnboardRouting = false;
@@ -2778,6 +2953,12 @@ async function renderScanView(profile) {
       // Non-blocking - preview tiles are optional enhancement.
     }
   }
+
+  setText("obScanPostsLabel", t("onboardScanPosts"));
+  setText("obScanLikesLabel", t("onboardScanLikes"));
+  setText("obScanReachLabel", t("onboardScanReach"));
+  setText("obScanTitle", t("onboardScanTitle"));
+  setText("obScanStepLabel", t("onboardScanStep1"));
 }
 
 function renderEdgeView(profile) {
@@ -2828,7 +3009,12 @@ async function startScanFlow() {
     });
   }
   const stepLabelEl = document.getElementById("obScanStepLabel");
-  const steps = ["Analyzing posts", "Reading captions", "Measuring reach", "Finding your edge"];
+  const steps = [
+    t("onboardScanStep1"),
+    t("onboardScanStep2"),
+    t("onboardScanStep3"),
+    t("onboardScanStep4"),
+  ];
   let stepIdx = 0;
   const stepTimer = window.setInterval(() => {
     stepIdx = Math.min(steps.length - 1, stepIdx + 1);
