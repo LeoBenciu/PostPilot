@@ -68,10 +68,13 @@ function sendJsRedirect(res, location) {
 <title>Redirecting…</title>
 <style>
   body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #fff7f9; color: #1f0d12; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; text-align: center; }
-  .card { max-width: 360px; }
+  .card { max-width: 420px; }
   .spinner { width: 32px; height: 32px; border: 3px solid #f3d5d8; border-top-color: #d50032; border-radius: 50%; margin: 0 auto 16px; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  button { background: #d50032; color: #fff; border: 0; border-radius: 999px; padding: 12px 20px; font-size: 15px; font-weight: 600; margin-top: 12px; cursor: pointer; }
+  button { background: #d50032; color: #fff; border: 0; border-radius: 999px; padding: 12px 20px; font-size: 15px; font-weight: 600; margin-top: 16px; cursor: pointer; }
+  .hint { margin-top: 18px; padding: 12px 14px; background: #fff; border: 1px solid #f3d5d8; border-radius: 12px; font-size: 13px; line-height: 1.45; color: #7e5b63; text-align: left; }
+  .hint strong { color: #1f0d12; display: block; margin-bottom: 4px; }
+  .hint.hidden { display: none; }
 </style>
 </head>
 <body>
@@ -79,17 +82,26 @@ function sendJsRedirect(res, location) {
   <div class="spinner"></div>
   <p>Redirecting to login…</p>
   <button type="button" id="manual">Tap here if you aren't redirected</button>
+  <div class="hint hidden" id="iosHint">
+    <strong>On iPhone: stay in Safari, ignore the Instagram app.</strong>
+    If the Instagram app opens with an error, just close it and come back to this browser tab — the login page opens here.
+  </div>
 </div>
 <script>
   // Both the automatic navigation and the manual fallback are JS-initiated, not
-  // <a href>-based. iOS Universal Links require a real link tap or typed URL to
-  // trigger; script navigations stay inside Safari.
+  // <a href>-based. Script navigations are less likely to trigger iOS Universal
+  // Links, but newer iOS versions can still open the native app in parallel.
+  // Since the Safari tab navigates correctly either way, we just tell the user
+  // to ignore the app popup.
   var target = ${JSON.stringify(location)};
   function go() {
     try { window.location.replace(target); }
     catch (e) { window.location.href = target; }
   }
   document.getElementById("manual").addEventListener("click", go);
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent || "")) {
+    document.getElementById("iosHint").classList.remove("hidden");
+  }
   setTimeout(go, 50);
 </script>
 </body>
