@@ -82,27 +82,27 @@ function sendJsRedirect(res, location) {
   <div class="spinner"></div>
   <p>Redirecting to login…</p>
   <button type="button" id="manual">Tap here if you aren't redirected</button>
-  <div class="hint hidden" id="iosHint">
-    <strong>On iPhone: stay in Safari, ignore the Instagram app.</strong>
-    If the Instagram app opens with an error, just close it and come back to this browser tab — the login page opens here.
+  <div class="hint hidden" id="mobileHint">
+    <strong>Stay in your browser, ignore the Instagram app.</strong>
+    If the Instagram app opens with an error, close it and come back to this tab — the login page is opening here.
   </div>
 </div>
 <script>
   // Both the automatic navigation and the manual fallback are JS-initiated, not
-  // <a href>-based. Script navigations are less likely to trigger iOS Universal
-  // Links, but newer iOS versions can still open the native app in parallel.
-  // Since the Safari tab navigates correctly either way, we just tell the user
-  // to ignore the app popup.
+  // <a href>-based. iOS Universal Links and Android App Links only trigger on
+  // navigations happening inside the original user-gesture window (~500ms).
+  // We wait past that before calling replace() so the URL stays inside the
+  // browser instead of being handed to the native Instagram app.
   var target = ${JSON.stringify(location)};
   function go() {
     try { window.location.replace(target); }
     catch (e) { window.location.href = target; }
   }
   document.getElementById("manual").addEventListener("click", go);
-  if (/iPhone|iPad|iPod/i.test(navigator.userAgent || "")) {
-    document.getElementById("iosHint").classList.remove("hidden");
+  if (/iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")) {
+    document.getElementById("mobileHint").classList.remove("hidden");
   }
-  setTimeout(go, 50);
+  setTimeout(go, 600);
 </script>
 </body>
 </html>`;
@@ -1302,14 +1302,15 @@ const server = http.createServer(async (req, res) => {
       });
       const redirectUri = `${requestOrigin(req)}/auth/${platform}/callback`;
       const authUrl = buildAuthUrl({ platform, redirectUri, state: stateToken });
-      // iOS Safari aggressively triggers Universal Links on server-side 302s
-      // to instagram.com, which opens the native app with a spurious
-      // "profile not found" error. The JS shim mitigates this by navigating
-      // from a script context. On every other browser a plain 302 gives a
-      // cleaner UX without the intermediate "Redirecting…" page.
+      // Both iOS Universal Links and Android App Links trigger on server-side
+      // 302s and hand the URL to the native Instagram app, which then shows
+      // a spurious "profile not found" error because /oauth/authorize is
+      // parsed as a username. JS-initiated navigations (setTimeout + replace)
+      // run outside the user-gesture window and skip the app handoff on most
+      // mobile browsers. Desktop clients get a plain 302 for the cleanest UX.
       const ua = String(req.headers["user-agent"] || "");
-      const isIos = /iPhone|iPad|iPod/i.test(ua);
-      if (isIos) sendJsRedirect(res, authUrl);
+      const isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(ua);
+      if (isMobile) sendJsRedirect(res, authUrl);
       else sendRedirect(res, authUrl);
     } catch (err) {
       const platform = pathname.endsWith("linkedin") ? "linkedin" : "instagram";

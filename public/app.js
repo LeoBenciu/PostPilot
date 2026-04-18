@@ -2369,20 +2369,12 @@ function displayPlatform(platform) {
   return "Social";
 }
 
-function isMobileDevice() {
-  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
-}
-
 async function connectPlatform(platform) {
-  // On mobile we navigate the current tab through our /auth/{platform}
-  // endpoint. The server picks the right redirect style per-browser
-  // (JS shim on iOS to dodge Universal Links, plain 302 elsewhere).
-  if (isMobileDevice()) {
-    setText("settingsStatus", tf("integrationRedirecting"));
-    window.location.assign(`/auth/${platform}`);
-    return;
-  }
-
+  // Same flow on desktop and mobile: fetch the OAuth URL over XHR first,
+  // then navigate. The async hop puts enough distance between the user tap
+  // and the final navigation that iOS Universal Links / Android App Links
+  // treat it as a programmatic navigation and usually leave it inside the
+  // browser instead of handing it off to the native Instagram app.
   try {
     setText("settingsStatus", tf("integrationRedirecting"));
     const data = await api("/api/integrations/connect", "POST", { platform });
