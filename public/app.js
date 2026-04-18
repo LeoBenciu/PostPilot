@@ -100,6 +100,18 @@ const I18N = {
     legalCookies: "Cookies",
     supportLabel: "Support",
     chatSubtitle: "Your creator growth assistant",
+    agentEmptyGreetingWithName: "Welcome back {name}, let's slay the day 💪",
+    agentEmptyGreetingGeneric: "Welcome back, let's slay the day 💪",
+    chipViralIdea: "Viral idea of the day",
+    chipWeeklyPlan: "Weekly content plan",
+    chipMotivate: "Motivate me",
+    chipPostIdeas: "Post ideas",
+    chipFindVoice: "Find my voice",
+    homePromptWeeklyPlan: "Build me a weekly content plan for this week based on my latest posts.",
+    homePromptMotivate: "Give me a quick motivation boost as a creator who's feeling stuck today.",
+    homePromptPostIdeas: "Give me 5 post ideas tailored to my niche and recent performance.",
+    homePromptFindVoice: "Help me find my voice. What's my edge as a creator?",
+    homePromptViralIdea: "Give me one viral content idea for today, tailored to my niche and audience.",
     chatInputPlaceholder: "Message PostPilot Agent",
     suggestionsLabel: "Suggestions",
     suggestions: [
@@ -282,6 +294,23 @@ const I18N = {
     legalCookies: "Cookie-uri",
     supportLabel: "Suport",
     chatSubtitle: "Asistentul tau pentru crestere",
+    agentEmptyGreetingWithName: "Bine ai revenit, {name}, hai sa rupem ziua asta 💪",
+    agentEmptyGreetingGeneric: "Bine ai revenit, hai sa rupem ziua asta 💪",
+    chipViralIdea: "Ideea virala a zilei",
+    chipWeeklyPlan: "Plan de continut saptamanal",
+    chipMotivate: "Motivaza-ma",
+    chipPostIdeas: "Idei de postari",
+    chipFindVoice: "Gaseste-mi vocea",
+    homePromptWeeklyPlan:
+      "Fa-mi un plan de continut pentru saptamana asta, pe baza ultimelor mele postari.",
+    homePromptMotivate:
+      "Da-mi un boost rapid de motivatie ca un creator care se simte blocat azi.",
+    homePromptPostIdeas:
+      "Da-mi 5 idei de postari adaptate nisei mele si performantei recente.",
+    homePromptFindVoice:
+      "Ajuta-ma sa imi gasesc vocea. Care e atuul meu ca si creator?",
+    homePromptViralIdea:
+      "Da-mi o idee virala de continut pentru azi, adaptata nisei si audientei mele.",
     chatInputPlaceholder: "Mesaj catre PostPilot Agent",
     suggestionsLabel: "Sugestii",
     suggestions: [
@@ -460,6 +489,23 @@ const I18N = {
     legalCookies: "Cookie",
     supportLabel: "Supporto",
     chatSubtitle: "Il tuo assistente per la crescita creator",
+    agentEmptyGreetingWithName: "Bentornato {name}, facciamo brillare questa giornata 💪",
+    agentEmptyGreetingGeneric: "Bentornato, facciamo brillare questa giornata 💪",
+    chipViralIdea: "Idea virale del giorno",
+    chipWeeklyPlan: "Piano contenuti settimanale",
+    chipMotivate: "Motivami",
+    chipPostIdeas: "Idee per post",
+    chipFindVoice: "Trova la mia voce",
+    homePromptWeeklyPlan:
+      "Creami un piano di contenuti per questa settimana in base alle mie ultime pubblicazioni.",
+    homePromptMotivate:
+      "Dammi una spinta motivazionale veloce come creator che oggi si sente bloccato.",
+    homePromptPostIdeas:
+      "Dammi 5 idee per post adatte alla mia nicchia e alle performance recenti.",
+    homePromptFindVoice:
+      "Aiutami a trovare la mia voce. Qual e il mio punto di forza come creator?",
+    homePromptViralIdea:
+      "Dammi un'idea di contenuto virale per oggi, adatta alla mia nicchia e al mio pubblico.",
     chatInputPlaceholder: "Messaggio per PostPilot Agent",
     suggestionsLabel: "Suggerimenti",
     suggestions: [
@@ -629,6 +675,23 @@ const I18N = {
     legalCookies: "Cookies",
     supportLabel: "Support",
     chatSubtitle: "Dein Assistent fuer Creator-Wachstum",
+    agentEmptyGreetingWithName: "Willkommen zurueck, {name}, lass uns den Tag rocken 💪",
+    agentEmptyGreetingGeneric: "Willkommen zurueck, lass uns den Tag rocken 💪",
+    chipViralIdea: "Virale Idee des Tages",
+    chipWeeklyPlan: "Woechentlicher Content-Plan",
+    chipMotivate: "Motiviere mich",
+    chipPostIdeas: "Post-Ideen",
+    chipFindVoice: "Finde meine Stimme",
+    homePromptWeeklyPlan:
+      "Erstelle mir einen Content-Plan fuer diese Woche basierend auf meinen neuesten Posts.",
+    homePromptMotivate:
+      "Gib mir einen schnellen Motivationsschub als Creator, der sich heute feststeckt.",
+    homePromptPostIdeas:
+      "Gib mir 5 Post-Ideen passend zu meiner Nische und meiner aktuellen Performance.",
+    homePromptFindVoice:
+      "Hilf mir, meine Stimme zu finden. Was ist meine Staerke als Creator?",
+    homePromptViralIdea:
+      "Gib mir eine virale Content-Idee fuer heute, passend zu meiner Nische und Zielgruppe.",
     chatInputPlaceholder: "Nachricht an PostPilot Agent",
     suggestionsLabel: "Vorschlaege",
     suggestions: [
@@ -798,6 +861,23 @@ const I18N = {
     legalCookies: "Cookies",
     supportLabel: "Support",
     chatSubtitle: "Votre assistant de croissance createur",
+    agentEmptyGreetingWithName: "Content de te revoir {name}, on ecrase la journee 💪",
+    agentEmptyGreetingGeneric: "Content de te revoir, on ecrase la journee 💪",
+    chipViralIdea: "Idee virale du jour",
+    chipWeeklyPlan: "Plan de contenu hebdomadaire",
+    chipMotivate: "Motive-moi",
+    chipPostIdeas: "Idees de posts",
+    chipFindVoice: "Trouve ma voix",
+    homePromptWeeklyPlan:
+      "Cree-moi un plan de contenu pour cette semaine base sur mes dernieres publications.",
+    homePromptMotivate:
+      "Donne-moi un petit boost de motivation en tant que createur qui se sent bloque aujourd'hui.",
+    homePromptPostIdeas:
+      "Donne-moi 5 idees de posts adaptees a ma niche et a mes performances recentes.",
+    homePromptFindVoice:
+      "Aide-moi a trouver ma voix. Quel est mon avantage en tant que createur ?",
+    homePromptViralIdea:
+      "Donne-moi une idee de contenu virale pour aujourd'hui, adaptee a ma niche et a mon audience.",
     chatInputPlaceholder: "Message a PostPilot Agent",
     suggestionsLabel: "Suggestions",
     suggestions: [
@@ -1114,6 +1194,11 @@ function applyLanguage() {
   setTextIfExists("disconnectCancelBtn", t("disconnectConfirmCancel"));
   setTextIfExists("disconnectConfirmBtn", t("disconnectConfirmCta"));
   setTextIfExists("chatHeaderSubtitle", t("chatSubtitle"));
+  setTextIfExists("viralIdeaChipLabel", t("chipViralIdea"));
+  setTextIfExists("homeChipWeeklyPlanLabel", t("chipWeeklyPlan"));
+  setTextIfExists("homeChipMotivateLabel", t("chipMotivate"));
+  setTextIfExists("homeChipPostIdeasLabel", t("chipPostIdeas"));
+  setTextIfExists("homeChipFindVoiceLabel", t("chipFindVoice"));
   setTextIfExists("labelTotalPosts", t("analyticsTotalPosts"));
   setTextIfExists("labelTotalLikes", t("analyticsTotalLikes"));
   setTextIfExists("labelTotalComments", t("analyticsTotalComments"));
@@ -1206,6 +1291,12 @@ function applyLanguage() {
   setTextIfExists("settingsInstagramStatus", t("notConnected"));
   if (connectLinkedinBtn) connectLinkedinBtn.textContent = t("connectAccount");
   if (connectInstagramBtn) connectInstagramBtn.textContent = t("connectAccount");
+
+  if (creatorProfile) {
+    renderHomeDashboard(creatorProfile);
+  } else {
+    setTextIfExists("agentGreeting", t("agentEmptyGreetingGeneric"));
+  }
 
   syncOnboardingLanguage();
   if (accountState) applySettingsForm(accountState);
@@ -2465,7 +2556,11 @@ async function loadCreatorProfile() {
 }
 
 function renderHomeDashboard(profile) {
-  if (!profile) return;
+  const greetingEl = document.getElementById("agentGreeting");
+  if (!profile) {
+    if (greetingEl) greetingEl.textContent = t("agentEmptyGreetingGeneric");
+    return;
+  }
   const scores = profile.scores || { momentum: 0, consistency: 0, growth: 0 };
   ["momentum", "consistency", "growth"].forEach((key) => {
     const value = Math.max(0, Math.min(100, Number(scores[key] || 0)));
@@ -2476,11 +2571,10 @@ function renderHomeDashboard(profile) {
   });
 
   const firstName = profile.user?.firstName || profile.user?.name?.split(" ")[0] || "";
-  const greetingEl = document.getElementById("agentGreeting");
   if (greetingEl) {
     greetingEl.textContent = firstName
-      ? `Welcome back ${firstName}, let's slay the day 💪`
-      : "Welcome back, let's slay the day 💪";
+      ? tf("agentEmptyGreetingWithName", { name: firstName })
+      : t("agentEmptyGreetingGeneric");
   }
 }
 
@@ -2517,16 +2611,18 @@ document.getElementById("scoreModal")?.addEventListener("click", (event) => {
    Home quick actions -> switch to chat view with prompt
    ============================================================ */
 
-const HOME_PROMPTS = {
-  "weekly-plan": "Build me a weekly content plan for this week based on my latest posts.",
-  motivate: "Give me a quick motivation boost as a creator who's feeling stuck today.",
-  "post-ideas": "Give me 5 post ideas tailored to my niche and recent performance.",
-  "find-voice": "Help me find my voice. What's my edge as a creator?",
-  "viral-idea": "Give me one viral content idea for today, tailored to my niche and audience.",
-};
+function getHomePrompts() {
+  return {
+    "weekly-plan": t("homePromptWeeklyPlan"),
+    motivate: t("homePromptMotivate"),
+    "post-ideas": t("homePromptPostIdeas"),
+    "find-voice": t("homePromptFindVoice"),
+    "viral-idea": t("homePromptViralIdea"),
+  };
+}
 
 function sendHomePrompt(promptKey, fallbackText) {
-  const text = HOME_PROMPTS[promptKey] || fallbackText || "";
+  const text = getHomePrompts()[promptKey] || fallbackText || "";
   if (!text) return;
   setActiveView("agent");
   const input = document.getElementById("messageInput");

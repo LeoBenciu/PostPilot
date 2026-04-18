@@ -844,8 +844,14 @@ async function ensureValidToken(state, platform) {
   return false;
 }
 
+// How long profile/posts are considered fresh before a background re-sync.
+// Tune these if you need more aggressive freshness.
+const PROFILE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const POSTS_TTL_MS = 20 * 60 * 1000; // 20 minutes
+
 async function ensureProfileData(state) {
   let changed = false;
+  const now = Date.now();
   for (const [platform, integration] of Object.entries(state.integrations || {})) {
     if (!integration?.connected || !integration?.token) continue;
 
@@ -853,12 +859,24 @@ async function ensureProfileData(state) {
     if (tokenChanged) changed = true;
     if (!integration.connected || !integration.token) continue;
 
-    const needsProfile = integration.bio === undefined || integration.bio === null;
+    const lastSync = integration.lastSyncAt
+      ? new Date(integration.lastSyncAt).getTime()
+      : 0;
+    const ageMs = lastSync ? now - lastSync : Infinity;
+    const profileStale = ageMs > PROFILE_TTL_MS;
+    const postsStale = ageMs > POSTS_TTL_MS;
+
+    const hasBio = integration.bio !== undefined && integration.bio !== null;
+    const needsProfile = !hasBio || profileStale;
+
     const platformPosts = (state.posts || []).filter((p) => p.platform === platform);
-    const needsPosts = !platformPosts.length;
-    const needsMediaUrls = platformPosts.length > 0 && !platformPosts.some((p) => p.imageUrl || p.mediaUrl);
+    const needsMediaUrls =
+      platformPosts.length > 0 && !platformPosts.some((p) => p.imageUrl || p.mediaUrl);
+    // If the (possibly just-refreshed) mediaCount says the user has more posts
+    // than we've cached, we're out of date regardless of TTL.
     const knownTotal = Number(integration.mediaCount || 0);
-    const needsMorePosts = knownTotal > 0 && platformPosts.length > 0 && platformPosts.length < knownTotal * 0.8;
+    const needsMorePosts = knownTotal > platformPosts.length;
+    const needsPosts = !platformPosts.length || postsStale;
 
     if (!needsProfile && !needsPosts && !needsMediaUrls && !needsMorePosts) continue;
 
@@ -875,23 +893,43 @@ async function ensureProfileData(state) {
         if (profile.website !== undefined) integration.website = profile.website || "";
         if (profile.accountType !== undefined) integration.accountType = profile.accountType || "";
         changed = true;
-        console.log(`[PostPilot] Backfilled profile data for ${platform}/@${integration.username}`);
+        const reason = !hasBio ? "missing" : `stale ${Math.round(ageMs / 60000)}m`;
+        console.log(
+          `[PostPilot] Refreshed profile for ${platform}/@${integration.username} (${reason})`,
+        );
       }
-      if (needsPosts || needsMediaUrls || needsMorePosts) {
-        if (needsMediaUrls || needsMorePosts) {
-          const reason = needsMorePosts ? `incomplete (${platformPosts.length}/${knownTotal})` : "missing media URLs";
+
+      // Re-read mediaCount after the profile refresh — Instagram may report a
+      // new post count that invalidates our cached posts.
+      const freshTotal = Number(integration.mediaCount || 0);
+      const currentCount = (state.posts || []).filter((p) => p.platform === platform).length;
+      const stillNeedsMore = freshTotal > currentCount;
+
+      if (needsPosts || needsMediaUrls || stillNeedsMore) {
+        if (needsMediaUrls || stillNeedsMore) {
+          const reason = stillNeedsMore
+            ? `incomplete (${currentCount}/${freshTotal})`
+            : "missing media URLs";
           state.posts = state.posts.filter((p) => p.platform !== platform);
           console.log(`[PostPilot] Clearing old ${platform} posts — ${reason}`);
         }
         const profile = { username: integration.username, urn: integration.urn };
-        const posts = await fetchPlatformPostsAndAnalytics({ platform, accessToken: integration.token, profile });
+        const posts = await fetchPlatformPostsAndAnalytics({
+          platform,
+          accessToken: integration.token,
+          profile,
+        });
         upsertPosts(state, posts);
         state.voiceProfile = buildVoiceProfile(state.posts);
+        integration.lastSyncAt = nowIso();
         changed = true;
-        console.log(`[PostPilot] Synced ${posts.length} posts for ${platform}/@${integration.username} (media URLs: ${posts.filter(p => p.imageUrl).length})`);
+        console.log(
+          `[PostPilot] Synced ${posts.length} posts for ${platform}/@${integration.username} ` +
+            `(media URLs: ${posts.filter((p) => p.imageUrl).length})`,
+        );
       }
     } catch (err) {
-      console.error(`[PostPilot] Data backfill failed for ${platform}:`, err?.message);
+      console.error(`[PostPilot] Data refresh failed for ${platform}:`, err?.message);
     }
   }
   return changed;
@@ -1790,6 +1828,8 @@ const server = http.createServer(async (req, res) => {
     const user = await requireAuth(req, res);
     if (!user) return;
     const state = bindStateToUser(await getStateForUser(user.id), user);
+    const backfilled = await ensureProfileData(state);
+    if (backfilled) await saveStateForUser(user.id, state);
     sendJson(res, 200, summarizeAnalytics(state.posts));
     return;
   }
@@ -1806,6 +1846,8 @@ const server = http.createServer(async (req, res) => {
     const user = await requireAuth(req, res);
     if (!user) return;
     const state = bindStateToUser(await getStateForUser(user.id), user);
+    const backfilled = await ensureProfileData(state);
+    if (backfilled) await saveStateForUser(user.id, state);
     const limit = Number(parsed.searchParams.get("limit") || 20);
     if (!Number.isFinite(limit) || limit <= 0) {
       sendJson(res, 200, { posts: state.posts });
