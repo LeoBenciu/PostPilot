@@ -60,12 +60,6 @@ function sendRedirect(res, location) {
 // triggers the navigation from JS (script-initiated, no user gesture) keeps
 // the flow inside the browser.
 function sendJsRedirect(res, location) {
-  const escaped = String(location)
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -77,22 +71,26 @@ function sendJsRedirect(res, location) {
   .card { max-width: 360px; }
   .spinner { width: 32px; height: 32px; border: 3px solid #f3d5d8; border-top-color: #d50032; border-radius: 50%; margin: 0 auto 16px; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  a { color: #d50032; font-weight: 600; }
+  button { background: #d50032; color: #fff; border: 0; border-radius: 999px; padding: 12px 20px; font-size: 15px; font-weight: 600; margin-top: 12px; cursor: pointer; }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="spinner"></div>
   <p>Redirecting to login…</p>
-  <p><a id="manual" href="${escaped}">Tap here if you aren't redirected</a></p>
+  <button type="button" id="manual">Tap here if you aren't redirected</button>
 </div>
 <script>
-  // Script-initiated replace() keeps the flow in Safari on iOS,
-  // bypassing Universal Links that would open the native app.
-  setTimeout(function () {
-    try { window.location.replace(${JSON.stringify(location)}); }
-    catch (e) { window.location.href = ${JSON.stringify(location)}; }
-  }, 50);
+  // Both the automatic navigation and the manual fallback are JS-initiated, not
+  // <a href>-based. iOS Universal Links require a real link tap or typed URL to
+  // trigger; script navigations stay inside Safari.
+  var target = ${JSON.stringify(location)};
+  function go() {
+    try { window.location.replace(target); }
+    catch (e) { window.location.href = target; }
+  }
+  document.getElementById("manual").addEventListener("click", go);
+  setTimeout(go, 50);
 </script>
 </body>
 </html>`;
