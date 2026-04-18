@@ -2374,21 +2374,12 @@ function isMobileDevice() {
 }
 
 async function connectPlatform(platform) {
-  // On mobile, navigating the current tab to instagram.com (or linkedin.com)
-  // triggers iOS Universal Links / Android App Links, which hand the URL to
-  // the native app. If the app isn't logged in — or the account isn't eligible
-  // for the OAuth scope — the user sees a cryptic error and is stuck.
-  //
-  // Opening the OAuth start URL in a new tab from a synchronous click handler
-  // keeps the flow inside the browser (Safari / Chrome) so the user can sign
-  // in with their credentials on the web, which is what we want here.
+  // On mobile we navigate the current tab through our /auth/{platform}
+  // endpoint. The server picks the right redirect style per-browser
+  // (JS shim on iOS to dodge Universal Links, plain 302 elsewhere).
   if (isMobileDevice()) {
     setText("settingsStatus", tf("integrationRedirecting"));
-    const startUrl = `/auth/${platform}`;
-    const newWindow = window.open(startUrl, "_blank", "noopener,noreferrer");
-    if (!newWindow) {
-      window.location.assign(startUrl);
-    }
+    window.location.assign(`/auth/${platform}`);
     return;
   }
 
