@@ -229,9 +229,13 @@
     <div class="app-shell hidden" id="chatApp">
       <aside class="sidebar">
         <div class="sidebar-top-nav">
-          <button id="agentViewBtn" class="secondary sidebar-view-btn active">
+          <button id="homeViewBtn" class="secondary sidebar-view-btn active">
+            <span aria-hidden="true" class="btn-icon">⌂</span>
+            <span id="homeViewBtnLabel">Home</span>
+          </button>
+          <button id="agentViewBtn" class="secondary sidebar-view-btn">
             <span aria-hidden="true" class="btn-icon">✦</span>
-            <span id="agentViewBtnLabel">Agent</span>
+            <span id="agentViewBtnLabel">Coach</span>
           </button>
           <button id="analyticsViewBtn" class="secondary sidebar-view-btn">
             <span aria-hidden="true" class="btn-icon">◫</span>
@@ -261,7 +265,130 @@
             <a href="/cookies.html" id="legalCookiesLinkApp" target="_blank" rel="noopener noreferrer">Cookies</a>
           </div>
         </header>
-        <section id="agentView" class="app-view agent-view">
+        <section id="homeView" class="app-view home-view">
+          <div class="home-scores" id="homeScores">
+            <button type="button" class="score-chip" data-score="momentum" aria-label="Momentum score details">
+              <span class="score-ring" style="--pct: 0">
+                <span class="score-ring-value" data-score-value="momentum">0</span>
+              </span>
+              <span class="score-ring-icon" aria-hidden="true">⚡</span>
+            </button>
+            <button type="button" class="score-chip" data-score="consistency" aria-label="Consistency score details">
+              <span class="score-ring" style="--pct: 0">
+                <span class="score-ring-value" data-score-value="consistency">0</span>
+              </span>
+              <span class="score-ring-icon" aria-hidden="true">🗓</span>
+            </button>
+            <button type="button" class="score-chip" data-score="growth" aria-label="Growth score details">
+              <span class="score-ring" style="--pct: 0">
+                <span class="score-ring-value" data-score-value="growth">0</span>
+              </span>
+              <span class="score-ring-icon" aria-hidden="true">📈</span>
+            </button>
+          </div>
+
+          <div class="home-hero">
+            <h2 class="home-greeting" id="homeGreeting">Welcome back, let's slay the day</h2>
+            <button type="button" class="home-feature-chip" id="viralIdeaChip">
+              <span class="home-feature-icon" aria-hidden="true">🔥</span>
+              <span id="viralIdeaChipLabel">Viral idea of the day</span>
+            </button>
+            <div class="home-chip-row">
+              <button type="button" class="home-chip" data-prompt="weekly-plan">
+                <span class="home-chip-icon" aria-hidden="true">Aa</span>
+                <span id="homeChipWeeklyPlanLabel">Weekly content plan</span>
+              </button>
+              <button type="button" class="home-chip" data-prompt="motivate">
+                <span class="home-chip-icon" aria-hidden="true">💪</span>
+                <span id="homeChipMotivateLabel">Motivate me</span>
+              </button>
+              <button type="button" class="home-chip" data-prompt="post-ideas">
+                <span class="home-chip-icon" aria-hidden="true">💡</span>
+                <span id="homeChipPostIdeasLabel">Post ideas</span>
+              </button>
+              <button type="button" class="home-chip" data-prompt="find-voice">
+                <span class="home-chip-icon" aria-hidden="true">🎤</span>
+                <span id="homeChipFindVoiceLabel">Find my voice</span>
+              </button>
+            </div>
+          </div>
+
+          <form id="homeComposer" class="home-composer" autocomplete="off">
+            <input
+              id="homeMessageInput"
+              type="text"
+              name="postpilot-home-message"
+              enterkeyhint="send"
+              placeholder="Ask anything"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="none"
+              spellcheck="false"
+              aria-label="Ask PostPilot anything"
+            />
+            <button type="submit" id="homeSendBtn" class="home-send-btn" aria-label="Send">
+              <span aria-hidden="true">↑</span>
+            </button>
+          </form>
+
+          <div class="home-cta-banner" id="homeCtaBanner">
+            <div class="home-cta-text">
+              <p class="home-cta-title" id="homeCtaTitle">Create my 30-Day Content Calendar</p>
+              <p class="home-cta-sub" id="homeCtaSub">Have PostPilot become your new Head of Content</p>
+            </div>
+            <span class="home-cta-arrow" aria-hidden="true">→</span>
+          </div>
+        </section>
+
+        <section id="scanView" class="app-view scan-view hidden">
+          <div class="scan-inner">
+            <div class="scan-avatar-wrap">
+              <div class="scan-glow" aria-hidden="true"></div>
+              <img id="scanAvatar" class="scan-avatar" alt="Your profile" src="" />
+            </div>
+            <p id="scanHandle" class="scan-handle"></p>
+            <div class="scan-badge" id="scanBadge">
+              <span id="scanBadgeCount">0</span><span class="scan-badge-heart" aria-hidden="true">❤</span>
+            </div>
+            <h2 class="scan-title" id="scanTitle">Scanning your profile...</h2>
+            <div class="scan-progress" aria-hidden="true">
+              <span class="scan-progress-bar"></span>
+            </div>
+          </div>
+        </section>
+
+        <section id="edgeView" class="app-view edge-view hidden">
+          <div class="edge-inner">
+            <img id="edgeAvatar" class="edge-avatar" alt="Your profile" src="" />
+            <h2 class="edge-title">
+              <span id="edgeFirstName">friend</span><span id="edgeTitleSuffix">, you've got an edge</span>
+            </h2>
+
+            <div class="edge-cards">
+              <article class="edge-card edge-card-super">
+                <span class="edge-card-kicker" id="edgeSuperKicker">🔥 Your Superpower</span>
+                <h3 class="edge-card-title">
+                  <span id="edgeSuperTitle1">What you're</span> <em id="edgeSuperTitle2">crushing</em>
+                </h3>
+                <ul class="edge-card-list" id="edgeSuperList"></ul>
+              </article>
+              <article class="edge-card edge-card-unlock">
+                <span class="edge-card-kicker" id="edgeUnlockKicker">🚀 Your Unlock</span>
+                <h3 class="edge-card-title">
+                  <span id="edgeUnlockTitle1">Your untapped</span> <em id="edgeUnlockTitle2">potential</em>
+                </h3>
+                <ul class="edge-card-list" id="edgeUnlockList"></ul>
+              </article>
+            </div>
+
+            <button type="button" class="edge-cta" id="edgeStartBtn">
+              <span id="edgeStartBtnLabel">Start Creating with PostPilot</span>
+            </button>
+            <p class="edge-trial-note" id="edgeTrialNote">FREE for 14 days</p>
+          </div>
+        </section>
+
+        <section id="agentView" class="app-view agent-view hidden">
           <div class="agent-toolbar">
             <button id="resetChatBtn" class="secondary agent-reset-btn">
               <span aria-hidden="true" class="btn-icon">↺</span>
@@ -559,6 +686,29 @@
         <div class="confirm-actions">
           <button type="button" id="disconnectCancelBtn" class="secondary">Cancel</button>
           <button type="button" id="disconnectConfirmBtn" class="danger-btn">Disconnect</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="scoreModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="scoreModalTitle">
+      <div class="modal-card score-modal-card">
+        <button class="modal-close" id="closeScoreModal" type="button" aria-label="Close score details">×</button>
+        <h2 id="scoreModalTitle" class="score-modal-title">
+          <span class="score-modal-icon" id="scoreModalIcon" aria-hidden="true"></span>
+          <span id="scoreModalName">Momentum</span>
+        </h2>
+        <div class="score-modal-bar" aria-hidden="true">
+          <span class="score-modal-bar-fill" id="scoreModalBarFill" style="width: 0%">
+            <span id="scoreModalValue">0</span>
+          </span>
+        </div>
+        <div class="score-modal-section">
+          <h3 id="scoreModalWhatTitle">What is it?</h3>
+          <p id="scoreModalWhatBody"></p>
+        </div>
+        <div class="score-modal-section">
+          <h3 id="scoreModalDriversTitle">What's driving your score?</h3>
+          <p id="scoreModalDriversBody"></p>
         </div>
       </div>
     </div>

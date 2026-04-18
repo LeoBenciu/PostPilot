@@ -208,6 +208,240 @@ function summarizeAnalytics(posts) {
   };
 }
 
+function buildCreatorProfile(state) {
+  const posts = Array.isArray(state?.posts) ? state.posts : [];
+  const integrations = state?.integrations || {};
+  const user = state?.user || {};
+
+  const igConnected = Boolean(integrations.instagram?.connected);
+  const liConnected = Boolean(integrations.linkedin?.connected);
+  const connectedPlatforms = [igConnected && "instagram", liConnected && "linkedin"].filter(Boolean);
+
+  const primaryPlatform = igConnected ? "instagram" : liConnected ? "linkedin" : "";
+  const primaryIntegration = primaryPlatform ? integrations[primaryPlatform] : {};
+  const handle = String(primaryIntegration?.username || "").replace(/^@+/, "");
+  const avatarUrl = String(primaryIntegration?.avatarUrl || "");
+  const followerCount = Number(primaryIntegration?.followerCount || primaryIntegration?.followers || 0);
+
+  const now = Date.now();
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const recentPosts = posts
+    .map((p) => ({
+      ...p,
+      _ts: p.postedAt ? Date.parse(p.postedAt) : 0,
+    }))
+    .filter((p) => p._ts > 0)
+    .sort((a, b) => b._ts - a._ts);
+
+  const postsLast8Weeks = recentPosts.filter((p) => now - p._ts <= 8 * weekMs);
+  const postsPerWeek = postsLast8Weeks.length / 8;
+
+  const weeklyCounts = new Array(8).fill(0);
+  for (const p of postsLast8Weeks) {
+    const bucket = Math.min(7, Math.floor((now - p._ts) / weekMs));
+    weeklyCounts[bucket] += 1;
+  }
+  const mean = weeklyCounts.reduce((s, v) => s + v, 0) / 8 || 0;
+  const variance =
+    weeklyCounts.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / 8 || 0;
+  const stddev = Math.sqrt(variance);
+  const steadiness = mean > 0 ? Math.max(0, 1 - stddev / (mean + 0.0001)) : 0;
+
+  const targetPerWeek = 4;
+  const cadenceScore = Math.min(1, postsPerWeek / targetPerWeek);
+  const consistency = Math.round(Math.min(100, (cadenceScore * 0.6 + steadiness * 0.4) * 100));
+
+  const engagementRates = [];
+  let totalLikes = 0;
+  let totalComments = 0;
+  let totalShares = 0;
+  let totalSaves = 0;
+  let totalReach = 0;
+  let totalViews = 0;
+  for (const p of recentPosts.slice(0, 40)) {
+    const likes = Number(p.likes || 0);
+    const comments = Number(p.comments || 0);
+    const shares = Number(p.shares || 0);
+    const saved = Number(p.saved || 0);
+    const reach = Number(p.reach || 0);
+    const impressions = Number(p.impressions || 0) || Number(p.videoViews || 0);
+    totalLikes += likes;
+    totalComments += comments;
+    totalShares += shares;
+    totalSaves += saved;
+    totalReach += reach;
+    totalViews += impressions;
+    const denom = reach || impressions;
+    if (denom > 0) {
+      engagementRates.push((likes + comments + shares + saved) / denom);
+    }
+  }
+  const avgEngagementRate = engagementRates.length
+    ? engagementRates.reduce((s, v) => s + v, 0) / engagementRates.length
+    : 0;
+
+  const engagementComponent = Math.min(1, avgEngagementRate / 0.06);
+  const reachComponent = totalViews > 0 ? Math.min(1, Math.log10(totalViews + 1) / 5) : 0;
+  const growth = Math.round(
+    Math.min(100, (engagementComponent * 0.7 + reachComponent * 0.3) * 100)
+  );
+
+  const momentum = Math.round(consistency * 0.4 + growth * 0.6);
+
+  const byType = { image: [], video: [], carousel: [] };
+  for (const p of recentPosts) {
+    const type = String(p.mediaType || "").toUpperCase();
+    if (type === "CAROUSEL_ALBUM" || type === "CAROUSEL") byType.carousel.push(p);
+    else if (type === "VIDEO" || type === "REEL" || type === "REELS") byType.video.push(p);
+    else byType.image.push(p);
+  }
+
+  const avgViewsByType = {};
+  for (const [key, arr] of Object.entries(byType)) {
+    if (!arr.length) continue;
+    const views = arr.reduce((s, p) => s + (Number(p.impressions || 0) || Number(p.videoViews || 0)), 0);
+    avgViewsByType[key] = Math.round(views / arr.length);
+  }
+
+  const captionsWithLen = recentPosts
+    .filter((p) => typeof p.text === "string" && p.text.trim().length > 0)
+    .map((p) => p.text.trim().length);
+  const avgCaptionLen = captionsWithLen.length
+    ? Math.round(captionsWithLen.reduce((s, v) => s + v, 0) / captionsWithLen.length)
+    : 0;
+
+  const shareRate = totalReach > 0 ? totalShares / totalReach : 0;
+  const saveRate = totalReach > 0 ? totalSaves / totalReach : 0;
+  const commentRate = totalReach > 0 ? totalComments / totalReach : 0;
+
+  const superpower = [];
+  const unlock = [];
+
+  if (byType.carousel.length >= 2 && avgViewsByType.carousel && avgViewsByType.carousel > (avgViewsByType.image || 0)) {
+    superpower.push({
+      icon: "carousel",
+      title: "Carousel mastery",
+      body: `Your multi-image posts average ${avgViewsByType.carousel.toLocaleString()} views — lean into this format.`,
+    });
+  }
+  if (shareRate > 0.01) {
+    superpower.push({
+      icon: "share",
+      title: "Strong share rate",
+      body: "People actively share your content — that is organic growth gold.",
+    });
+  }
+  if (avgEngagementRate > 0.04) {
+    superpower.push({
+      icon: "engagement",
+      title: "High engagement rate",
+      body: `You are averaging ${(avgEngagementRate * 100).toFixed(1)}% engagement — well above the ~2% creator median.`,
+    });
+  }
+  if (followerCount > 0 && totalViews / Math.max(1, followerCount) > 5) {
+    superpower.push({
+      icon: "reach",
+      title: "Massive reach for your size",
+      body: `Your recent posts pulled ${totalViews.toLocaleString()} views — that's huge for ${followerCount.toLocaleString()} followers.`,
+    });
+  }
+  if (byType.video.length >= 2 && avgViewsByType.video && avgViewsByType.video > (avgViewsByType.image || 0) * 1.3) {
+    superpower.push({
+      icon: "video",
+      title: "Video-first storytelling",
+      body: "Your videos travel further than static posts — that's a real edge.",
+    });
+  }
+  if (!superpower.length && recentPosts.length > 0) {
+    superpower.push({
+      icon: "consistency",
+      title: "You're showing up",
+      body: `You've published ${recentPosts.length} posts — consistency is the foundation everything else builds on.`,
+    });
+  }
+
+  if (commentRate < 0.002 && totalReach > 0) {
+    unlock.push({
+      icon: "comments",
+      title: "Your comments are low",
+      body: "Let's craft captions that spark conversation — more comments means better reach.",
+    });
+  }
+  if (postsPerWeek < 2) {
+    unlock.push({
+      icon: "cadence",
+      title: "Posting is inconsistent",
+      body: `Only ~${postsPerWeek.toFixed(1)} posts/week — we're leaving growth on the table, let's build a rhythm.`,
+    });
+  }
+  if (avgCaptionLen > 0 && avgCaptionLen < 60) {
+    unlock.push({
+      icon: "caption",
+      title: "Captions are minimal",
+      body: "Let's add storytelling that connects — longer, specific captions convert viewers into fans.",
+    });
+  }
+  if (byType.video.length && avgViewsByType.video && avgViewsByType.image && avgViewsByType.video < avgViewsByType.image * 0.7) {
+    unlock.push({
+      icon: "hooks",
+      title: "Reels are underperforming",
+      body: "I'll help you nail hooks that stop the scroll — this is your biggest unlock.",
+    });
+  }
+  if (saveRate < 0.005 && totalReach > 0) {
+    unlock.push({
+      icon: "saves",
+      title: "Saves are low",
+      body: "Content people save = content they want to revisit. Let's add practical value hooks.",
+    });
+  }
+  if (!unlock.length) {
+    unlock.push({
+      icon: "scale",
+      title: "Time to scale",
+      body: "Your foundation is solid — let's double down on what's working and amplify reach.",
+    });
+  }
+
+  return {
+    user: {
+      name: user.name || "",
+      firstName: (user.name || "").split(" ")[0] || "",
+      niche: user.niche || "",
+      objective: user.objective || "",
+    },
+    primary: {
+      platform: primaryPlatform,
+      handle,
+      avatarUrl,
+      followerCount,
+    },
+    connectedPlatforms,
+    hasAnyConnection: connectedPlatforms.length > 0,
+    hasPosts: recentPosts.length > 0,
+    postsCount: recentPosts.length,
+    scores: {
+      momentum,
+      consistency,
+      growth,
+    },
+    metrics: {
+      postsPerWeek: Number(postsPerWeek.toFixed(1)),
+      avgEngagementRate: Number((avgEngagementRate * 100).toFixed(2)),
+      totalLikes,
+      totalComments,
+      totalViews,
+      totalReach,
+      shareRate: Number((shareRate * 100).toFixed(2)),
+      saveRate: Number((saveRate * 100).toFixed(2)),
+      avgCaptionLen,
+      avgViewsByType,
+    },
+    superpower: superpower.slice(0, 4),
+    unlock: unlock.slice(0, 4),
+  };
+}
+
 function generateWeeklyPlan({ goal, postsPerWeek, focus }) {
   const count = Number(postsPerWeek) || 4;
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -1557,6 +1791,14 @@ const server = http.createServer(async (req, res) => {
     if (!user) return;
     const state = bindStateToUser(await getStateForUser(user.id), user);
     sendJson(res, 200, summarizeAnalytics(state.posts));
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/creator/profile") {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    sendJson(res, 200, buildCreatorProfile(state));
     return;
   }
 

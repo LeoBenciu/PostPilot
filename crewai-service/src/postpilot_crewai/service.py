@@ -52,16 +52,16 @@ def _build_system_prompt_from_yaml(
     backstory = " ".join(str(strategist.get("backstory", "")).split())
 
     task = tasks_cfg.get("compose_response", {}) or {}
-    description_template = str(task.get("description", ""))
-    try:
-        description = description_template.format(
-            message=message,
-            account_context=account_context,
-            history_summary=history_summary,
-            language=language,
-        )
-    except (KeyError, IndexError):
-        description = description_template
+    description = str(task.get("description", ""))
+    # Use str.replace instead of str.format so stray curly braces in the YAML
+    # template (e.g. examples, emojis, literal {something}) never raise KeyError.
+    for placeholder, value in (
+        ("{message}", message),
+        ("{account_context}", account_context),
+        ("{history_summary}", history_summary),
+        ("{language}", language),
+    ):
+        description = description.replace(placeholder, value)
 
     return (
         f"You are {role}.\n\n"

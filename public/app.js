@@ -1535,12 +1535,22 @@ function sendPrompt(text) {
 }
 
 function setActiveView(view) {
-  const showAnalytics = view === "analytics";
-  agentView?.classList.toggle("hidden", showAnalytics);
-  analyticsView?.classList.toggle("hidden", !showAnalytics);
-  agentViewBtn?.classList.toggle("active", !showAnalytics);
-  analyticsViewBtn?.classList.toggle("active", showAnalytics);
-  if (resetChatBtn) resetChatBtn.classList.toggle("hidden", showAnalytics);
+  const views = {
+    home: document.getElementById("homeView"),
+    agent: document.getElementById("agentView"),
+    analytics: document.getElementById("analyticsView"),
+    scan: document.getElementById("scanView"),
+    edge: document.getElementById("edgeView"),
+  };
+  Object.entries(views).forEach(([name, el]) => {
+    if (!el) return;
+    el.classList.toggle("hidden", name !== view);
+  });
+  const homeBtn = document.getElementById("homeViewBtn");
+  homeBtn?.classList.toggle("active", view === "home");
+  agentViewBtn?.classList.toggle("active", view === "agent");
+  analyticsViewBtn?.classList.toggle("active", view === "analytics");
+  if (resetChatBtn) resetChatBtn.classList.toggle("hidden", view !== "agent");
 }
 
 const analyticsCharts = {};
@@ -1931,6 +1941,11 @@ async function unlockChat(toastMessage) {
   } catch (_error) {
     renderConversation([]);
   }
+  try {
+    await loadCreatorProfile();
+  } catch (_error) {
+    // non-blocking
+  }
 }
 
 async function handleGoogleAuth(source) {
@@ -2162,6 +2177,12 @@ analyticsViewBtn?.addEventListener("click", async () => {
   await loadAnalyticsView();
 });
 
+const homeViewBtnEl = document.getElementById("homeViewBtn");
+homeViewBtnEl?.addEventListener("click", async () => {
+  setActiveView("home");
+  if (!creatorProfile) await loadCreatorProfile();
+});
+
 document.getElementById("settingsBtn").addEventListener("click", async () => {
   setHidden("settingsModal", false);
   try {
@@ -2336,9 +2357,216 @@ if (suggestionsBtn && suggestionsPopup) {
   });
 }
 
+/* ============================================================
+   Creator profile: scores, superpower, unlock
+   ============================================================ */
+
+let creatorProfile = null;
+
+const SCORE_META = {
+  momentum: {
+    name: "Momentum",
+    icon: "⚡",
+    what:
+      "Your Momentum score gives you a clear pulse on your creative drive. It blends how consistently you show up with how your audience responds, so you always know if you're moving forward.",
+    drivers: "The combination of your Consistency & Growth scores, guiding you toward \"Am I on track?\"",
+  },
+  consistency: {
+    name: "Consistency",
+    icon: "🗓",
+    what:
+      "Consistency reflects your commitment to showing up and publishing. It's the rhythm that helps you build habits that compound over time.",
+    drivers: "How often you post each week and how steady that cadence is over time.",
+  },
+  growth: {
+    name: "Growth",
+    icon: "📈",
+    what:
+      "Growth highlights the progress of your effort online. It captures how your content lands with your audience and the momentum you're building along the way.",
+    drivers: "Your engagement and reach trends, plus the actions you take to improve.",
+  },
+};
+
+async function loadCreatorProfile() {
+  try {
+    const data = await api("/api/creator/profile");
+    creatorProfile = data;
+    renderHomeDashboard(data);
+    return data;
+  } catch (err) {
+    console.warn("Creator profile load failed:", err.message);
+    return null;
+  }
+}
+
+function renderHomeDashboard(profile) {
+  if (!profile) return;
+  const scores = profile.scores || { momentum: 0, consistency: 0, growth: 0 };
+  ["momentum", "consistency", "growth"].forEach((key) => {
+    const value = Math.max(0, Math.min(100, Number(scores[key] || 0)));
+    const valueEl = document.querySelector(`[data-score-value="${key}"]`);
+    if (valueEl) valueEl.textContent = String(value);
+    const chip = document.querySelector(`.score-chip[data-score="${key}"] .score-ring`);
+    if (chip) chip.style.setProperty("--pct", String(value));
+  });
+
+  const firstName = profile.user?.firstName || profile.user?.name?.split(" ")[0] || "";
+  const greetingEl = document.getElementById("homeGreeting");
+  if (greetingEl) {
+    const base = t("homeGreetingBase") || "Welcome back, let's slay the day";
+    greetingEl.textContent = firstName ? `Welcome back ${firstName}, let's slay the day 💪` : `${base} 💪`;
+  }
+}
+
+function openScoreModal(scoreKey) {
+  const meta = SCORE_META[scoreKey];
+  if (!meta || !creatorProfile) return;
+  const value = Math.max(0, Math.min(100, Number(creatorProfile.scores?.[scoreKey] || 0)));
+  const modal = document.getElementById("scoreModal");
+  if (!modal) return;
+  document.getElementById("scoreModalIcon").textContent = meta.icon;
+  document.getElementById("scoreModalName").textContent = meta.name;
+  const fill = document.getElementById("scoreModalBarFill");
+  fill.style.width = `${value}%`;
+  document.getElementById("scoreModalValue").textContent = String(value);
+  document.getElementById("scoreModalWhatBody").textContent = meta.what;
+  document.getElementById("scoreModalDriversBody").textContent = meta.drivers;
+  modal.classList.remove("hidden");
+}
+
+function closeScoreModal() {
+  document.getElementById("scoreModal")?.classList.add("hidden");
+}
+
+document.querySelectorAll(".score-chip[data-score]").forEach((btn) => {
+  btn.addEventListener("click", () => openScoreModal(btn.getAttribute("data-score")));
+});
+
+document.getElementById("closeScoreModal")?.addEventListener("click", closeScoreModal);
+document.getElementById("scoreModal")?.addEventListener("click", (event) => {
+  if (event.target.id === "scoreModal") closeScoreModal();
+});
+
+/* ============================================================
+   Home quick actions -> switch to chat view with prompt
+   ============================================================ */
+
+const HOME_PROMPTS = {
+  "weekly-plan": "Build me a weekly content plan for this week based on my latest posts.",
+  motivate: "Give me a quick motivation boost as a creator who's feeling stuck today.",
+  "post-ideas": "Give me 5 post ideas tailored to my niche and recent performance.",
+  "find-voice": "Help me find my voice. What's my edge as a creator?",
+  "viral-idea": "Give me one viral content idea for today, tailored to my niche and audience.",
+};
+
+function sendHomePrompt(promptKey, fallbackText) {
+  const text = HOME_PROMPTS[promptKey] || fallbackText || "";
+  if (!text) return;
+  setActiveView("agent");
+  const input = document.getElementById("messageInput");
+  if (input) input.value = text;
+  document.getElementById("composer")?.requestSubmit();
+}
+
+document.querySelectorAll(".home-chip[data-prompt]").forEach((btn) => {
+  btn.addEventListener("click", () => sendHomePrompt(btn.getAttribute("data-prompt")));
+});
+
+document.getElementById("viralIdeaChip")?.addEventListener("click", () => sendHomePrompt("viral-idea"));
+
+document.getElementById("homeComposer")?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const input = document.getElementById("homeMessageInput");
+  const value = String(input?.value || "").trim();
+  if (!value) return;
+  setActiveView("agent");
+  const chatInput = document.getElementById("messageInput");
+  if (chatInput) chatInput.value = value;
+  if (input) input.value = "";
+  document.getElementById("composer")?.requestSubmit();
+});
+
+document.getElementById("homeCtaBanner")?.addEventListener("click", () => {
+  sendHomePrompt(
+    "",
+    "Create my 30-Day Content Calendar. Become my new Head of Content and plan themes, hooks, and formats for the next 30 days.",
+  );
+});
+
+/* ============================================================
+   Scan + Edge results flow (post-connect onboarding)
+   ============================================================ */
+
+function renderScanView(profile) {
+  const avatar = String(profile?.primary?.avatarUrl || "").trim();
+  const handle = String(profile?.primary?.handle || "").trim();
+  const followers = Number(profile?.primary?.followerCount || 0);
+  const avatarEl = document.getElementById("scanAvatar");
+  const fallbackAvatar = handle
+    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(handle)}&background=f7c6c7&color=7f002d&bold=true&size=176`
+    : "/logo.png";
+  if (avatarEl) avatarEl.src = avatar || fallbackAvatar;
+  setText("scanHandle", handle ? `@${handle}` : "");
+  const badgeCount = document.getElementById("scanBadgeCount");
+  if (badgeCount) badgeCount.textContent = followers > 0 ? formatCompactNumber(followers) : String(profile?.postsCount || 0);
+}
+
+function formatCompactNumber(num) {
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(num >= 10_000 ? 0 : 1)}K`;
+  return String(num);
+}
+
+function renderEdgeView(profile) {
+  if (!profile) return;
+  const avatarEl = document.getElementById("edgeAvatar");
+  const handle = String(profile.primary?.handle || "").trim();
+  const fallbackAvatar = handle
+    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(handle)}&background=f7c6c7&color=7f002d&bold=true&size=240`
+    : "/logo.png";
+  if (avatarEl) avatarEl.src = profile.primary?.avatarUrl || fallbackAvatar;
+  setText("edgeFirstName", profile.user?.firstName || handle || "friend");
+
+  const superList = document.getElementById("edgeSuperList");
+  const unlockList = document.getElementById("edgeUnlockList");
+  if (superList) {
+    superList.innerHTML = (profile.superpower || [])
+      .map(
+        (item) =>
+          `<li><strong>${escapeHtml(item.title)}</strong> — ${escapeHtml(item.body)}</li>`,
+      )
+      .join("");
+  }
+  if (unlockList) {
+    unlockList.innerHTML = (profile.unlock || [])
+      .map(
+        (item) =>
+          `<li><strong>${escapeHtml(item.title)}</strong> — ${escapeHtml(item.body)}</li>`,
+      )
+      .join("");
+  }
+}
+
+async function startScanFlow() {
+  const profile = await loadCreatorProfile();
+  if (!profile?.hasAnyConnection) {
+    setActiveView("home");
+    return;
+  }
+  renderScanView(profile);
+  setActiveView("scan");
+  await new Promise((r) => window.setTimeout(r, 2600));
+  renderEdgeView(profile);
+  setActiveView("edge");
+}
+
+document.getElementById("edgeStartBtn")?.addEventListener("click", () => {
+  setActiveView("home");
+});
+
 renderConversation([]);
 applyLanguage();
-setActiveView("agent");
+setActiveView("home");
 
 const authQueryState = getAuthQueryState();
 let handledFreshGoogleAuth = false;
@@ -2367,6 +2595,10 @@ if (authQueryState.integrationAuth === "success" && authQueryState.integration) 
   const platformLabel = displayPlatform(authQueryState.integration);
   showToast(tf("integrationConnectedToast", { platform: platformLabel }));
   clearAuthQueryParams();
+  // Trigger the Stanley-style scan → edge results flow after a fresh connect.
+  window.setTimeout(() => {
+    startScanFlow().catch(() => {});
+  }, 600);
 }
 
 if (authQueryState.integrationError && authQueryState.integration) {
