@@ -428,15 +428,10 @@ function summarizeIntegrations(integrations) {
 // ---------------------------------------------------------------------------
 
 function formatProfileSection(ctx) {
-  const account = ctx.account || {};
-  const firstName = ctx.firstName || "";
-  const niche = account.niche || "(not set)";
-  const objective = account.objective || "(not set)";
   const platforms = ctx.connectedPlatforms || [];
   const lines = [];
+  const firstName = ctx.firstName || "";
   if (firstName) lines.push(`First name (use when greeting): ${firstName}`);
-  lines.push(`Niche: ${niche}`);
-  lines.push(`Primary objective: ${objective}`);
   lines.push(`Connected platforms: ${platforms.length ? platforms.join(", ") : "none"}`);
   return lines.join("\n");
 }

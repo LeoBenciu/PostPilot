@@ -11,8 +11,6 @@ const defaultState = Object.freeze({
     createdAt: null,
     name: "",
     email: "",
-    niche: "",
-    objective: "",
     onboardingCompleted: false,
     billing: {
       status: "unpaid",

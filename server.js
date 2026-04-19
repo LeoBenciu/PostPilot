@@ -466,8 +466,6 @@ function buildCreatorProfile(state) {
     user: {
       name: user.name || "",
       firstName: (user.name || "").split(" ")[0] || "",
-      niche: user.niche || "",
-      objective: user.objective || "",
     },
     primary: {
       platform: primaryPlatform,
@@ -1491,6 +1489,7 @@ const server = http.createServer(async (req, res) => {
     const user = await requireAuth(req, res);
     if (!user) return;
     const state = bindStateToUser(await getStateForUser(user.id), user);
+    updateOnboardingCompletion(state);
     await saveStateForUser(user.id, state);
     sendJson(res, 200, accountSummary(state));
     return;
@@ -1527,23 +1526,12 @@ const server = http.createServer(async (req, res) => {
       const user = await requireAuth(req, res);
       if (!user) return;
       const state = bindStateToUser(await getStateForUser(user.id), user);
-      const body = await readBody(req);
       if (!state.user.createdAt) {
         sendJson(res, 400, { error: "Create account first" });
         return;
       }
 
-      state.user.niche = String(body.niche || "").trim();
-      state.user.objective = String(body.objective || "").trim();
-
       updateOnboardingCompletion(state);
-      if (!state.user.onboardingCompleted) {
-        sendJson(res, 400, {
-          error: `Missing onboarding fields: ${onboardingMissingFields(state).join(", ")}`,
-        });
-        return;
-      }
-
       await saveStateForUser(user.id, state);
       sendJson(res, 200, accountSummary(state));
     } catch (err) {
@@ -1573,8 +1561,6 @@ const server = http.createServer(async (req, res) => {
       }
       state.user.name = updatedUser.fullName;
       state.user.email = updatedUser.email;
-      if (typeof body.niche === "string") state.user.niche = body.niche.trim();
-      if (typeof body.objective === "string") state.user.objective = body.objective.trim();
 
       if (typeof body.linkedinUsername === "string") {
         const v = body.linkedinUsername.trim();

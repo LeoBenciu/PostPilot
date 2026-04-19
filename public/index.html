@@ -290,8 +290,8 @@
       <main class="chat-layout">
         <header class="chat-header">
           <div>
-            <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span>Agent</span></h1>
-            <p id="chatHeaderSubtitle">Your creator growth assistant</p>
+          <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span>Agent</span></h1>
+          <p id="chatHeaderSubtitle">Your creator growth assistant</p>
           </div>
         </header>
         <section id="agentView" class="app-view agent-view">
@@ -351,7 +351,7 @@
             </div>
           </div>
 
-          <section id="messages" class="messages"></section>
+        <section id="messages" class="messages"></section>
 
           <form id="composer" class="composer" autocomplete="off">
             <div class="composer-suggestions-wrap">
@@ -560,21 +560,16 @@
     </div>
 
     <div class="legacy-forms hidden" aria-hidden="true">
-      <form id="accountForm">
+        <form id="accountForm">
         <input id="accountName" />
         <input id="accountEmail" />
         <button type="submit" id="accountFormSubmitBtn"></button>
       </form>
-      <form id="onboardingForm">
-        <select id="onboardNiche"><option value="creator" selected></option></select>
-        <select id="onboardObjective"><option value="growth" selected></option></select>
-        <button type="submit" id="onboardingFormSubmitBtn"></button>
-      </form>
       <form id="paymentForm">
         <input id="paymentConfirm" type="checkbox" checked />
         <button type="submit" id="paymentSubmitBtn"></button>
-      </form>
-      <p id="onboardingError" class="form-error"></p>
+        </form>
+        <p id="onboardingError" class="form-error"></p>
       <button id="closeOnboarding" type="button"></button>
     </div>
 
@@ -595,20 +590,6 @@
           <form id="settingsForm" class="settings-main">
             <section class="settings-panel active" data-panel="general">
               <h3 id="settingsPanelGeneralTitle">General</h3>
-              <div class="setting-row">
-                <div>
-                  <p class="setting-title" id="settingsNicheTitle">Niche</p>
-                  <p class="setting-hint" id="settingsNicheHint">Your core content angle and audience.</p>
-                </div>
-                <input id="settingsNiche" />
-              </div>
-              <div class="setting-row">
-                <div>
-                  <p class="setting-title" id="settingsObjectiveTitle">Objective</p>
-                  <p class="setting-hint" id="settingsObjectiveHint">Main growth outcome for this quarter.</p>
-                </div>
-                <input id="settingsObjective" />
-              </div>
             </section>
 
             <section class="settings-panel" data-panel="account">

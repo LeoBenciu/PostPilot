@@ -216,19 +216,10 @@ const I18N = {
     accountPhEmail: "you@domain.com",
     onboardingCreateTitle: "Create your account",
     onboardingCreateSubtitle: "Set up your creator profile to unlock your AI agent.",
-    onboardingFormTitle: "Complete onboarding",
-    onboardingFormSubtitle:
-      "Tell us about your niche and main objective. You can connect LinkedIn and Instagram later in Settings.",
-    onboardPhNiche: "e.g. creator education for coaches",
-    onboardPhObjective: "e.g. grow inbound leads from content",
     shortName: "Name",
     shortEmail: "Email",
-    nicheLabel: "Niche",
-    objectiveShort: "Objective",
-    onboardObjectiveLabel: "Main objective",
     linkedinUsername: "LinkedIn username",
     instagramUsername: "Instagram username",
-    completeOnboarding: "Complete onboarding",
     settingsModalHeading: "Settings",
     tabGeneral: "General",
     tabAccount: "Account",
@@ -244,8 +235,6 @@ const I18N = {
     supportEmailHint: "Write us anytime for account or billing issues.",
     supportPhoneTitle: "Support phone",
     supportPhoneHint: "For urgent requests, call this number.",
-    settingsNicheHint: "Your core content angle and audience.",
-    settingsObjectiveHint: "Main growth outcome for this quarter.",
     onboardingKicker: "Get Started",
     paymentModeTitle: "Activate your plan",
     paymentModeSubtitle: "Complete your 29 Euro/month subscription to unlock the AI coach.",
@@ -262,7 +251,6 @@ const I18N = {
     paymentRequiredBeforeContinuing: "Payment is required before continuing.",
     paymentCompleteToContinue: "Complete payment to continue.",
     paymentEndpointUnavailable: "Payment endpoint is unavailable. Restart the server and try again.",
-    onboardingMissingFields: "Complete niche and objective to continue.",
     paymentConfirmTerms: "Please confirm the subscription terms.",
     paymentCheckoutSessionError: "Could not create Stripe checkout session.",
     checkoutCanceled: "Checkout was canceled. Complete payment to unlock the AI coach.",
@@ -467,19 +455,10 @@ const I18N = {
     accountPhEmail: "tu@domeniu.com",
     onboardingCreateTitle: "Creeaza contul",
     onboardingCreateSubtitle: "Configureaza profilul de creator ca sa activezi agentul AI.",
-    onboardingFormTitle: "Finalizeaza onboarding-ul",
-    onboardingFormSubtitle:
-      "Spune-ne despre nisa si obiectivul principal. Poti conecta LinkedIn si Instagram mai tarziu din Setari.",
-    onboardPhNiche: "ex: educatie pentru creatori si coachi",
-    onboardPhObjective: "ex: crestere lead-uri din continut",
     shortName: "Nume",
     shortEmail: "Email",
-    nicheLabel: "Nisa",
-    objectiveShort: "Obiectiv",
-    onboardObjectiveLabel: "Obiectiv principal",
     linkedinUsername: "Utilizator LinkedIn",
     instagramUsername: "Utilizator Instagram",
-    completeOnboarding: "Finalizeaza onboarding-ul",
     settingsModalHeading: "Setari",
     tabGeneral: "General",
     tabAccount: "Cont",
@@ -495,8 +474,6 @@ const I18N = {
     supportEmailHint: "Scrie-ne oricand pentru probleme de cont sau facturare.",
     supportPhoneTitle: "Telefon suport",
     supportPhoneHint: "Pentru solicitari urgente, suna la acest numar.",
-    settingsNicheHint: "Unghiul tau de continut si publicul tinta.",
-    settingsObjectiveHint: "Rezultatul principal de crestere pentru acest trimestru.",
     onboardingKicker: "Incepe acum",
     paymentModeTitle: "Activeaza-ti planul",
     paymentModeSubtitle: "Finalizeaza abonamentul de 29 Euro/luna ca sa deblochezi coach-ul AI.",
@@ -513,7 +490,6 @@ const I18N = {
     paymentRequiredBeforeContinuing: "Plata este necesara inainte de a continua.",
     paymentCompleteToContinue: "Finalizeaza plata pentru a continua.",
     paymentEndpointUnavailable: "Endpoint-ul de plata nu este disponibil. Reporneste serverul si incearca din nou.",
-    onboardingMissingFields: "Completeaza nisa si obiectivul pentru a continua.",
     paymentConfirmTerms: "Te rog confirma termenii abonamentului.",
     paymentCheckoutSessionError: "Nu am putut crea sesiunea Stripe Checkout.",
     checkoutCanceled: "Checkout-ul a fost anulat. Finalizeaza plata pentru a debloca AI coach-ul.",
@@ -715,19 +691,10 @@ const I18N = {
     accountPhEmail: "tu@dominio.com",
     onboardingCreateTitle: "Crea il tuo account",
     onboardingCreateSubtitle: "Imposta il profilo creator per sbloccare l'agente AI.",
-    onboardingFormTitle: "Completa l'onboarding",
-    onboardingFormSubtitle:
-      "Parlaci di nicchia e obiettivo principale. Puoi collegare LinkedIn e Instagram piu tardi in Impostazioni.",
-    onboardPhNiche: "es. educazione creator per coach",
-    onboardPhObjective: "es. aumentare i lead dal contenuto",
     shortName: "Nome",
     shortEmail: "Email",
-    nicheLabel: "Nicchia",
-    objectiveShort: "Obiettivo",
-    onboardObjectiveLabel: "Obiettivo principale",
     linkedinUsername: "Username LinkedIn",
     instagramUsername: "Username Instagram",
-    completeOnboarding: "Completa onboarding",
     settingsModalHeading: "Impostazioni",
     tabGeneral: "Generale",
     tabAccount: "Account",
@@ -743,8 +710,6 @@ const I18N = {
     supportEmailHint: "Scrivici in qualsiasi momento per problemi account o fatturazione.",
     supportPhoneTitle: "Telefono supporto",
     supportPhoneHint: "Per richieste urgenti, chiama questo numero.",
-    settingsNicheHint: "Angolo dei contenuti e pubblico di riferimento.",
-    settingsObjectiveHint: "Risultato di crescita principale per questo trimestre.",
     onboardingKicker: "Inizia ora",
     paymentModeTitle: "Attiva il tuo piano",
     paymentModeSubtitle: "Completa l'abbonamento da 29 Euro/mese per sbloccare il coach AI.",
@@ -761,7 +726,6 @@ const I18N = {
     paymentRequiredBeforeContinuing: "Il pagamento e richiesto prima di continuare.",
     paymentCompleteToContinue: "Completa il pagamento per continuare.",
     paymentEndpointUnavailable: "Endpoint di pagamento non disponibile. Riavvia il server e riprova.",
-    onboardingMissingFields: "Completa nicchia e obiettivo per continuare.",
     paymentConfirmTerms: "Conferma i termini dell'abbonamento.",
     paymentCheckoutSessionError: "Impossibile creare la sessione Stripe Checkout.",
     checkoutCanceled: "Checkout annullato. Completa il pagamento per sbloccare il coach AI.",
@@ -954,19 +918,10 @@ const I18N = {
     accountPhEmail: "du@domain.de",
     onboardingCreateTitle: "Konto erstellen",
     onboardingCreateSubtitle: "Richte dein Creator-Profil ein, um den KI-Agenten freizuschalten.",
-    onboardingFormTitle: "Onboarding abschliessen",
-    onboardingFormSubtitle:
-      "Erzaehl uns von deiner Nische und deinem Hauptziel. LinkedIn und Instagram kannst du spaeter unter Einstellungen verbinden.",
-    onboardPhNiche: "z.B. Creator-Bildung fuer Coaches",
-    onboardPhObjective: "z.B. mehr Inbound-Leads durch Content",
     shortName: "Name",
     shortEmail: "E-Mail",
-    nicheLabel: "Nische",
-    objectiveShort: "Ziel",
-    onboardObjectiveLabel: "Hauptziel",
     linkedinUsername: "LinkedIn-Benutzername",
     instagramUsername: "Instagram-Benutzername",
-    completeOnboarding: "Onboarding abschliessen",
     settingsModalHeading: "Einstellungen",
     tabGeneral: "Allgemein",
     tabAccount: "Konto",
@@ -982,8 +937,6 @@ const I18N = {
     supportEmailHint: "Schreib uns jederzeit bei Konto- oder Zahlungsproblemen.",
     supportPhoneTitle: "Support-Telefon",
     supportPhoneHint: "Bei dringenden Anliegen ruf diese Nummer an.",
-    settingsNicheHint: "Dein Content-Fokus und deine Zielgruppe.",
-    settingsObjectiveHint: "Das wichtigste Wachstumsziel fuer dieses Quartal.",
     onboardingKicker: "Loslegen",
     paymentModeTitle: "Aktiviere deinen Plan",
     paymentModeSubtitle: "Schliesse dein Abo fuer 29 Euro/Monat ab, um den KI-Coach freizuschalten.",
@@ -1000,7 +953,6 @@ const I18N = {
     paymentRequiredBeforeContinuing: "Eine Zahlung ist erforderlich, bevor du fortfaehrst.",
     paymentCompleteToContinue: "Schliesse die Zahlung ab, um fortzufahren.",
     paymentEndpointUnavailable: "Payment-Endpunkt ist nicht verfuegbar. Starte den Server neu und versuche es erneut.",
-    onboardingMissingFields: "Bitte Nische und Ziel ausfuellen, um fortzufahren.",
     paymentConfirmTerms: "Bitte bestaetige die Abonnementbedingungen.",
     paymentCheckoutSessionError: "Stripe-Checkout-Session konnte nicht erstellt werden.",
     checkoutCanceled: "Checkout wurde abgebrochen. Schliesse die Zahlung ab, um den KI-Coach freizuschalten.",
@@ -1193,19 +1145,10 @@ const I18N = {
     accountPhEmail: "vous@domaine.com",
     onboardingCreateTitle: "Creer votre compte",
     onboardingCreateSubtitle: "Configurez votre profil createur pour activer l'agent IA.",
-    onboardingFormTitle: "Terminer l'onboarding",
-    onboardingFormSubtitle:
-      "Parlez-nous de votre niche et de votre objectif principal. Vous pourrez connecter LinkedIn et Instagram plus tard dans Parametres.",
-    onboardPhNiche: "ex. education createurs pour coachs",
-    onboardPhObjective: "ex. augmenter les leads via le contenu",
     shortName: "Nom",
     shortEmail: "E-mail",
-    nicheLabel: "Niche",
-    objectiveShort: "Objectif",
-    onboardObjectiveLabel: "Objectif principal",
     linkedinUsername: "Nom d'utilisateur LinkedIn",
     instagramUsername: "Nom d'utilisateur Instagram",
-    completeOnboarding: "Terminer l'onboarding",
     settingsModalHeading: "Parametres",
     tabGeneral: "General",
     tabAccount: "Compte",
@@ -1221,8 +1164,6 @@ const I18N = {
     supportEmailHint: "Ecrivez-nous a tout moment pour les problemes de compte ou facturation.",
     supportPhoneTitle: "Telephone support",
     supportPhoneHint: "Pour les demandes urgentes, appelez ce numero.",
-    settingsNicheHint: "Votre angle de contenu et votre audience.",
-    settingsObjectiveHint: "Le principal objectif de croissance pour ce trimestre.",
     onboardingKicker: "Commencer",
     paymentModeTitle: "Activez votre plan",
     paymentModeSubtitle: "Finalisez votre abonnement de 29 Euro/mois pour debloquer le coach IA.",
@@ -1239,7 +1180,6 @@ const I18N = {
     paymentRequiredBeforeContinuing: "Le paiement est requis avant de continuer.",
     paymentCompleteToContinue: "Finalisez le paiement pour continuer.",
     paymentEndpointUnavailable: "Le point de terminaison de paiement est indisponible. Redemarrez le serveur puis reessayez.",
-    onboardingMissingFields: "Completez la niche et l'objectif pour continuer.",
     paymentConfirmTerms: "Veuillez confirmer les conditions de l'abonnement.",
     paymentCheckoutSessionError: "Impossible de creer la session Stripe Checkout.",
     checkoutCanceled: "Le checkout a ete annule. Finalisez le paiement pour debloquer le coach IA.",
@@ -1274,85 +1214,6 @@ function setTextIfExists(id, value) {
 function setPlaceholderIfExists(id, value) {
   const el = document.getElementById(id);
   if (el) el.placeholder = value;
-}
-
-const ONBOARDING_NICHE_OPTIONS = {
-  en: [
-    "Business & Entrepreneurship",
-    "Marketing & Social Media",
-    "Health & Wellness",
-    "Fitness & Sports",
-    "Education & Coaching",
-    "Beauty & Fashion",
-    "Travel & Lifestyle",
-    "Tech & AI",
-    "Personal Development",
-    "Other",
-  ],
-  ro: [
-    "Business & Antreprenoriat",
-    "Marketing & Social Media",
-    "Sanatate & Wellness",
-    "Fitness & Sport",
-    "Educatie & Coaching",
-    "Beauty & Fashion",
-    "Calatorii & Lifestyle",
-    "Tech & AI",
-    "Dezvoltare Personala",
-    "Altele",
-  ],
-};
-
-const ONBOARDING_OBJECTIVE_OPTIONS = {
-  en: [
-    "Grow audience",
-    "Generate leads",
-    "Increase sales",
-    "Build personal brand",
-    "Improve engagement",
-    "Post consistently",
-    "Launch a product/service",
-    "Monetize content",
-  ],
-  ro: [
-    "Crestere audienta",
-    "Generare lead-uri",
-    "Crestere vanzari",
-    "Construire brand personal",
-    "Crestere engagement",
-    "Postare constanta",
-    "Lansare produs/serviciu",
-    "Monetizare continut",
-  ],
-};
-
-function onboardingOptionsForLanguage(optionsMap) {
-  return optionsMap[currentLanguage] || optionsMap.en || [];
-}
-
-function populateSelectOptions(selectId, placeholder, options) {
-  const select = document.getElementById(selectId);
-  if (!select) return;
-  const previousValue = select.value;
-  select.innerHTML = "";
-
-  const placeholderOption = document.createElement("option");
-  placeholderOption.value = "";
-  placeholderOption.textContent = placeholder;
-  placeholderOption.disabled = true;
-  placeholderOption.selected = !previousValue;
-  select.appendChild(placeholderOption);
-
-  for (const label of options) {
-    const option = document.createElement("option");
-    option.value = label;
-    option.textContent = label;
-    if (previousValue && previousValue === label) {
-      option.selected = true;
-      placeholderOption.selected = false;
-    }
-    select.appendChild(option);
-  }
 }
 
 function setGoogleButtonLabel(button, label) {
@@ -1533,9 +1394,6 @@ function applyLanguage() {
   setPlaceholderIfExists("accountName", t("accountPhName"));
   setPlaceholderIfExists("accountEmail", t("accountPhEmail"));
 
-  setTextIfExists("onboardNicheLabel", t("nicheLabel"));
-  setTextIfExists("onboardObjectiveLabel", t("onboardObjectiveLabel"));
-  setTextIfExists("onboardingFormSubmitBtn", t("completeOnboarding"));
   setTextIfExists("onboardingKicker", t("onboardingKicker"));
   setTextIfExists("onboardingExplainerTitle", t("onboardingExplainerTitle"));
   setTextIfExists("onboardingExplainerBody", t("onboardingExplainerBody"));
@@ -1547,27 +1405,12 @@ function applyLanguage() {
   setTextIfExists("paymentFeature3", t("paymentFeature3"));
   setTextIfExists("paymentAgreeText", t("paymentAgree"));
   setTextIfExists("paymentSubmitBtn", t("paymentSubmit"));
-  populateSelectOptions(
-    "onboardNiche",
-    t("onboardPhNiche"),
-    onboardingOptionsForLanguage(ONBOARDING_NICHE_OPTIONS),
-  );
-  populateSelectOptions(
-    "onboardObjective",
-    t("onboardPhObjective"),
-    onboardingOptionsForLanguage(ONBOARDING_OBJECTIVE_OPTIONS),
-  );
-
   setTextIfExists("settingsModalTitle", t("settingsModalHeading"));
   setTextIfExists("settingsNavGeneral", t("tabGeneral"));
   setTextIfExists("settingsNavAccount", t("tabAccount"));
   setTextIfExists("settingsNavConnections", t("tabConnections"));
   setTextIfExists("settingsNavSupport", t("tabSupport"));
   setTextIfExists("settingsPanelGeneralTitle", t("panelGeneral"));
-  setTextIfExists("settingsNicheTitle", t("nicheLabel"));
-  setTextIfExists("settingsNicheHint", t("settingsNicheHint"));
-  setTextIfExists("settingsObjectiveTitle", t("objectiveShort"));
-  setTextIfExists("settingsObjectiveHint", t("settingsObjectiveHint"));
   setTextIfExists("settingsPanelAccountTitle", t("panelAccount"));
   setTextIfExists("settingsNameTitle", t("shortName"));
   setTextIfExists("settingsEmailTitle", t("shortEmail"));
@@ -2493,8 +2336,6 @@ function applySettingsForm(data) {
   const billing = data.payment?.details || {};
   document.getElementById("settingsName").value = user.name || "";
   document.getElementById("settingsEmail").value = user.email || "";
-  document.getElementById("settingsNiche").value = user.niche || "";
-  document.getElementById("settingsObjective").value = user.objective || "";
   applyIntegrationUi("linkedin", integrations.linkedin || {});
   applyIntegrationUi("instagram", integrations.instagram || {});
   const paid = Boolean(data.payment?.completed);
@@ -2508,7 +2349,7 @@ function applySettingsForm(data) {
 function setOnboardingMode(mode) {
   // Map legacy modes to new full-page steps.
   // "create" and "onboarding" both funnel into the Instagram-connect gate now
-  // because the name/email step is handled by signup and niche/objective are gone.
+  // because the name/email step is handled at signup.
   if (mode === "create" || mode === "onboarding") {
     showOnboardStep("connect");
     return;
@@ -2642,7 +2483,7 @@ signupForm.addEventListener("submit", async (event) => {
 
   try {
     await api("/api/auth/signup", "POST", { fullName, email, password });
-    signupForm.reset();
+  signupForm.reset();
     await unlockChat(`Welcome to PostPilot, ${fullName}!`);
   } catch (err) {
     showFeedback(signupFeedback, err.message);
@@ -2807,8 +2648,8 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
 resetChatBtn?.addEventListener("click", async () => {
   try {
     await api("/api/agent/conversation/reset", "POST", { sessionId });
-    const messages = document.getElementById("messages");
-    messages.innerHTML = "";
+  const messages = document.getElementById("messages");
+  messages.innerHTML = "";
     refreshAgentEmptyState();
   } catch (err) {
     showToast(`Could not reset chat: ${err.message}`);
@@ -2869,31 +2710,6 @@ document.getElementById("accountForm").addEventListener("submit", async (event) 
   }
 });
 
-document.getElementById("onboardingForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const niche = document.getElementById("onboardNiche").value.trim();
-  const objective = document.getElementById("onboardObjective").value.trim();
-
-  if (!niche || !objective) {
-    setText("onboardingError", t("onboardingMissingFields"));
-    return;
-  }
-
-  try {
-    await api("/api/account/onboarding/complete", "POST", {
-      niche,
-      objective,
-    });
-    setText("onboardingError", "");
-    setOnboardingMode("payment");
-    showOnboardingModal();
-    await loadAccountState();
-    addMessage("assistant", t("onboardingDone"));
-  } catch (err) {
-    setText("onboardingError", err.message);
-  }
-});
-
 document.getElementById("paymentForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const confirmed = document.getElementById("paymentConfirm").checked;
@@ -2923,8 +2739,6 @@ document.getElementById("settingsForm").addEventListener("submit", async (event)
   const payload = {
     name: document.getElementById("settingsName").value.trim(),
     email: document.getElementById("settingsEmail").value.trim(),
-    niche: document.getElementById("settingsNiche").value.trim(),
-    objective: document.getElementById("settingsObjective").value.trim(),
     linkedinUsername: accountState?.integrations?.linkedin?.username || "",
     instagramUsername: accountState?.integrations?.instagram?.username || "",
   };
@@ -3355,9 +3169,9 @@ if (!handledFreshGoogleAuth) {
     .then((session) => {
       if (session.authenticated) {
         unlockChat(`Welcome back, ${session.user.fullName}.`).catch((err) => {
-          showFeedback(signupFeedback, `Could not restore session: ${err.message}`);
-        });
-      }
+      showFeedback(signupFeedback, `Could not restore session: ${err.message}`);
+    });
+  }
     })
     .catch(() => {});
 }

@@ -35,16 +35,11 @@ def _truncate(value: Any, limit: int) -> str:
 
 
 def _format_account(context: dict[str, Any]) -> str:
-    account = context.get("account") or {}
     first_name = context.get("firstName") or ""
-    niche = account.get("niche") or "(not set)"
-    objective = account.get("objective") or "(not set)"
     platforms = context.get("connectedPlatforms") or []
     lines = []
     if first_name:
         lines.append(f"First name (use when greeting): {first_name}")
-    lines.append(f"Niche: {niche}")
-    lines.append(f"Primary objective: {objective}")
     lines.append(f"Connected platforms: {', '.join(platforms) if platforms else 'none'}")
     return "\n".join(lines)
 
