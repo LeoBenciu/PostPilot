@@ -242,12 +242,15 @@ async function fetchInstagramPostsAndAnalytics(accessToken) {
     const insights = insightsById.get(item.id) || {};
     const views = Number(insights.views || 0);
     const rawImpressions = Number(insights.impressions || 0);
-    const impressions = rawImpressions || views;
+    const videoViews = Number(insights.video_views || insights.plays || 0);
+    // Instagram app often highlights Reels plays / views while the API splits
+    // impressions, views, video_views, and plays — take the strongest signal
+    // so analytics stay in the same ballpark as the native insights UI.
+    const impressions = Math.max(rawImpressions || 0, views || 0, videoViews || 0);
     const reach = Number(insights.reach || 0);
     const saved = Number(insights.saved || 0);
     const shares = Number(insights.shares || 0);
     const totalInteractions = Number(insights.total_interactions || 0);
-    const videoViews = Number(insights.video_views || insights.plays || 0);
     const avgWatchTime = Number(insights.ig_reels_avg_watch_time || 0);
     const totalWatchTime = Number(insights.ig_reels_video_view_total_time || 0);
     const engagementFromInsights = Number(insights.engagement || 0) || totalInteractions;
@@ -284,6 +287,7 @@ function pickInstagramInsightMetricSets(mediaType) {
       ["reach", "saved", "total_interactions", "shares", "views", "ig_reels_avg_watch_time", "ig_reels_video_view_total_time"],
       ["reach", "saved", "total_interactions", "shares", "views"],
       ["impressions", "reach", "saved", "video_views", "engagement"],
+      ["plays"],
       ["reach", "saved"],
     ];
   }

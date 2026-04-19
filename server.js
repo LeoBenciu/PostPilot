@@ -757,6 +757,7 @@ async function syncPlatform(state, platform) {
     accessToken: integration.token,
     profile,
   });
+  state.posts = state.posts.filter((p) => p.platform !== platform);
   upsertPosts(state, fetched);
   integration.username = profile.username || integration.username || null;
   integration.avatarUrl = profile.avatarUrl || integration.avatarUrl || null;
@@ -1030,13 +1031,19 @@ async function ensureProfileData(state) {
       const stillNeedsMore = freshTotal > previouslySynced;
 
       if (needsPosts || needsMediaUrls || stillNeedsMore) {
-        if (needsMediaUrls || stillNeedsMore) {
-          const reason = stillNeedsMore
-            ? `new posts (${previouslySynced}→${freshTotal})`
-            : "missing media URLs";
-          state.posts = state.posts.filter((p) => p.platform !== platform);
-          console.log(`[PostPilot] Clearing old ${platform} posts — ${reason}`);
-        }
+        // Always drop this platform's cached posts before re-fetching. `upsertPosts`
+        // only appends unseen (platform+date+text) keys — without a clear, a TTL
+        // refresh would refetch from IG but never replace rows, so impressions
+        // and other metrics stayed frozen indefinitely.
+        const reason = stillNeedsMore
+          ? `new posts (${previouslySynced}→${freshTotal})`
+          : needsMediaUrls
+            ? "missing media URLs"
+            : postsStale
+              ? "posts cache stale (refresh metrics)"
+              : "re-sync posts";
+        state.posts = state.posts.filter((p) => p.platform !== platform);
+        console.log(`[PostPilot] Clearing old ${platform} posts — ${reason}`);
         const profile = { username: integration.username, urn: integration.urn };
         const posts = await fetchPlatformPostsAndAnalytics({
           platform,
