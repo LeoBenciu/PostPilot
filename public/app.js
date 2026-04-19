@@ -176,6 +176,7 @@ const I18N = {
     analyticsBestDay: "Best day to post",
     analyticsCaptionLength: "Caption length vs engagement",
     analyticsTopPosts: "Top posts by engagement",
+    analyticsRefreshing: "Refreshing data\u2026",
     chartLikes: "Likes",
     chartComments: "Comments",
     chartImpressions: "Impressions",
@@ -186,6 +187,11 @@ const I18N = {
     chartAvgEngShort: "Avg eng.",
     msgSenderAssistant: "PostPilot",
     msgSenderUser: "You",
+    statusThinking: "Thinking…",
+    statusCheckingProfile: "Checking your profile…",
+    statusSearchingMarket: "Searching the internet…",
+    statusAnalyzingPosts: "Analyzing your posts…",
+    statusWriting: "Writing…",
     send: "Send",
     saveSettings: "Save settings",
     onboardingRequired: "Complete onboarding when you are ready. I need those details before I can coach your content.",
@@ -420,6 +426,7 @@ const I18N = {
     analyticsBestDay: "Cea mai buna zi de postare",
     analyticsCaptionLength: "Lungime descriere vs interactiuni",
     analyticsTopPosts: "Top postari dupa interactiuni",
+    analyticsRefreshing: "Se actualizeaza datele\u2026",
     chartLikes: "Aprecieri",
     chartComments: "Comentarii",
     chartPosts: "Postari",
@@ -429,6 +436,11 @@ const I18N = {
     chartAvgEngShort: "Int. medie",
     msgSenderAssistant: "PostPilot",
     msgSenderUser: "Tu",
+    statusThinking: "Ma gandesc…",
+    statusCheckingProfile: "Verific profilul tau…",
+    statusSearchingMarket: "Caut trenduri din nisa ta…",
+    statusAnalyzingPosts: "Analizez postarile tale…",
+    statusWriting: "Scriu…",
     send: "Trimite",
     saveSettings: "Salveaza setarile",
     onboardingRequired: "Completeaza onboarding-ul cand esti pregatit. Am nevoie de aceste detalii inainte sa te pot ajuta.",
@@ -660,6 +672,7 @@ const I18N = {
     analyticsBestDay: "Giorno migliore per postare",
     analyticsCaptionLength: "Lunghezza descrizione vs interazioni",
     analyticsTopPosts: "Top post per interazioni",
+    analyticsRefreshing: "Aggiornamento dati\u2026",
     chartLikes: "Like",
     chartComments: "Commenti",
     chartPosts: "Post",
@@ -669,6 +682,11 @@ const I18N = {
     chartAvgEngShort: "Int. media",
     msgSenderAssistant: "PostPilot",
     msgSenderUser: "Tu",
+    statusThinking: "Sto pensando…",
+    statusCheckingProfile: "Controllo il tuo profilo…",
+    statusSearchingMarket: "Cerco online…",
+    statusAnalyzingPosts: "Analizzo i tuoi post…",
+    statusWriting: "Sto scrivendo…",
     send: "Invia",
     saveSettings: "Salva impostazioni",
     onboardingRequired: "Completa l'onboarding quando vuoi. Mi servono questi dettagli prima di aiutarti.",
@@ -891,6 +909,7 @@ const I18N = {
     analyticsBestDay: "Bester Tag zum Posten",
     analyticsCaptionLength: "Beschreibungslaenge vs Interaktion",
     analyticsTopPosts: "Top-Beitraege nach Interaktion",
+    analyticsRefreshing: "Daten werden aktualisiert\u2026",
     chartLikes: "Likes",
     chartComments: "Kommentare",
     chartPosts: "Beitraege",
@@ -900,6 +919,11 @@ const I18N = {
     chartAvgEngShort: "Durchschn.",
     msgSenderAssistant: "PostPilot",
     msgSenderUser: "Du",
+    statusThinking: "Denke nach…",
+    statusCheckingProfile: "Prüfe dein Profil…",
+    statusSearchingMarket: "Suche im Netz…",
+    statusAnalyzingPosts: "Analysiere deine Posts…",
+    statusWriting: "Schreibe…",
     send: "Senden",
     saveSettings: "Einstellungen speichern",
     onboardingRequired: "Schliesse das Onboarding ab, wenn du bereit bist. Ich brauche diese Angaben, bevor ich helfen kann.",
@@ -1122,6 +1146,7 @@ const I18N = {
     analyticsBestDay: "Meilleur jour pour publier",
     analyticsCaptionLength: "Longueur de description vs interactions",
     analyticsTopPosts: "Top publications par interactions",
+    analyticsRefreshing: "Actualisation des donn\u00e9es\u2026",
     chartLikes: "J'aime",
     chartComments: "Commentaires",
     chartPosts: "Publications",
@@ -1131,6 +1156,11 @@ const I18N = {
     chartAvgEngShort: "Int. moy.",
     msgSenderAssistant: "PostPilot",
     msgSenderUser: "Vous",
+    statusThinking: "Je réfléchis…",
+    statusCheckingProfile: "Je vérifie ton profil…",
+    statusSearchingMarket: "Je cherche en ligne…",
+    statusAnalyzingPosts: "J'analyse tes posts…",
+    statusWriting: "J'écris…",
     send: "Envoyer",
     saveSettings: "Enregistrer les parametres",
     onboardingRequired: "Completez l'onboarding quand vous voulez. J'ai besoin de ces infos avant de vous aider.",
@@ -1462,6 +1492,7 @@ function applyLanguage() {
   setTextIfExists("titleBestDay", t("analyticsBestDay"));
   setTextIfExists("titleCaptionLength", t("analyticsCaptionLength"));
   setTextIfExists("titleTopPosts", t("analyticsTopPosts"));
+  setTextIfExists("analyticsRefreshingLabel", t("analyticsRefreshing"));
   setTextIfExists("sendBtn", t("send"));
   setTextIfExists("settingsSaveBtn", t("saveSettings"));
 
@@ -1806,12 +1837,37 @@ function createMsgRow(role) {
   return { row, bubble };
 }
 
+// Sticky-follow: auto-scroll only while the user is already near the bottom.
+// If they scrolled up to read earlier messages, let them read in peace — the
+// stream keeps writing below without yanking them back down.
+const SCROLL_STICKY_THRESHOLD_PX = 80;
+
+function isMessagesNearBottom(messagesEl) {
+  if (!messagesEl) return true;
+  const distance = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight;
+  return distance <= SCROLL_STICKY_THRESHOLD_PX;
+}
+
+function scrollMessagesToBottom(messagesEl) {
+  if (!messagesEl) return;
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// Append-only helper: scroll to bottom only if the user was already there.
+// Used during streaming so tokens appear without stealing their scroll.
+function followBottomIfAtBottom(messagesEl, wasAtBottom) {
+  if (wasAtBottom) scrollMessagesToBottom(messagesEl);
+}
+
 function addMessage(role, content) {
   const messages = document.getElementById("messages");
+  const wasAtBottom = isMessagesNearBottom(messages);
   const { row, bubble } = createMsgRow(role);
   bubble.innerHTML = renderMarkdown(content);
   messages.appendChild(row);
-  messages.scrollTop = messages.scrollHeight;
+  // A user sending a new message always snaps to bottom — they expect to see
+  // their own message. For assistant completions, respect the user's scroll.
+  if (role === "user" || wasAtBottom) scrollMessagesToBottom(messages);
   refreshAgentEmptyState();
 }
 
@@ -1831,22 +1887,76 @@ async function loadConversationFromServer() {
   renderConversation(Array.isArray(data.conversation) ? data.conversation : []);
 }
 
+const STATUS_LABEL_KEYS = {
+  thinking: "statusThinking",
+  checking_profile: "statusCheckingProfile",
+  searching_market: "statusSearchingMarket",
+  analyzing_posts: "statusAnalyzingPosts",
+  writing: "statusWriting",
+};
+
+function statusLabel(statusKey) {
+  const tKey = STATUS_LABEL_KEYS[statusKey] || "statusThinking";
+  return t(tKey);
+}
+
 function addStreamingMessage() {
   const messages = document.getElementById("messages");
   const { row, bubble } = createMsgRow("assistant");
+
+  // The status block is a transient "live activity" pill that replaces the
+  // old generic loading state. It shows what the agent is doing ("Thinking",
+  // "Searching the internet", etc.) until the first token comes back.
+  const statusEl = document.createElement("div");
+  statusEl.className = "msg-status";
+  const statusDot = document.createElement("span");
+  statusDot.className = "msg-status__dot";
+  const statusText = document.createElement("span");
+  statusText.className = "msg-status__text";
+  statusText.textContent = statusLabel("thinking");
+  statusEl.appendChild(statusDot);
+  statusEl.appendChild(statusText);
+  bubble.appendChild(statusEl);
+
   const cursor = document.createElement("span");
   cursor.className = "streaming-cursor";
+  // Cursor starts hidden — it only appears once actual tokens arrive, so the
+  // status pill isn't competing with a blinking caret.
+  cursor.style.display = "none";
   bubble.appendChild(cursor);
+
   let rawText = "";
+  let statusVisible = true;
   messages.appendChild(row);
-  messages.scrollTop = messages.scrollHeight;
+  // A newly appearing assistant bubble should snap to view only if the user
+  // hasn't scrolled up. If they're mid-read, don't yank them down.
+  const atBottomAtStart = isMessagesNearBottom(messages);
+  if (atBottomAtStart) scrollMessagesToBottom(messages);
+
+  function ensureStatusHidden() {
+    if (!statusVisible) return;
+    statusEl.remove();
+    cursor.style.display = "";
+    statusVisible = false;
+  }
+
   return {
     append(token) {
+      // First token terminates the status pill.
+      ensureStatusHidden();
+      const wasAtBottom = isMessagesNearBottom(messages);
       rawText += String(token || "");
       bubble.insertBefore(document.createTextNode(token), cursor);
-      messages.scrollTop = messages.scrollHeight;
+      followBottomIfAtBottom(messages, wasAtBottom);
+    },
+    setStatus(key) {
+      if (!statusVisible) return;
+      const wasAtBottom = isMessagesNearBottom(messages);
+      statusText.textContent = statusLabel(key);
+      followBottomIfAtBottom(messages, wasAtBottom);
     },
     finish() {
+      ensureStatusHidden();
       cursor.remove();
       bubble.innerHTML = renderMarkdown(rawText);
     },
@@ -1886,6 +1996,9 @@ async function streamChat(message, sessionId) {
         if (!trimmed || !trimmed.startsWith("data: ")) continue;
         try {
           const data = JSON.parse(trimmed.slice(6));
+          if (data.status) {
+            handle.setStatus(data.status);
+          }
           if (data.token) {
             handle.append(data.token);
             fullText += data.token;
@@ -2171,20 +2284,93 @@ function renderTopPosts(posts) {
   });
 }
 
+const ANALYTICS_STAT_CARD_IDS = [
+  "analyticsTotalPosts",
+  "analyticsTotalLikes",
+  "analyticsTotalComments",
+  "analyticsTotalImpressions",
+  "analyticsAvgEngagement",
+];
+
+const ANALYTICS_CHART_CANVAS_IDS = [
+  "chartEngagementTrend",
+  "chartMediaType",
+  "chartPostingCadence",
+  "chartCaptionLength",
+  "chartTopPosts",
+];
+
+function setAnalyticsSkeleton(isLoading) {
+  ANALYTICS_STAT_CARD_IDS.forEach((id) => {
+    const el = document.getElementById(id);
+    const card = el?.closest(".analytics-stat-card");
+    if (card) card.classList.toggle("is-loading", isLoading);
+  });
+  ANALYTICS_CHART_CANVAS_IDS.forEach((id) => {
+    const canvas = document.getElementById(id);
+    const card = canvas?.closest(".analytics-chart-card");
+    if (card) card.classList.toggle("is-loading", isLoading);
+  });
+}
+
+function setAnalyticsRefreshing(isRefreshing) {
+  const pill = document.getElementById("analyticsRefreshing");
+  if (!pill) return;
+  pill.classList.toggle("is-visible", Boolean(isRefreshing));
+}
+
+function renderAnalyticsBundle(bundle) {
+  const posts = bundle?.posts || [];
+  const summary = bundle?.summary || {};
+  renderStatCards(summary, posts);
+  renderEngagementTrend(posts);
+  renderMediaTypeBreakdown(posts);
+  renderPostingCadence(posts);
+  renderCaptionLength(posts);
+  renderTopPosts(posts);
+}
+
+// Track the latest call so an in-flight background refresh triggered by a
+// previous view open doesn't overwrite a newer load.
+let analyticsLoadToken = 0;
+let hasRenderedAnalyticsOnce = false;
+
 async function loadAnalyticsView() {
+  const token = ++analyticsLoadToken;
+  const showSkeleton = !hasRenderedAnalyticsOnce;
+  if (showSkeleton) setAnalyticsSkeleton(true);
+
   try {
-    const [summary, recent] = await Promise.all([
-      api("/api/analytics/summary"),
-      api("/api/posts/recent?limit=0"),
-    ]);
-    const posts = recent?.posts || [];
-    renderStatCards(summary || {}, posts);
-    renderEngagementTrend(posts);
-    renderMediaTypeBreakdown(posts);
-    renderPostingCadence(posts);
-    renderCaptionLength(posts);
-    renderTopPosts(posts);
+    // First round-trip: let the server return cached data fast. The server
+    // only hits Instagram when the cache is empty or the caller explicitly
+    // asks for a refresh — so this call usually returns in <100ms.
+    const bundle = await api("/api/analytics/bundle");
+    if (token !== analyticsLoadToken) return;
+
+    renderAnalyticsBundle(bundle);
+    hasRenderedAnalyticsOnce = true;
+    setAnalyticsSkeleton(false);
+
+    // If the cache is stale, fire a background refresh and update the charts
+    // once fresh data arrives. User sees charts immediately; the small
+    // "Refreshing data…" pill tells them an update is in flight.
+    if (bundle?.staleHint) {
+      setAnalyticsRefreshing(true);
+      try {
+        const fresh = await api("/api/analytics/bundle?refresh=1");
+        if (token !== analyticsLoadToken) return;
+        renderAnalyticsBundle(fresh);
+      } catch (err) {
+        console.warn("Analytics background refresh failed:", err);
+      } finally {
+        if (token === analyticsLoadToken) setAnalyticsRefreshing(false);
+      }
+    }
   } catch (err) {
+    if (token === analyticsLoadToken) {
+      setAnalyticsSkeleton(false);
+      setAnalyticsRefreshing(false);
+    }
     console.error("Analytics load error:", err);
   }
 }

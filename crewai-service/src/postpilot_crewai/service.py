@@ -3,7 +3,7 @@ import json
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 import yaml
 from fastapi import FastAPI, HTTPException, Request
@@ -214,24 +214,12 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
 
     context = payload.context or {}
     history = payload.history or []
-    account_context = _format_account_context(context)
     history_summary_text = _history_summary(history)
     language_name = _resolve_language_name(context.get("language"))
 
     niche = (context.get("account") or {}).get("niche") if isinstance(context, dict) else None
-    market_context = None
-    if should_search_market(payload.message, niche):
-        market_context = await fetch_market_context(
-            niche or "", language_name, payload.message
-        )
-    if market_context:
-        account_context = account_context + MARKET_CONTEXT_HEADER + market_context
-
-    system_prompt = _build_system_prompt_from_yaml(
-        message=payload.message[:4000],
-        account_context=account_context,
-        history_summary=history_summary_text,
-        language=language_name,
+    will_search_market = bool(os.getenv("TAVILY_API_KEY")) and should_search_market(
+        payload.message, niche
     )
 
     history_msgs = []
@@ -242,50 +230,85 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
             history_msgs.append({"role": role, "content": content[:1500]})
 
     post_images = payload.postImages or []
-    if post_images:
-        image_context = "I'm attaching your most recent post images for reference:\n"
-        for i, img in enumerate(post_images):
-            image_context += (
-                f"\nImage {i + 1}: [{img.type}] {img.date} — "
-                f"likes: {img.likes}, comments: {img.comments}\n"
-                f'Caption: "{img.caption}"'
-            )
-        openai_user_content: list[dict] = [
-            {"type": "text", "text": f"{image_context}\n\nUser message: {payload.message[:4000]}"},
-        ]
-        for img in post_images:
-            if img.url:
-                openai_user_content.append(
-                    {"type": "image_url", "image_url": {"url": img.url, "detail": "low"}}
-                )
-    else:
-        openai_user_content = payload.message[:4000]
 
     provider = "anthropic" if use_anthropic else "openai"
 
-    posthog_client.capture(
-        "chat stream started",
-        distinct_id=distinct_id,
-        properties={
-            "provider": provider,
-            "model": model,
-            "has_images": len(payload.postImages) > 0,
-            "history_length": len(payload.history),
-            "message_length": len(payload.message),
-            "market_context_used": bool(market_context),
-        },
-    )
+    def _sse(data: dict) -> str:
+        return f"data: {json.dumps(data)}\n\n"
 
-    if use_anthropic:
-        anthropic_user_content = _openai_to_anthropic_user_content(openai_user_content)
-        anthropic_messages = [
-            *history_msgs,
-            {"role": "user", "content": anthropic_user_content},
-        ]
-        client = AsyncAnthropic(api_key=api_key)
+    async def generate() -> AsyncGenerator[str, None]:
+        # The SSE stream is already open at this point. Use it to broadcast
+        # agent activity ("searching the internet", "analyzing posts", …)
+        # so the client UI never shows a blind spinner.
+        try:
+            market_context: Optional[str] = None
+            if will_search_market:
+                yield _sse({"status": "searching_market"})
+                market_context = await fetch_market_context(
+                    niche or "", language_name, payload.message
+                )
 
-        async def generate() -> AsyncGenerator[str, None]:
-            try:
+            if post_images:
+                yield _sse({"status": "analyzing_posts"})
+
+            account_context_text = _format_account_context(context)
+            if market_context:
+                account_context_text += MARKET_CONTEXT_HEADER + market_context
+
+            system_prompt = _build_system_prompt_from_yaml(
+                message=payload.message[:4000],
+                account_context=account_context_text,
+                history_summary=history_summary_text,
+                language=language_name,
+            )
+
+            if post_images:
+                image_context = "I'm attaching your most recent post images for reference:\n"
+                for i, img in enumerate(post_images):
+                    image_context += (
+                        f"\nImage {i + 1}: [{img.type}] {img.date} — "
+                        f"likes: {img.likes}, comments: {img.comments}\n"
+                        f'Caption: "{img.caption}"'
+                    )
+                openai_user_content: list[dict] = [
+                    {
+                        "type": "text",
+                        "text": f"{image_context}\n\nUser message: {payload.message[:4000]}",
+                    },
+                ]
+                for img in post_images:
+                    if img.url:
+                        openai_user_content.append(
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": img.url, "detail": "low"},
+                            }
+                        )
+            else:
+                openai_user_content = payload.message[:4000]
+
+            posthog_client.capture(
+                "chat stream started",
+                distinct_id=distinct_id,
+                properties={
+                    "provider": provider,
+                    "model": model,
+                    "has_images": len(payload.postImages) > 0,
+                    "history_length": len(payload.history),
+                    "message_length": len(payload.message),
+                    "market_context_used": bool(market_context),
+                },
+            )
+
+            yield _sse({"status": "writing"})
+
+            if use_anthropic:
+                anthropic_user_content = _openai_to_anthropic_user_content(openai_user_content)
+                anthropic_messages = [
+                    *history_msgs,
+                    {"role": "user", "content": anthropic_user_content},
+                ]
+                client = AsyncAnthropic(api_key=api_key)
                 async with client.messages.stream(
                     model=model,
                     max_tokens=2048,
@@ -295,30 +318,14 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
                 ) as stream:
                     async for text in stream.text_stream:
                         if text:
-                            yield f"data: {json.dumps({'token': text})}\n\n"
-                posthog_client.capture(
-                    "chat stream completed",
-                    distinct_id=distinct_id,
-                    properties={"provider": "anthropic", "model": model},
-                )
-                yield f"data: {json.dumps({'done': True})}\n\n"
-            except Exception as exc:
-                posthog_client.capture(
-                    "chat stream failed",
-                    distinct_id=distinct_id,
-                    properties={"provider": "anthropic", "error_type": type(exc).__name__},
-                )
-                yield f"data: {json.dumps({'error': str(exc)})}\n\n"
-    else:
-        openai_messages = [
-            {"role": "system", "content": system_prompt},
-            *history_msgs,
-            {"role": "user", "content": openai_user_content},
-        ]
-        client = AsyncOpenAI(api_key=api_key)
-
-        async def generate() -> AsyncGenerator[str, None]:
-            try:
+                            yield _sse({"token": text})
+            else:
+                openai_messages = [
+                    {"role": "system", "content": system_prompt},
+                    *history_msgs,
+                    {"role": "user", "content": openai_user_content},
+                ]
+                client = AsyncOpenAI(api_key=api_key)
                 stream = await client.chat.completions.create(
                     model=model,
                     temperature=0.4,
@@ -328,20 +335,21 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
                 async for chunk in stream:
                     delta = chunk.choices[0].delta if chunk.choices else None
                     if delta and delta.content:
-                        yield f"data: {json.dumps({'token': delta.content})}\n\n"
-                posthog_client.capture(
-                    "chat stream completed",
-                    distinct_id=distinct_id,
-                    properties={"provider": "openai", "model": model},
-                )
-                yield f"data: {json.dumps({'done': True})}\n\n"
-            except Exception as exc:
-                posthog_client.capture(
-                    "chat stream failed",
-                    distinct_id=distinct_id,
-                    properties={"provider": "openai", "error_type": type(exc).__name__},
-                )
-                yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+                        yield _sse({"token": delta.content})
+
+            posthog_client.capture(
+                "chat stream completed",
+                distinct_id=distinct_id,
+                properties={"provider": provider, "model": model},
+            )
+            yield _sse({"done": True})
+        except Exception as exc:
+            posthog_client.capture(
+                "chat stream failed",
+                distinct_id=distinct_id,
+                properties={"provider": provider, "error_type": type(exc).__name__},
+            )
+            yield _sse({"error": str(exc)})
 
     return StreamingResponse(
         generate(),

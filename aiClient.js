@@ -84,6 +84,14 @@ function isAnthropicModel(model) {
   return String(model || "").toLowerCase().startsWith("claude");
 }
 
+// Stream event helpers. Stream generators yield these typed events so the
+// server can route status updates to the client without mixing them into the
+// token stream. Status keys are short identifiers ("thinking",
+// "searching_market", "analyzing_posts", "writing", "checking_profile") — the
+// client maps them to localized strings.
+const tokenEvent = (value) => ({ type: "token", value: String(value || "") });
+const statusEvent = (value) => ({ type: "status", value: String(value || "") });
+
 function resolveDirectModel() {
   return process.env.OPENAI_MODEL || "gpt-4o-mini";
 }
@@ -856,12 +864,14 @@ async function* streamAnthropic({ message, history, state, connectedPlatforms, l
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
   state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
+  if (useVision) yield statusEvent("analyzing_posts");
   const postImages = useVision ? await collectPostImages(state.posts) : [];
   aiLog("log", "Anthropic vision routing for stream", { useVision, count: postImages.length });
   const openaiStyleUserContent = buildVisionUserMessage(inputText, postImages);
   const userContent = Array.isArray(openaiStyleUserContent)
     ? convertVisionContentToAnthropic(openaiStyleUserContent)
     : [{ type: "text", text: openaiStyleUserContent }];
+  yield statusEvent("writing");
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -904,7 +914,7 @@ async function* streamAnthropic({ message, history, state, connectedPlatforms, l
         const parsed = JSON.parse(payload);
         if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
           const token = parsed.delta.text;
-          if (token) yield token;
+          if (token) yield tokenEvent(token);
         } else if (parsed.type === "message_stop") {
           return;
         }
@@ -931,6 +941,14 @@ async function callDirectLLM(params) {
 }
 
 async function* streamDirectLLM(params) {
+  // Emit a status event BEFORE the Tavily call when a search will actually
+  // happen, so the client shows "Searching the internet…" while we wait.
+  const niche = params.state?.user?.niche || "";
+  const willSearch = Boolean(
+    process.env.TAVILY_API_KEY && shouldSearchMarket(params.message, niche),
+  );
+  if (willSearch) yield statusEvent("searching_market");
+
   const marketContext = await resolveMarketContext({
     state: params.state,
     language: params.language,
@@ -1098,9 +1116,11 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms, lang
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
   state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
+  if (useVision) yield statusEvent("analyzing_posts");
   const postImages = useVision ? await collectPostImages(state.posts) : [];
   aiLog("log", "Vision routing for stream", { useVision, count: postImages.length });
   const userContent = buildVisionUserMessage(inputText, postImages);
+  yield statusEvent("writing");
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -1139,7 +1159,7 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms, lang
       try {
         const parsed = JSON.parse(payload);
         const token = parsed.choices?.[0]?.delta?.content;
-        if (token) yield token;
+        if (token) yield tokenEvent(token);
       } catch (_e) { /* skip malformed SSE line */ }
     }
   }
@@ -1154,6 +1174,7 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
   const inputText = truncate(message, DEFAULT_MAX_INPUT_CHARS);
   state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
+  if (useVision) yield statusEvent("analyzing_posts");
   const postImages = useVision ? await collectPostImages(state.posts) : [];
   aiLog("log", "Vision routing for CrewAI stream", { useVision, count: postImages.length });
   const res = await fetch(endpoint, {
@@ -1192,7 +1213,8 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
         const parsed = JSON.parse(trimmed.slice(6));
         if (parsed.error) throw new Error(parsed.error);
         if (parsed.done) return;
-        if (parsed.token) yield parsed.token;
+        if (parsed.status) yield statusEvent(parsed.status);
+        if (parsed.token) yield tokenEvent(parsed.token);
       } catch (e) {
         if (e.message && !e.message.startsWith("Unexpected")) throw e;
       }

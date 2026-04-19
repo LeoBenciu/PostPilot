@@ -377,6 +377,10 @@
         </section>
 
         <section id="analyticsView" class="app-view analytics-view hidden">
+          <div id="analyticsRefreshing" class="analytics-refreshing" role="status" aria-live="polite">
+            <span class="analytics-refreshing__dot" aria-hidden="true"></span>
+            <span id="analyticsRefreshingLabel">Refreshing data…</span>
+          </div>
           <div class="analytics-stat-grid">
             <article class="analytics-stat-card">
               <p class="analytics-label" id="labelTotalPosts">Total posts</p>

@@ -908,6 +908,62 @@ async function ensureValidToken(state, platform) {
 const PROFILE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const POSTS_TTL_MS = 20 * 60 * 1000; // 20 minutes
 
+// When the analytics page opens it used to fire two parallel requests that
+// each kicked off their own ensureProfileData (two IG API round-trips for
+// the same data). We dedupe by user so only ONE refresh runs at a time per
+// user — later callers piggyback on the in-flight promise and then reload
+// the freshly persisted state.
+const profileRefreshInFlight = new Map();
+
+async function ensureProfileDataDeduped(userId, state) {
+  if (profileRefreshInFlight.has(userId)) {
+    await profileRefreshInFlight.get(userId);
+    // The in-flight refresh may have mutated & persisted state for OTHER
+    // state objects in memory. Reload from DB so we return fresh values.
+    const fresh = await getStateForUser(userId);
+    Object.assign(state, fresh);
+    return false;
+  }
+  const promise = (async () => {
+    const changed = await ensureProfileData(state);
+    if (changed) await saveStateForUser(userId, state);
+    return changed;
+  })();
+  profileRefreshInFlight.set(userId, promise);
+  try {
+    return await promise;
+  } finally {
+    profileRefreshInFlight.delete(userId);
+  }
+}
+
+// Cheap version of ensureProfileData's staleness check — no network, no token
+// refresh, just "will ensureProfileData need to hit the IG/LinkedIn APIs?".
+// Used to emit the "checking your profile…" SSE status only when we're
+// actually about to do real work.
+async function shouldRefreshProfileData(state) {
+  const now = Date.now();
+  for (const [platform, integration] of Object.entries(state.integrations || {})) {
+    if (!integration?.connected || !integration?.token) continue;
+    const lastSync = integration.lastSyncAt
+      ? new Date(integration.lastSyncAt).getTime()
+      : 0;
+    const ageMs = lastSync ? now - lastSync : Infinity;
+    const profileStale = ageMs > PROFILE_TTL_MS;
+    const postsStale = ageMs > POSTS_TTL_MS;
+    const hasBio = integration.bio !== undefined && integration.bio !== null;
+    const needsProfile = !hasBio || profileStale;
+    const platformPosts = (state.posts || []).filter((p) => p.platform === platform);
+    const needsMediaUrls =
+      platformPosts.length > 0 && !platformPosts.some((p) => p.imageUrl || p.mediaUrl);
+    const knownTotal = Number(integration.mediaCount || 0);
+    const needsMorePosts = knownTotal > platformPosts.length;
+    const needsPosts = !platformPosts.length || postsStale;
+    if (needsProfile || needsPosts || needsMediaUrls || needsMorePosts) return true;
+  }
+  return false;
+}
+
 async function ensureProfileData(state) {
   let changed = false;
   const now = Date.now();
@@ -1887,9 +1943,36 @@ const server = http.createServer(async (req, res) => {
     const user = await requireAuth(req, res);
     if (!user) return;
     const state = bindStateToUser(await getStateForUser(user.id), user);
-    const backfilled = await ensureProfileData(state);
-    if (backfilled) await saveStateForUser(user.id, state);
+    await ensureProfileDataDeduped(user.id, state);
     sendJson(res, 200, summarizeAnalytics(state.posts));
+    return;
+  }
+
+  // Single round-trip for the analytics page. Returns summary + posts + a
+  // couple of TTL hints the client can use to decide whether to trigger a
+  // background refresh. Skipping ?refresh=1 lets the client render from
+  // cache instantly and then request a fresh version in the background.
+  if (req.method === "GET" && pathname === "/api/analytics/bundle") {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    const refreshParam = parsed.searchParams.get("refresh");
+    const wantsRefresh = refreshParam === "1" || refreshParam === "true";
+    const needsRefresh = await shouldRefreshProfileData(state);
+    // Always refresh when the cache is empty — nothing to render otherwise.
+    const hasCachedPosts = Array.isArray(state.posts) && state.posts.length > 0;
+    if (wantsRefresh || !hasCachedPosts) {
+      await ensureProfileDataDeduped(user.id, state);
+    }
+    const limit = Number(parsed.searchParams.get("limit") || 0);
+    const posts =
+      Number.isFinite(limit) && limit > 0 ? state.posts.slice(0, limit) : state.posts;
+    sendJson(res, 200, {
+      summary: summarizeAnalytics(state.posts),
+      posts,
+      fresh: wantsRefresh || !hasCachedPosts,
+      staleHint: needsRefresh && !(wantsRefresh || !hasCachedPosts),
+    });
     return;
   }
 
@@ -1905,8 +1988,7 @@ const server = http.createServer(async (req, res) => {
     const user = await requireAuth(req, res);
     if (!user) return;
     const state = bindStateToUser(await getStateForUser(user.id), user);
-    const backfilled = await ensureProfileData(state);
-    if (backfilled) await saveStateForUser(user.id, state);
+    await ensureProfileDataDeduped(user.id, state);
     const limit = Number(parsed.searchParams.get("limit") || 20);
     if (!Number.isFinite(limit) || limit <= 0) {
       sendJson(res, 200, { posts: state.posts });
@@ -2003,13 +2085,9 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const backfilled = await ensureProfileData(state);
-      if (backfilled) await saveStateForUser(user.id, state);
-      const voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
-      state.voiceProfile = voiceProfile;
-      const convo = getConversation(state, sessionId);
-      convo.push({ role: "user", content: message, at: nowIso() });
-
+      // Open the SSE stream before doing any heavy lifting so the client
+      // gets immediate feedback ("Thinking…") instead of a blank pause while
+      // we backfill profile data or spin up the LLM.
       res.writeHead(200, {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
@@ -2018,10 +2096,23 @@ const server = http.createServer(async (req, res) => {
       });
       res.flushHeaders();
       if (res.socket) res.socket.setNoDelay(true);
+      res.write(`data: ${JSON.stringify({ status: "thinking" })}\n\n`);
+
+      // If the profile/posts cache is stale we refresh it here. Show a
+      // dedicated status so the user knows we're fetching fresh data from IG.
+      if (await shouldRefreshProfileData(state)) {
+        res.write(`data: ${JSON.stringify({ status: "checking_profile" })}\n\n`);
+      }
+      const backfilled = await ensureProfileData(state);
+      if (backfilled) await saveStateForUser(user.id, state);
+      const voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
+      state.voiceProfile = voiceProfile;
+      const convo = getConversation(state, sessionId);
+      convo.push({ role: "user", content: message, at: nowIso() });
 
       let fullContent = "";
       try {
-        for await (const token of streamAgentReply({
+        for await (const event of streamAgentReply({
           message,
           history: convo,
           state,
@@ -2029,6 +2120,15 @@ const server = http.createServer(async (req, res) => {
           sessionId,
           language,
         })) {
+          // streamAgentReply yields typed events so we can surface live
+          // agent status ("searching the internet", "analyzing posts", …)
+          // to the client without mixing it into the token stream.
+          if (event && event.type === "status" && event.value) {
+            res.write(`data: ${JSON.stringify({ status: event.value })}\n\n`);
+            continue;
+          }
+          const token = event && event.type === "token" ? event.value : "";
+          if (!token) continue;
           fullContent += token;
           res.write(`data: ${JSON.stringify({ token })}\n\n`);
         }
