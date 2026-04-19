@@ -212,13 +212,53 @@ async function fetchMarketContext({ niche, language, userMessage }) {
 async function resolveMarketContext({ state, language, message }) {
   try {
     const niche = state?.user?.niche || "";
-    if (!shouldSearchMarket(message, niche)) return null;
+    const trimmedNiche = String(niche).trim();
+    const apiKey = process.env.TAVILY_API_KEY;
+    const messagePreview = String(message || "").slice(0, 80);
+
+    // Single-stop diagnostic log so every chat makes the Tavily decision
+    // transparent in production logs. Useful to answer "why didn't Tavily
+    // fire?" without attaching a debugger.
+    if (!apiKey) {
+      aiLog("log", "Tavily decision: skipped (TAVILY_API_KEY not set)");
+      return null;
+    }
+    if (!trimmedNiche || trimmedNiche === "(not set)") {
+      aiLog("log", "Tavily decision: skipped (niche not set)", { messagePreview });
+      return null;
+    }
+    if (!shouldSearchMarket(message, niche)) {
+      aiLog("log", "Tavily decision: skipped (no market trigger in message)", {
+        niche: trimmedNiche,
+        messagePreview,
+      });
+      return null;
+    }
+
     const languageName = resolveLanguageName(language);
-    return await fetchMarketContext({
+    aiLog("log", "Tavily decision: firing", {
+      niche: trimmedNiche,
+      language: languageName,
+      messagePreview,
+    });
+
+    const startedAt = Date.now();
+    const result = await fetchMarketContext({
       niche,
       language: languageName,
       userMessage: message,
     });
+    const elapsedMs = Date.now() - startedAt;
+
+    if (result) {
+      aiLog("log", "Tavily decision: context ready", {
+        length: result.length,
+        elapsedMs,
+      });
+    } else {
+      aiLog("log", "Tavily decision: no usable results", { elapsedMs });
+    }
+    return result;
   } catch (err) {
     aiLog("warn", "resolveMarketContext failed", { message: String(err?.message || err) });
     return null;

@@ -987,10 +987,17 @@ async function ensureProfileData(state) {
     const platformPosts = (state.posts || []).filter((p) => p.platform === platform);
     const needsMediaUrls =
       platformPosts.length > 0 && !platformPosts.some((p) => p.imageUrl || p.mediaUrl);
-    // If the (possibly just-refreshed) mediaCount says the user has more posts
-    // than we've cached, we're out of date regardless of TTL.
+    // Compare the profile's reported media count against the count we saw at
+    // the LAST successful sync, not the number of posts currently cached.
+    // Instagram's `media_count` can include stories, archived, or otherwise
+    // unreachable items — if /media consistently returns 6 while the profile
+    // says 7, comparing against cached length would trigger a pointless
+    // clear+resync on every request. Comparing against the remembered count
+    // at sync time breaks that loop; we only re-fetch when the profile's
+    // number actually *grows* beyond what we've already reconciled.
     const knownTotal = Number(integration.mediaCount || 0);
-    const needsMorePosts = knownTotal > platformPosts.length;
+    const syncedTotal = Number(integration.syncedMediaCount || 0);
+    const needsMorePosts = knownTotal > syncedTotal;
     const needsPosts = !platformPosts.length || postsStale;
 
     if (!needsProfile && !needsPosts && !needsMediaUrls && !needsMorePosts) continue;
@@ -1017,13 +1024,17 @@ async function ensureProfileData(state) {
       // Re-read mediaCount after the profile refresh — Instagram may report a
       // new post count that invalidates our cached posts.
       const freshTotal = Number(integration.mediaCount || 0);
-      const currentCount = (state.posts || []).filter((p) => p.platform === platform).length;
-      const stillNeedsMore = freshTotal > currentCount;
+      const previouslySynced = Number(integration.syncedMediaCount || 0);
+      // Only consider posts "actually new" when the profile's total exceeds
+      // what we already reconciled on a previous sync. This prevents the
+      // pathological loop where IG says 7, /media keeps returning 6, and we
+      // clear + resync on every single request.
+      const stillNeedsMore = freshTotal > previouslySynced;
 
       if (needsPosts || needsMediaUrls || stillNeedsMore) {
         if (needsMediaUrls || stillNeedsMore) {
           const reason = stillNeedsMore
-            ? `incomplete (${currentCount}/${freshTotal})`
+            ? `new posts (${previouslySynced}→${freshTotal})`
             : "missing media URLs";
           state.posts = state.posts.filter((p) => p.platform !== platform);
           console.log(`[PostPilot] Clearing old ${platform} posts — ${reason}`);
@@ -1037,10 +1048,16 @@ async function ensureProfileData(state) {
         upsertPosts(state, posts);
         state.voiceProfile = buildVoiceProfile(state.posts);
         integration.lastSyncAt = nowIso();
+        // Remember the profile's reported count AT SYNC TIME (not the number
+        // we actually fetched) — if IG reports 7 but /media only returns 6,
+        // the mismatch is structural (stories / archive / deleted items).
+        // Storing 7 here means subsequent calls with mediaCount=7 won't
+        // re-trigger a resync until IG's reported count increases past it.
+        integration.syncedMediaCount = freshTotal;
         changed = true;
         console.log(
           `[PostPilot] Synced ${posts.length} posts for ${platform}/@${integration.username} ` +
-            `(media URLs: ${posts.filter((p) => p.imageUrl).length})`,
+            `(media URLs: ${posts.filter((p) => p.imageUrl).length}, profile reports ${freshTotal})`,
         );
       }
     } catch (err) {
@@ -2246,6 +2263,16 @@ async function startServer() {
   await ensureAppState();
   server.listen(PORT, () => {
     console.log(`PostPilot Agent running on http://localhost:${PORT}`);
+    // Boot-time config summary — helps answer "is feature X actually
+    // configured?" without digging through the dashboard.
+    const flag = (v) => (v ? "set" : "MISSING");
+    console.log(
+      `[PostPilot][boot] AI_PROVIDER=${process.env.AI_PROVIDER || "crewai"} ` +
+        `CREWAI_API_URL=${flag(process.env.CREWAI_API_URL)} ` +
+        `OPENAI_API_KEY=${flag(process.env.OPENAI_API_KEY)} ` +
+        `ANTHROPIC_API_KEY=${flag(process.env.ANTHROPIC_API_KEY)} ` +
+        `TAVILY_API_KEY=${flag(process.env.TAVILY_API_KEY)}`,
+    );
   });
 }
 
