@@ -1,7 +1,8 @@
 import atexit
 import json
+import logging
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, nullcontext
 from pathlib import Path
 from typing import AsyncGenerator, Optional
 
@@ -29,12 +30,33 @@ MARKET_CONTEXT_HEADER = (
     "\n\n=== Live market context (what's trending in this niche right now) ===\n"
 )
 
-posthog_client = Posthog(
-    os.environ.get("POSTHOG_API_KEY", ""),
-    host=os.environ.get("POSTHOG_HOST", "https://us.i.posthog.com"),
-    enable_exception_autocapture=True,
-)
-atexit.register(posthog_client.shutdown)
+_log = logging.getLogger("postpilot.service")
+
+# PostHog on this service is optional. If POSTHOG_API_KEY is unset (common when
+# only the Node app has the key), the Python SDK would still try to flush events
+# and spam logs: "API key is not valid: empty (401)". Browser/session recordings
+# can still work from the frontend with a different key.
+_POSTHOG_API_KEY = (os.environ.get("POSTHOG_API_KEY") or "").strip()
+_POSTHOG_HOST = os.environ.get("POSTHOG_HOST", "https://us.i.posthog.com")
+posthog_client: Optional[Posthog] = None
+if _POSTHOG_API_KEY:
+    posthog_client = Posthog(
+        _POSTHOG_API_KEY,
+        host=_POSTHOG_HOST,
+        enable_exception_autocapture=True,
+    )
+    atexit.register(posthog_client.shutdown)
+else:
+    _log.info("PostHog disabled: POSTHOG_API_KEY not set on crewai-service (set it to mirror Node analytics)")
+
+
+def _ph_capture(distinct_id: str, event: str, properties: Optional[dict] = None) -> None:
+    if not posthog_client:
+        return
+    try:
+        posthog_client.capture(distinct_id, event, properties=properties or {})
+    except Exception as exc:
+        _log.warning("PostHog capture skipped: %s", exc)
 
 
 CONFIG_DIR = Path(__file__).resolve().parent / "config"
@@ -85,7 +107,8 @@ def _build_system_prompt_from_yaml(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    posthog_client.flush()
+    if posthog_client:
+        posthog_client.flush()
 
 
 app = FastAPI(title="PostPilot CrewAI Service", version="1.0.0", lifespan=lifespan)
@@ -100,9 +123,11 @@ def health() -> dict[str, str]:
 def chat(request: Request, payload: ChatRequest) -> ChatResponse:
     distinct_id = request.headers.get("X-POSTHOG-DISTINCT-ID") or payload.userId
     session_id = request.headers.get("X-POSTHOG-SESSION-ID") or payload.sessionId
-    with new_context():
-        identify_context(distinct_id)
-        set_context_session(session_id)
+    ph_ctx = new_context() if posthog_client else nullcontext()
+    with ph_ctx:
+        if posthog_client:
+            identify_context(distinct_id)
+            set_context_session(session_id)
         try:
             context = payload.context or {}
             raw_niche = (
@@ -126,11 +151,10 @@ def chat(request: Request, payload: ChatRequest) -> ChatResponse:
             reply = crew.kickoff(kickoff_payload)
             if not reply:
                 raise RuntimeError("empty_reply")
-            # PostHog Python SDK: capture(distinct_id, event, properties={...})
-            posthog_client.capture(
+            _ph_capture(
                 distinct_id,
                 "chat completed",
-                properties={
+                {
                     "provider": "crewai",
                     "has_images": len(payload.postImages) > 0,
                     "history_length": len(payload.history),
@@ -140,10 +164,10 @@ def chat(request: Request, payload: ChatRequest) -> ChatResponse:
             )
             return ChatResponse(reply=reply, action="ai_reply", provider="crewai")
         except Exception as err:
-            posthog_client.capture(
+            _ph_capture(
                 distinct_id,
                 "chat failed",
-                properties={
+                {
                     "provider": "crewai",
                     "error_type": type(err).__name__,
                 },
@@ -297,10 +321,10 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
             else:
                 openai_user_content = payload.message[:4000]
 
-            posthog_client.capture(
+            _ph_capture(
                 distinct_id,
                 "chat stream started",
-                properties={
+                {
                     "provider": provider,
                     "model": model,
                     "has_images": len(payload.postImages) > 0,
@@ -347,17 +371,17 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
                     if delta and delta.content:
                         yield _sse({"token": delta.content})
 
-            posthog_client.capture(
+            _ph_capture(
                 distinct_id,
                 "chat stream completed",
-                properties={"provider": provider, "model": model},
+                {"provider": provider, "model": model},
             )
             yield _sse({"done": True})
         except Exception as exc:
-            posthog_client.capture(
+            _ph_capture(
                 distinct_id,
                 "chat stream failed",
-                properties={"provider": provider, "error_type": type(exc).__name__},
+                {"provider": provider, "error_type": type(exc).__name__},
             )
             yield _sse({"error": str(exc)})
 
