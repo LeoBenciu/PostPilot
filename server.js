@@ -54,11 +54,11 @@ function sendRedirect(res, location) {
   res.end();
 }
 
-// iOS Universal Links hijack server-side 302s to instagram.com / linkedin.com
-// and open them in the native app, where the OAuth path (/oauth/authorize) is
-// parsed as a username → "profile not found". Rendering an HTML shim that
-// triggers the navigation from JS (script-initiated, no user gesture) keeps
-// the flow inside the browser.
+// Kept as a fallback in case the /consent/ URL trick stops working and we
+// need to route through a JS shim again to dodge Universal / App Links.
+// Currently unused — buildAuthUrl() points directly at www.instagram.com/
+// consent/ which isn't in the Instagram app's deep-link allowlist.
+// eslint-disable-next-line no-unused-vars
 function sendJsRedirect(res, location) {
   const html = `<!doctype html>
 <html lang="en">
@@ -1302,16 +1302,7 @@ const server = http.createServer(async (req, res) => {
       });
       const redirectUri = `${requestOrigin(req)}/auth/${platform}/callback`;
       const authUrl = buildAuthUrl({ platform, redirectUri, state: stateToken });
-      // Both iOS Universal Links and Android App Links trigger on server-side
-      // 302s and hand the URL to the native Instagram app, which then shows
-      // a spurious "profile not found" error because /oauth/authorize is
-      // parsed as a username. JS-initiated navigations (setTimeout + replace)
-      // run outside the user-gesture window and skip the app handoff on most
-      // mobile browsers. Desktop clients get a plain 302 for the cleanest UX.
-      const ua = String(req.headers["user-agent"] || "");
-      const isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(ua);
-      if (isMobile) sendJsRedirect(res, authUrl);
-      else sendRedirect(res, authUrl);
+      sendRedirect(res, authUrl);
     } catch (err) {
       const platform = pathname.endsWith("linkedin") ? "linkedin" : "instagram";
       sendRedirect(res, integrationRedirectUrl(platform, false, "oauth_start_failed", err.message));

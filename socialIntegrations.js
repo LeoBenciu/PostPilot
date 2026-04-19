@@ -37,19 +37,39 @@ function ensurePlatformConfigured(platform) {
 
 function buildAuthUrl({ platform, redirectUri, state }) {
   const cfg = ensurePlatformConfigured(platform);
-  const url = new URL(cfg.authorizeUrl);
-  url.searchParams.set("client_id", cfg.clientId);
-  url.searchParams.set("redirect_uri", redirectUri);
+
   if (platform === "linkedin") {
+    const url = new URL(cfg.authorizeUrl);
+    url.searchParams.set("client_id", cfg.clientId);
+    url.searchParams.set("redirect_uri", redirectUri);
     url.searchParams.set("response_type", "code");
     url.searchParams.set("scope", cfg.scopes.join(" "));
-  } else {
-    url.searchParams.set("scope", cfg.scopes.join(","));
-    url.searchParams.set("response_type", "code");
-    url.searchParams.set("enable_fb_login", "0");
+    url.searchParams.set("state", state);
+    return url.toString();
   }
-  url.searchParams.set("state", state);
-  return url.toString();
+
+  // Instagram: the documented endpoint is /oauth/authorize, but on mobile iOS
+  // and Android that path gets hijacked by the Instagram app via Universal
+  // Links / App Links and shown as "profile @oauth not found". Going straight
+  // to the consent page (the URL Instagram itself redirects to after
+  // /oauth/authorize) skips that interception because /consent/ isn't in the
+  // app's deep-link allowlist. Same approach other tools use (e.g. Stanley).
+  const { randomUUID } = require("crypto");
+  const paramsJson = JSON.stringify({
+    client_id: cfg.clientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    state,
+    scope: cfg.scopes.join("-"),
+    logger_id: randomUUID(),
+    app_id: cfg.clientId,
+    platform_app_id: cfg.clientId,
+  });
+  const url = new URL("https://www.instagram.com/consent/");
+  url.searchParams.set("flow", "ig_biz_login_oauth");
+  url.searchParams.set("params_json", paramsJson);
+  url.searchParams.set("source", "oauth_permissions_page_www");
+  return `${url.toString()}#weblink`;
 }
 
 async function exchangeCodeForToken({ platform, code, redirectUri }) {
