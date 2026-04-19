@@ -2177,6 +2177,7 @@ const server = http.createServer(async (req, res) => {
         if (!fullContent) {
           // LLM finished without producing any text — never leave the user
           // staring at an empty bubble.
+          console.warn("[PostPilot][AI] provider returned empty response");
           safeEnd(
             "provider_error",
             "The AI provider returned no response. Please try again.",
@@ -2192,13 +2193,18 @@ const server = http.createServer(async (req, res) => {
         );
       }
 
+      // Persist the user's message regardless of whether the assistant
+      // replied successfully. Otherwise, a failed AI call would make the
+      // user's own message disappear on refresh (reload pulls from DB,
+      // which never saw the push). The assistant message is only persisted
+      // when we actually got content from the provider.
       if (fullContent) {
         convo.push({ role: "assistant", content: fullContent, at: nowIso(), action: "ai_reply" });
-        try {
-          await saveStateForUser(user.id, state);
-        } catch (saveErr) {
-          console.error("[PostPilot][AI] save state after reply failed:", saveErr?.message);
-        }
+      }
+      try {
+        await saveStateForUser(user.id, state);
+      } catch (saveErr) {
+        console.error("[PostPilot][AI] save state after reply failed:", saveErr?.message);
       }
     } catch (err) {
       console.error("[PostPilot][AI] stream handler error:", err?.message);

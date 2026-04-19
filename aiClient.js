@@ -1202,6 +1202,8 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
 
   const decoder = new TextDecoder();
   let buffer = "";
+  let tokenCount = 0;
+  let sawDone = false;
   for await (const chunk of res.body) {
     buffer += decoder.decode(chunk, { stream: true });
     const lines = buffer.split("\n");
@@ -1212,13 +1214,24 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
       try {
         const parsed = JSON.parse(trimmed.slice(6));
         if (parsed.error) throw new Error(parsed.error);
-        if (parsed.done) return;
+        if (parsed.done) { sawDone = true; break; }
         if (parsed.status) yield statusEvent(parsed.status);
-        if (parsed.token) yield tokenEvent(parsed.token);
+        if (parsed.token) {
+          tokenCount += 1;
+          yield tokenEvent(parsed.token);
+        }
       } catch (e) {
         if (e.message && !e.message.startsWith("Unexpected")) throw e;
       }
     }
+    if (sawDone) break;
+  }
+  // CrewAI finished but gave us nothing — treat as a silent provider failure
+  // so the caller can fall back to the direct LLM path instead of handing
+  // the user an empty reply.
+  if (tokenCount === 0) {
+    aiLog("warn", "CrewAI stream returned zero tokens — triggering direct fallback");
+    throw new Error("crewai_empty_response");
   }
 }
 
