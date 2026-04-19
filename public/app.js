@@ -192,6 +192,8 @@ const I18N = {
     statusSearchingMarket: "Searching the internet…",
     statusAnalyzingPosts: "Analyzing your posts…",
     statusWriting: "Writing…",
+    streamErrorFallback: "Something went wrong. Please try again.",
+    streamTimeoutFallback: "The AI is taking too long to respond. Please try again.",
     send: "Send",
     saveSettings: "Save settings",
     onboardingRequired: "Complete onboarding when you are ready. I need those details before I can coach your content.",
@@ -441,6 +443,8 @@ const I18N = {
     statusSearchingMarket: "Caut trenduri din nisa ta…",
     statusAnalyzingPosts: "Analizez postarile tale…",
     statusWriting: "Scriu…",
+    streamErrorFallback: "Ceva nu a mers bine. Te rog incearca din nou.",
+    streamTimeoutFallback: "Raspunsul dureaza prea mult. Te rog incearca din nou.",
     send: "Trimite",
     saveSettings: "Salveaza setarile",
     onboardingRequired: "Completeaza onboarding-ul cand esti pregatit. Am nevoie de aceste detalii inainte sa te pot ajuta.",
@@ -687,6 +691,8 @@ const I18N = {
     statusSearchingMarket: "Cerco online…",
     statusAnalyzingPosts: "Analizzo i tuoi post…",
     statusWriting: "Sto scrivendo…",
+    streamErrorFallback: "Qualcosa è andato storto. Riprova.",
+    streamTimeoutFallback: "L'AI sta impiegando troppo tempo. Riprova.",
     send: "Invia",
     saveSettings: "Salva impostazioni",
     onboardingRequired: "Completa l'onboarding quando vuoi. Mi servono questi dettagli prima di aiutarti.",
@@ -924,6 +930,8 @@ const I18N = {
     statusSearchingMarket: "Suche im Netz…",
     statusAnalyzingPosts: "Analysiere deine Posts…",
     statusWriting: "Schreibe…",
+    streamErrorFallback: "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+    streamTimeoutFallback: "Die KI braucht zu lange. Bitte versuche es erneut.",
     send: "Senden",
     saveSettings: "Einstellungen speichern",
     onboardingRequired: "Schliesse das Onboarding ab, wenn du bereit bist. Ich brauche diese Angaben, bevor ich helfen kann.",
@@ -1161,6 +1169,8 @@ const I18N = {
     statusSearchingMarket: "Je cherche en ligne…",
     statusAnalyzingPosts: "J'analyse tes posts…",
     statusWriting: "J'écris…",
+    streamErrorFallback: "Une erreur s'est produite. Réessaie.",
+    streamTimeoutFallback: "L'IA met trop de temps à répondre. Réessaie.",
     send: "Envoyer",
     saveSettings: "Enregistrer les parametres",
     onboardingRequired: "Completez l'onboarding quand vous voulez. J'ai besoin de ces infos avant de vous aider.",
@@ -1955,22 +1965,43 @@ function addStreamingMessage() {
       statusText.textContent = statusLabel(key);
       followBottomIfAtBottom(messages, wasAtBottom);
     },
-    finish() {
+    finish(fallbackText) {
       ensureStatusHidden();
       cursor.remove();
-      bubble.innerHTML = renderMarkdown(rawText);
+      const text = rawText || fallbackText || "";
+      if (text) {
+        bubble.innerHTML = renderMarkdown(text);
+      } else {
+        // Never leave the user staring at an empty bubble — show a clear
+        // "something went wrong" message if no tokens arrived.
+        bubble.textContent = t("streamErrorFallback");
+        bubble.classList.add("msg-bubble--error");
+      }
     },
+    hasContent() { return rawText.length > 0; },
     element: bubble,
   };
 }
 
+// If the backend goes silent for this long (no tokens, no heartbeat, no
+// status events), we abort the stream so the UI can show an error instead
+// of spinning forever.
+const STREAM_IDLE_TIMEOUT_MS = 90000;
+
 async function streamChat(message, sessionId) {
-  const res = await fetch("/api/agent/message/stream", {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sessionId, message, language: currentLanguage }),
-  });
+  const controller = new AbortController();
+  let res;
+  try {
+    res = await fetch("/api/agent/message/stream", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, message, language: currentLanguage }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    throw new Error(err?.message || "Network error");
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "Request failed" }));
@@ -1983,11 +2014,32 @@ async function streamChat(message, sessionId) {
   let buffer = "";
   let fullText = "";
   let lastAction = "ai_reply";
+  let timedOut = false;
+
+  let idleTimer = null;
+  const resetIdleTimer = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      timedOut = true;
+      try { controller.abort(); } catch (_e) { /* noop */ }
+    }, STREAM_IDLE_TIMEOUT_MS);
+  };
+  resetIdleTimer();
 
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      let chunk;
+      try {
+        chunk = await reader.read();
+      } catch (readErr) {
+        if (timedOut) break;
+        throw readErr;
+      }
+      const { done, value } = chunk;
       if (done) break;
+      // Any incoming bytes — including heartbeats / comments — reset the
+      // idle watchdog. Only total silence trips the timeout.
+      resetIdleTimer();
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop() || "";
@@ -2013,7 +2065,9 @@ async function streamChat(message, sessionId) {
       }
     }
   } finally {
-    handle.finish();
+    if (idleTimer) clearTimeout(idleTimer);
+    // Pass the idle-timeout fallback text in so the bubble never ends empty.
+    handle.finish(timedOut ? t("streamTimeoutFallback") : null);
   }
 
   return { content: fullText, action: lastAction };

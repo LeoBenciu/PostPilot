@@ -2057,6 +2057,37 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && pathname === "/api/agent/message/stream") {
+    // Heartbeat + safe-end helpers. These make sure the client ALWAYS gets a
+    // `done` event and the socket is always closed, even when something
+    // between res.writeHead() and res.end() throws (previously that left the
+    // SSE stream half-open and the UI stuck on the "Thinking…" pill forever).
+    let heartbeat = null;
+    const stopHeartbeat = () => {
+      if (heartbeat) {
+        clearInterval(heartbeat);
+        heartbeat = null;
+      }
+    };
+    const startHeartbeat = () => {
+      if (heartbeat) return;
+      heartbeat = setInterval(() => {
+        try {
+          if (!res.writableEnded) res.write(": ping\n\n");
+        } catch (_e) { /* socket closed */ }
+      }, 15000);
+    };
+    const safeEnd = (action, fallbackToken) => {
+      stopHeartbeat();
+      if (res.writableEnded) return;
+      try {
+        if (fallbackToken) {
+          res.write(`data: ${JSON.stringify({ token: fallbackToken })}\n\n`);
+        }
+        res.write(`data: ${JSON.stringify({ done: true, action: action || "ai_reply" })}\n\n`);
+      } catch (_e) { /* socket closed */ }
+      try { res.end(); } catch (_e) { /* socket closed */ }
+    };
+
     try {
       const user = await requireAuth(req, res);
       if (!user) return;
@@ -2097,18 +2128,29 @@ const server = http.createServer(async (req, res) => {
       res.flushHeaders();
       if (res.socket) res.socket.setNoDelay(true);
       res.write(`data: ${JSON.stringify({ status: "thinking" })}\n\n`);
+      startHeartbeat();
 
       // If the profile/posts cache is stale we refresh it here. Show a
       // dedicated status so the user knows we're fetching fresh data from IG.
-      if (await shouldRefreshProfileData(state)) {
-        res.write(`data: ${JSON.stringify({ status: "checking_profile" })}\n\n`);
+      // We wrap the whole prep phase in a try so a single bad token / DB blip
+      // doesn't orphan the stream — the user still gets a clean error bubble.
+      let voiceProfile;
+      let convo;
+      try {
+        if (await shouldRefreshProfileData(state)) {
+          res.write(`data: ${JSON.stringify({ status: "checking_profile" })}\n\n`);
+        }
+        const backfilled = await ensureProfileData(state);
+        if (backfilled) await saveStateForUser(user.id, state);
+        voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
+        state.voiceProfile = voiceProfile;
+        convo = getConversation(state, sessionId);
+        convo.push({ role: "user", content: message, at: nowIso() });
+      } catch (prepErr) {
+        console.error("[PostPilot][AI] prep error:", prepErr?.message);
+        safeEnd("provider_error", "I hit a snag preparing your profile data. Try again in a moment.");
+        return;
       }
-      const backfilled = await ensureProfileData(state);
-      if (backfilled) await saveStateForUser(user.id, state);
-      const voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
-      state.voiceProfile = voiceProfile;
-      const convo = getConversation(state, sessionId);
-      convo.push({ role: "user", content: message, at: nowIso() });
 
       let fullContent = "";
       try {
@@ -2132,24 +2174,44 @@ const server = http.createServer(async (req, res) => {
           fullContent += token;
           res.write(`data: ${JSON.stringify({ token })}\n\n`);
         }
-        res.write(`data: ${JSON.stringify({ done: true, action: "ai_reply" })}\n\n`);
+        if (!fullContent) {
+          // LLM finished without producing any text — never leave the user
+          // staring at an empty bubble.
+          safeEnd(
+            "provider_error",
+            "The AI provider returned no response. Please try again.",
+          );
+        } else {
+          safeEnd("ai_reply");
+        }
       } catch (streamErr) {
         console.error("[PostPilot][AI] stream error", streamErr?.message);
-        if (!fullContent) {
-          res.write(`data: ${JSON.stringify({ token: "I could not reach the AI provider. Please try again." })}\n\n`);
-        }
-        res.write(`data: ${JSON.stringify({ done: true, action: "provider_error" })}\n\n`);
+        safeEnd(
+          "provider_error",
+          fullContent ? null : "I could not reach the AI provider. Please try again.",
+        );
       }
-      res.end();
 
       if (fullContent) {
         convo.push({ role: "assistant", content: fullContent, at: nowIso(), action: "ai_reply" });
-        await saveStateForUser(user.id, state);
+        try {
+          await saveStateForUser(user.id, state);
+        } catch (saveErr) {
+          console.error("[PostPilot][AI] save state after reply failed:", saveErr?.message);
+        }
       }
     } catch (err) {
-      if (!res.headersSent) {
+      console.error("[PostPilot][AI] stream handler error:", err?.message);
+      if (res.headersSent) {
+        // Stream was already open — the client is waiting for `done`. Send
+        // a friendly error bubble so the UI isn't stuck spinning forever.
+        safeEnd("provider_error", "Something went wrong. Please try again.");
+      } else {
+        stopHeartbeat();
         sendJson(res, 400, { error: err.message });
       }
+    } finally {
+      stopHeartbeat();
     }
     return;
   }

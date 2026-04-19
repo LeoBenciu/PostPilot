@@ -733,6 +733,15 @@ body {
   100% { background-position: -100% 0; }
 }
 
+/* Error-state assistant bubble shown when the stream ended without any
+   tokens (timeout, provider failure, silent disconnect). */
+.msg-bubble.msg-bubble--error {
+  color: #8b3a4a;
+  background: #fdf2f4;
+  border: 1px solid #f3c7d0;
+  font-style: italic;
+}
+
 .composer {
   padding: 12px 20px 22px;
   display: flex;
