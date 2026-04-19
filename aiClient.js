@@ -88,6 +88,135 @@ function resolveDirectModel() {
   return process.env.OPENAI_MODEL || "gpt-4o-mini";
 }
 
+// ---------------------------------------------------------------------------
+// Tavily market-context helpers (direct/fallback path only — when we go
+// through CrewAI, the Python service does its own Tavily lookup).
+//
+// Gated behind a cheap keyword heuristic: simple greetings, pure analytics
+// questions, and off-topic messages skip the call so we don't burn Tavily
+// credits or add latency when market data wouldn't help.
+// ---------------------------------------------------------------------------
+
+const MARKET_TRIGGERS = [
+  // English
+  "trend", "viral", "what works", "whats working", "what's working",
+  "top creator", "best performing", "perform well", "popular", "benchmark",
+  "industry", "competit", "market", "inspiration", "inspire", "hook",
+  "idea", "ideas", "format", "caption", "hashtag", "reel", "script",
+  "growth strategy", "go viral", "compared to", "how do i grow",
+  // Romanian
+  "tend", "tendin", "vira", "ce func", "ce merge", "idee", "idei", "idei de",
+  "inspir", "scenariu", "scenari", "hook", "format", "popular", "compar",
+  "strategi", "cresc", "crestere", "creștere",
+  // Italian
+  "tendenz", "virali", "idee", "ispira", "cresc", "popolare", "format",
+  "copione", "didascali", "strategi",
+  // German
+  "trend", "viral", "idee", "ideen", "wachstum", "beliebt", "strateg",
+  "format", "untertitel",
+  // French
+  "tendance", "vira", "idée", "idées", "inspir", "croissance", "populaire",
+  "stratégi", "format", "légende",
+  // Spanish
+  "tendenc", "viral", "idea", "ideas", "inspir", "crecimiento", "popular",
+  "estrategi", "formato", "subtítulo",
+  // Portuguese
+  "tendênc", "vira", "ideia", "inspira", "crescimento", "popular",
+  "estratégi", "formato", "legenda",
+];
+
+const TAVILY_TIMEOUT_MS = 6000;
+
+function shouldSearchMarket(message, niche) {
+  if (!message || !niche) return false;
+  const trimmed = String(niche).trim();
+  if (!trimmed || trimmed === "(not set)") return false;
+  const lower = String(message).toLowerCase();
+  return MARKET_TRIGGERS.some((kw) => lower.includes(kw));
+}
+
+function buildMarketQuery(niche, language, userMessage) {
+  const year = new Date().getUTCFullYear();
+  const words = String(userMessage || "")
+    .match(/[\w\u00c0-\u017f']{4,}/g) || [];
+  const extra = words.slice(0, 8).join(" ");
+  const langHint =
+    language && language.toLowerCase() !== "english" ? ` in ${language}` : "";
+  let base =
+    `What is currently trending on Instagram for ${String(niche).trim()} creators${langHint} in ${year}? ` +
+    "Focus on viral hooks, popular content formats, trending hashtags, and specific " +
+    "creators performing well right now.";
+  if (extra) base += ` Context from the user: ${extra}`;
+  return base;
+}
+
+function formatTavilyResults(query, payload) {
+  if (!payload) return null;
+  const lines = [`Query: ${query}`];
+  const answer = String(payload.answer || "").trim();
+  if (answer) lines.push(`Summary: ${answer}`);
+  const results = Array.isArray(payload.results) ? payload.results : [];
+  if (results.length) {
+    lines.push("Sources:");
+    for (const r of results.slice(0, 6)) {
+      const title = String(r?.title || "").trim();
+      let content = String(r?.content || "").trim().replace(/\s+/g, " ");
+      if (content.length > 320) content = `${content.slice(0, 320)}...`;
+      const url = String(r?.url || "").trim();
+      if (title) lines.push(`- ${title}`);
+      if (content) lines.push(`  ${content}`);
+      if (url) lines.push(`  ${url}`);
+    }
+  }
+  return lines.length > 1 ? lines.join("\n") : null;
+}
+
+async function fetchMarketContext({ niche, language, userMessage }) {
+  const apiKey = process.env.TAVILY_API_KEY;
+  if (!apiKey) return null;
+  const query = buildMarketQuery(niche, language, userMessage);
+  try {
+    const res = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        search_depth: "basic",
+        include_answer: true,
+        max_results: 5,
+        topic: "general",
+      }),
+      signal: AbortSignal.timeout(TAVILY_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      aiLog("warn", "Tavily HTTP error", { status: res.status });
+      return null;
+    }
+    const data = await res.json();
+    return formatTavilyResults(query, data);
+  } catch (err) {
+    aiLog("warn", "Tavily fetch failed", { message: String(err?.message || err) });
+    return null;
+  }
+}
+
+async function resolveMarketContext({ state, language, message }) {
+  try {
+    const niche = state?.user?.niche || "";
+    if (!shouldSearchMarket(message, niche)) return null;
+    const languageName = resolveLanguageName(language);
+    return await fetchMarketContext({
+      niche,
+      language: languageName,
+      userMessage: message,
+    });
+  } catch (err) {
+    aiLog("warn", "resolveMarketContext failed", { message: String(err?.message || err) });
+    return null;
+  }
+}
+
 // Anthropic's Messages API expects images as {type:"image", source:{...}} rather
 // than OpenAI's {type:"image_url", image_url:{url}}. Our vision pipeline produces
 // base64 data URIs — split them into media_type + raw base64 for Anthropic.
@@ -320,7 +449,7 @@ function formatAccountContext(ctx) {
 // uses the same prompt the CrewAI service uses. No more silent drift.
 // ---------------------------------------------------------------------------
 
-function buildSystemPrompt({ state, connectedPlatforms, language }) {
+function buildSystemPrompt({ state, connectedPlatforms, language, marketContext }) {
   const config = loadPromptConfig();
   const ctx = buildCrewContext({
     state,
@@ -328,7 +457,12 @@ function buildSystemPrompt({ state, connectedPlatforms, language }) {
     language,
     message: state._lastUserMessageForPrompt || "",
   });
-  const accountContext = formatAccountContext(ctx);
+  let accountContext = formatAccountContext(ctx);
+  if (marketContext) {
+    accountContext +=
+      "\n\n=== Live market context (what's trending in this niche right now) ===\n" +
+      marketContext;
+  }
   const languageName = resolveLanguageName(language);
 
   if (!config) {
@@ -613,7 +747,7 @@ function buildCrewContext({ state, connectedPlatforms, language, message }) {
   };
 }
 
-async function callOpenAI({ message, history, state, connectedPlatforms, language }) {
+async function callOpenAI({ message, history, state, connectedPlatforms, language, marketContext }) {
   const apiKey = process.env.OPENAI_API_KEY || "";
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   if (!apiKey) {
@@ -637,7 +771,7 @@ async function callOpenAI({ message, history, state, connectedPlatforms, languag
       model,
       temperature: 0.4,
       messages: [
-        { role: "system", content: buildSystemPrompt({ state, connectedPlatforms, language }) },
+        { role: "system", content: buildSystemPrompt({ state, connectedPlatforms, language, marketContext }) },
         ...history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user", content: userContent },
       ],
@@ -659,7 +793,7 @@ async function callOpenAI({ message, history, state, connectedPlatforms, languag
   };
 }
 
-async function callAnthropic({ message, history, state, connectedPlatforms, language }) {
+async function callAnthropic({ message, history, state, connectedPlatforms, language, marketContext }) {
   const apiKey = process.env.ANTHROPIC_API_KEY || "";
   const model = resolveDirectModel();
   if (!apiKey) {
@@ -688,7 +822,7 @@ async function callAnthropic({ message, history, state, connectedPlatforms, lang
       model,
       max_tokens: 2048,
       temperature: 0.4,
-      system: buildSystemPrompt({ state, connectedPlatforms, language }),
+      system: buildSystemPrompt({ state, connectedPlatforms, language, marketContext }),
       messages: [
         ...history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user", content: userContent },
@@ -714,7 +848,7 @@ async function callAnthropic({ message, history, state, connectedPlatforms, lang
   };
 }
 
-async function* streamAnthropic({ message, history, state, connectedPlatforms, language }) {
+async function* streamAnthropic({ message, history, state, connectedPlatforms, language, marketContext }) {
   const apiKey = process.env.ANTHROPIC_API_KEY || "";
   const model = resolveDirectModel();
   if (!apiKey) throw new Error("anthropic_not_configured");
@@ -741,7 +875,7 @@ async function* streamAnthropic({ message, history, state, connectedPlatforms, l
       max_tokens: 2048,
       temperature: 0.4,
       stream: true,
-      system: buildSystemPrompt({ state, connectedPlatforms, language }),
+      system: buildSystemPrompt({ state, connectedPlatforms, language, marketContext }),
       messages: [
         ...history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user", content: userContent },
@@ -780,18 +914,40 @@ async function* streamAnthropic({ message, history, state, connectedPlatforms, l
 }
 
 async function callDirectLLM(params) {
+  const marketContext = await resolveMarketContext({
+    state: params.state,
+    language: params.language,
+    message: params.message,
+  });
+  if (marketContext) {
+    aiLog("log", "Market context injected (direct call)", {
+      length: marketContext.length,
+    });
+  }
+  const enriched = { ...params, marketContext };
   const model = resolveDirectModel();
-  if (isAnthropicModel(model)) return callAnthropic(params);
-  return callOpenAI(params);
+  if (isAnthropicModel(model)) return callAnthropic(enriched);
+  return callOpenAI(enriched);
 }
 
 async function* streamDirectLLM(params) {
+  const marketContext = await resolveMarketContext({
+    state: params.state,
+    language: params.language,
+    message: params.message,
+  });
+  if (marketContext) {
+    aiLog("log", "Market context injected (direct stream)", {
+      length: marketContext.length,
+    });
+  }
+  const enriched = { ...params, marketContext };
   const model = resolveDirectModel();
   if (isAnthropicModel(model)) {
-    yield* streamAnthropic(params);
+    yield* streamAnthropic(enriched);
     return;
   }
-  yield* streamOpenAI(params);
+  yield* streamOpenAI(enriched);
 }
 
 async function callCrewAI({ message, history, state, connectedPlatforms, userId, sessionId, language }) {
@@ -934,7 +1090,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId, 
   throw new Error(`unsupported_ai_provider_${provider}`);
 }
 
-async function* streamOpenAI({ message, history, state, connectedPlatforms, language }) {
+async function* streamOpenAI({ message, history, state, connectedPlatforms, language, marketContext }) {
   const apiKey = process.env.OPENAI_API_KEY || "";
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   if (!apiKey) throw new Error("openai_not_configured");
@@ -956,7 +1112,7 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms, lang
       temperature: 0.4,
       stream: true,
       messages: [
-        { role: "system", content: buildSystemPrompt({ state, connectedPlatforms, language }) },
+        { role: "system", content: buildSystemPrompt({ state, connectedPlatforms, language, marketContext }) },
         ...history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user", content: userContent },
       ],

@@ -229,9 +229,16 @@ class PostPilotCrew:
 
     def kickoff(self, payload: dict[str, Any]) -> str:
         context = payload.get("context", {}) or {}
+        account_context_text = _format_account_context(context)
+        market_context = str(payload.get("market_context") or "").strip()
+        if market_context:
+            account_context_text += (
+                "\n\n=== Live market context (what's trending in this niche right now) ===\n"
+                + market_context
+            )
         inputs = {
             "message": str(payload.get("message", "")),
-            "account_context": _format_account_context(context),
+            "account_context": account_context_text,
             "history_summary": _history_summary(payload.get("history", []) or []),
             "language": _resolve_language_name(context.get("language")),
         }

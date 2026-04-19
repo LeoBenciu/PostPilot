@@ -16,7 +16,17 @@ from .crew import (
     _history_summary,
     _resolve_language_name,
 )
+from .market_search import (
+    fetch_market_context,
+    fetch_market_context_sync,
+    should_search_market,
+)
 from .schemas import ChatRequest, ChatResponse
+
+
+MARKET_CONTEXT_HEADER = (
+    "\n\n=== Live market context (what's trending in this niche right now) ===\n"
+)
 
 posthog_client = Posthog(
     os.environ.get("POSTHOG_API_KEY", ""),
@@ -93,8 +103,21 @@ def chat(request: Request, payload: ChatRequest) -> ChatResponse:
         identify_context(distinct_id)
         set_context_session(session_id)
         try:
+            context = payload.context or {}
+            niche = (context.get("account") or {}).get("niche") if isinstance(context, dict) else None
+            market_context = None
+            if should_search_market(payload.message, niche):
+                language_name = _resolve_language_name(
+                    context.get("language") if isinstance(context, dict) else None
+                )
+                market_context = fetch_market_context_sync(
+                    niche or "", language_name, payload.message
+                )
+            kickoff_payload = payload.model_dump()
+            if market_context:
+                kickoff_payload["market_context"] = market_context
             crew = PostPilotCrew()
-            reply = crew.kickoff(payload.model_dump())
+            reply = crew.kickoff(kickoff_payload)
             if not reply:
                 raise RuntimeError("empty_reply")
             posthog_client.capture(
@@ -105,6 +128,7 @@ def chat(request: Request, payload: ChatRequest) -> ChatResponse:
                     "has_images": len(payload.postImages) > 0,
                     "history_length": len(payload.history),
                     "message_length": len(payload.message),
+                    "market_context_used": bool(market_context),
                 },
             )
             return ChatResponse(reply=reply, action="ai_reply", provider="crewai")
@@ -194,6 +218,15 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
     history_summary_text = _history_summary(history)
     language_name = _resolve_language_name(context.get("language"))
 
+    niche = (context.get("account") or {}).get("niche") if isinstance(context, dict) else None
+    market_context = None
+    if should_search_market(payload.message, niche):
+        market_context = await fetch_market_context(
+            niche or "", language_name, payload.message
+        )
+    if market_context:
+        account_context = account_context + MARKET_CONTEXT_HEADER + market_context
+
     system_prompt = _build_system_prompt_from_yaml(
         message=payload.message[:4000],
         account_context=account_context,
@@ -239,6 +272,7 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
             "has_images": len(payload.postImages) > 0,
             "history_length": len(payload.history),
             "message_length": len(payload.message),
+            "market_context_used": bool(market_context),
         },
     )
 
