@@ -242,11 +242,13 @@ async function fetchInstagramPostsAndAnalytics(accessToken) {
     const insights = insightsById.get(item.id) || {};
     const views = Number(insights.views || 0);
     const rawImpressions = Number(insights.impressions || 0);
-    const videoViews = Number(insights.video_views || insights.plays || 0);
+    const vv = Number(insights.video_views || 0);
+    const pl = Number(insights.plays || 0);
+    const videoViews = Math.max(vv, pl);
     // Instagram app often highlights Reels plays / views while the API splits
     // impressions, views, video_views, and plays — take the strongest signal
     // so analytics stay in the same ballpark as the native insights UI.
-    const impressions = Math.max(rawImpressions || 0, views || 0, videoViews || 0);
+    const impressions = Math.max(rawImpressions || 0, views || 0, videoViews);
     const reach = Number(insights.reach || 0);
     const saved = Number(insights.saved || 0);
     const shares = Number(insights.shares || 0);
@@ -352,8 +354,18 @@ async function fetchInsightsForMedia({ mediaId, mediaType, accessToken }) {
     if (permissionBlocked) break;
     if (obtained && Object.keys(obtained).length) {
       sawAnyData = true;
+      // IG returns overlapping "size" metrics across metric sets (e.g. views in
+      // one batch, impressions/plays in another). First-wins merge kept a low
+      // `views` and never raised it when a later batch had higher plays.
+      const maxMergeKeys = new Set(["impressions", "views", "video_views", "plays", "reach"]);
       for (const [k, v] of Object.entries(obtained)) {
-        if (merged[k] == null) merged[k] = v;
+        if (maxMergeKeys.has(k) && typeof v === "number" && Number.isFinite(v)) {
+          const prev = merged[k];
+          merged[k] =
+            typeof prev === "number" && Number.isFinite(prev) ? Math.max(prev, v) : v;
+        } else if (merged[k] == null) {
+          merged[k] = v;
+        }
       }
     }
   }

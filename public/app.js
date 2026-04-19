@@ -2017,7 +2017,9 @@ function renderEngagementTrend(posts) {
   });
   const likes = sorted.map(p => Number(p.likes || 0));
   const comments = sorted.map(p => Number(p.comments || 0));
-  const impressions = sorted.map(p => Number(p.impressions || 0));
+  const impressions = sorted.map((p) =>
+    Math.max(Number(p.impressions || 0), Number(p.videoViews || 0)),
+  );
 
   destroyChart("engagementTrend");
   const ctx = document.getElementById("chartEngagementTrend");
@@ -2237,38 +2239,23 @@ async function loadAnalyticsView() {
   const showSkeleton = !hasRenderedAnalyticsOnce;
   if (showSkeleton) setAnalyticsSkeleton(true);
 
+  setAnalyticsRefreshing(true);
   try {
-    // First round-trip: let the server return cached data fast. The server
-    // only hits Instagram when the cache is empty or the caller explicitly
-    // asks for a refresh — so this call usually returns in <100ms.
-    const bundle = await api("/api/analytics/bundle");
+    // Always ask the server to pull fresh post metrics from Instagram when
+    // opening this tab. The bundle endpoint bypasses the posts TTL when
+    // ?refresh=1 so we do not show numbers frozen from an earlier sync.
+    const bundle = await api("/api/analytics/bundle?refresh=1");
     if (token !== analyticsLoadToken) return;
 
     renderAnalyticsBundle(bundle);
     hasRenderedAnalyticsOnce = true;
-    setAnalyticsSkeleton(false);
-
-    // If the cache is stale, fire a background refresh and update the charts
-    // once fresh data arrives. User sees charts immediately; the small
-    // "Refreshing data…" pill tells them an update is in flight.
-    if (bundle?.staleHint) {
-      setAnalyticsRefreshing(true);
-      try {
-        const fresh = await api("/api/analytics/bundle?refresh=1");
-        if (token !== analyticsLoadToken) return;
-        renderAnalyticsBundle(fresh);
-      } catch (err) {
-        console.warn("Analytics background refresh failed:", err);
-      } finally {
-        if (token === analyticsLoadToken) setAnalyticsRefreshing(false);
-      }
-    }
   } catch (err) {
+    if (token === analyticsLoadToken) console.error("Analytics load error:", err);
+  } finally {
     if (token === analyticsLoadToken) {
       setAnalyticsSkeleton(false);
       setAnalyticsRefreshing(false);
     }
-    console.error("Analytics load error:", err);
   }
 }
 

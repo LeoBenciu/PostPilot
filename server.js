@@ -914,7 +914,7 @@ const POSTS_TTL_MS = 20 * 60 * 1000; // 20 minutes
 // the freshly persisted state.
 const profileRefreshInFlight = new Map();
 
-async function ensureProfileDataDeduped(userId, state) {
+async function ensureProfileDataDeduped(userId, state, opts = {}) {
   if (profileRefreshInFlight.has(userId)) {
     await profileRefreshInFlight.get(userId);
     // The in-flight refresh may have mutated & persisted state for OTHER
@@ -924,7 +924,7 @@ async function ensureProfileDataDeduped(userId, state) {
     return false;
   }
   const promise = (async () => {
-    const changed = await ensureProfileData(state);
+    const changed = await ensureProfileData(state, opts);
     if (changed) await saveStateForUser(userId, state);
     return changed;
   })();
@@ -963,7 +963,8 @@ async function shouldRefreshProfileData(state) {
   return false;
 }
 
-async function ensureProfileData(state) {
+async function ensureProfileData(state, opts = {}) {
+  const forcePostsRefresh = Boolean(opts.forcePostsRefresh);
   let changed = false;
   const now = Date.now();
   for (const [platform, integration] of Object.entries(state.integrations || {})) {
@@ -978,7 +979,7 @@ async function ensureProfileData(state) {
       : 0;
     const ageMs = lastSync ? now - lastSync : Infinity;
     const profileStale = ageMs > PROFILE_TTL_MS;
-    const postsStale = ageMs > POSTS_TTL_MS;
+    const postsStale = forcePostsRefresh || ageMs > POSTS_TTL_MS;
 
     const hasBio = integration.bio !== undefined && integration.bio !== null;
     const needsProfile = !hasBio || profileStale;
@@ -1972,7 +1973,11 @@ const server = http.createServer(async (req, res) => {
     // Always refresh when the cache is empty — nothing to render otherwise.
     const hasCachedPosts = Array.isArray(state.posts) && state.posts.length > 0;
     if (wantsRefresh || !hasCachedPosts) {
-      await ensureProfileDataDeduped(user.id, state);
+      // `?refresh=1` must bypass the posts TTL; otherwise a sync from <20m ago
+      // would skip the IG refetch and analytics would keep frozen metrics.
+      await ensureProfileDataDeduped(user.id, state, {
+        forcePostsRefresh: Boolean(wantsRefresh),
+      });
     }
     const limit = Number(parsed.searchParams.get("limit") || 0);
     const posts =
