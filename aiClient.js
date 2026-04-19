@@ -143,6 +143,39 @@ function shouldSearchMarket(message, niche) {
   return MARKET_TRIGGERS.some((kw) => lower.includes(kw));
 }
 
+/** When onboarding niche is empty but the user names one in the question
+ * (e.g. "trending for build-in-public creators"), use that for Tavily + context.
+ */
+function extractNicheHintFromMessage(message) {
+  const raw = String(message || "").trim();
+  if (!raw) return "";
+  const patterns = [
+    /instagram\s+for\s+([^,.\n]+?)\s+creators/i,
+    /for\s+([^,.\n]+?)\s+creators/i,
+    /pentru\s+creatori(?:i)?\s+(?:de\s+)?([^,.\n]+?)(?:\s+în|\s+in|,|\.|\?|$)/iu,
+  ];
+  for (const re of patterns) {
+    const hit = raw.match(re);
+    if (!hit || !hit[1]) continue;
+    let s = hit[1].trim();
+    s = s.replace(/\s+in\s+\d{4}$/i, "").trim();
+    s = s
+      .replace(
+        /\s+(in|în)\s+(romanian|english|italian|german|french|spanish|portuguese)$/i,
+        "",
+      )
+      .trim();
+    if (s.length >= 3 && s.length < 120) return s;
+  }
+  return "";
+}
+
+function resolveEffectiveNiche(state, message) {
+  const fromState = String(state?.user?.niche || "").trim();
+  if (fromState && fromState !== "(not set)") return fromState;
+  return extractNicheHintFromMessage(message);
+}
+
 function buildMarketQuery(niche, language, userMessage) {
   const year = new Date().getUTCFullYear();
   const words = String(userMessage || "")
@@ -211,7 +244,7 @@ async function fetchMarketContext({ niche, language, userMessage }) {
 
 async function resolveMarketContext({ state, language, message }) {
   try {
-    const niche = state?.user?.niche || "";
+    const niche = resolveEffectiveNiche(state, message);
     const trimmedNiche = String(niche).trim();
     const apiKey = process.env.TAVILY_API_KEY;
     const messagePreview = String(message || "").slice(0, 80);
@@ -224,7 +257,9 @@ async function resolveMarketContext({ state, language, message }) {
       return null;
     }
     if (!trimmedNiche || trimmedNiche === "(not set)") {
-      aiLog("log", "Tavily decision: skipped (niche not set)", { messagePreview });
+      aiLog("log", "Tavily decision: skipped (niche not in profile or message)", {
+        messagePreview,
+      });
       return null;
     }
     if (!shouldSearchMarket(message, niche)) {
@@ -763,6 +798,7 @@ function computeAccountStats(allPosts) {
  * this context provides the data the prompt references.
  */
 function buildCrewContext({ state, connectedPlatforms, language, message }) {
+  const effectiveNiche = resolveEffectiveNiche(state, message);
   const selected = selectPostsForMessage({
     posts: state.posts,
     message: state._lastUserMessageForPrompt || message || "",
@@ -784,7 +820,10 @@ function buildCrewContext({ state, connectedPlatforms, language, message }) {
     permalink: p.permalink || "",
   }));
   return {
-    account: state.user || {},
+    account: {
+      ...(state.user || {}),
+      niche: effectiveNiche || (state.user && state.user.niche) || "",
+    },
     firstName: extractFirstName(state),
     integrations: state.integrations || {},
     connectedPlatforms,
@@ -983,7 +1022,7 @@ async function callDirectLLM(params) {
 async function* streamDirectLLM(params) {
   // Emit a status event BEFORE the Tavily call when a search will actually
   // happen, so the client shows "Searching the internet…" while we wait.
-  const niche = params.state?.user?.niche || "";
+  const niche = resolveEffectiveNiche(params.state, params.message);
   const willSearch = Boolean(
     process.env.TAVILY_API_KEY && shouldSearchMarket(params.message, niche),
   );

@@ -19,6 +19,7 @@ from .crew import (
 from .market_search import (
     fetch_market_context,
     fetch_market_context_sync,
+    resolve_effective_niche,
     should_search_market,
 )
 from .schemas import ChatRequest, ChatResponse
@@ -104,7 +105,12 @@ def chat(request: Request, payload: ChatRequest) -> ChatResponse:
         set_context_session(session_id)
         try:
             context = payload.context or {}
-            niche = (context.get("account") or {}).get("niche") if isinstance(context, dict) else None
+            raw_niche = (
+                (context.get("account") or {}).get("niche")
+                if isinstance(context, dict)
+                else None
+            )
+            niche = resolve_effective_niche(raw_niche, payload.message)
             market_context = None
             if should_search_market(payload.message, niche):
                 language_name = _resolve_language_name(
@@ -120,9 +126,10 @@ def chat(request: Request, payload: ChatRequest) -> ChatResponse:
             reply = crew.kickoff(kickoff_payload)
             if not reply:
                 raise RuntimeError("empty_reply")
+            # PostHog Python SDK: capture(distinct_id, event, properties={...})
             posthog_client.capture(
+                distinct_id,
                 "chat completed",
-                distinct_id=distinct_id,
                 properties={
                     "provider": "crewai",
                     "has_images": len(payload.postImages) > 0,
@@ -134,8 +141,8 @@ def chat(request: Request, payload: ChatRequest) -> ChatResponse:
             return ChatResponse(reply=reply, action="ai_reply", provider="crewai")
         except Exception as err:
             posthog_client.capture(
+                distinct_id,
                 "chat failed",
-                distinct_id=distinct_id,
                 properties={
                     "provider": "crewai",
                     "error_type": type(err).__name__,
@@ -217,7 +224,10 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
     history_summary_text = _history_summary(history)
     language_name = _resolve_language_name(context.get("language"))
 
-    niche = (context.get("account") or {}).get("niche") if isinstance(context, dict) else None
+    raw_niche = (
+        (context.get("account") or {}).get("niche") if isinstance(context, dict) else None
+    )
+    niche = resolve_effective_niche(raw_niche, payload.message)
     will_search_market = bool(os.getenv("TAVILY_API_KEY")) and should_search_market(
         payload.message, niche
     )
@@ -288,8 +298,8 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
                 openai_user_content = payload.message[:4000]
 
             posthog_client.capture(
+                distinct_id,
                 "chat stream started",
-                distinct_id=distinct_id,
                 properties={
                     "provider": provider,
                     "model": model,
@@ -338,15 +348,15 @@ async def chat_stream(request: Request, payload: ChatRequest) -> StreamingRespon
                         yield _sse({"token": delta.content})
 
             posthog_client.capture(
+                distinct_id,
                 "chat stream completed",
-                distinct_id=distinct_id,
                 properties={"provider": provider, "model": model},
             )
             yield _sse({"done": True})
         except Exception as exc:
             posthog_client.capture(
+                distinct_id,
                 "chat stream failed",
-                distinct_id=distinct_id,
                 properties={"provider": provider, "error_type": type(exc).__name__},
             )
             yield _sse({"error": str(exc)})

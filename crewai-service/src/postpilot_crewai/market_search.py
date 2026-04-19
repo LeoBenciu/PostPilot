@@ -56,6 +56,44 @@ _MAX_QUERY_WORDS = 8
 _TAVILY_TIMEOUT_SECONDS = 6
 
 
+def extract_niche_hint_from_message(message: str) -> str:
+    """When profile niche is empty, parse phrases like 'for X creators'."""
+    raw = (message or "").strip()
+    if not raw:
+        return ""
+    patterns = (
+        re.compile(r"instagram\s+for\s+([^,.\n]+?)\s+creators", re.I),
+        re.compile(r"for\s+([^,.\n]+?)\s+creators", re.I),
+        re.compile(
+            r"pentru\s+creatori(?:i)?\s+(?:de\s+)?([^,.\n]+?)(?:\s+în|\s+in|,|\.|\?|$)",
+            re.I,
+        ),
+    )
+    for pat in patterns:
+        m = pat.search(raw)
+        if not m:
+            continue
+        s = m.group(1).strip()
+        s = re.sub(r"\s+in\s+\d{4}$", "", s, flags=re.I).strip()
+        s = re.sub(
+            r"\s+(in|în)\s+(romanian|english|italian|german|french|spanish|portuguese)$",
+            "",
+            s,
+            flags=re.I,
+        ).strip()
+        if 3 <= len(s) < 120:
+            return s
+    return ""
+
+
+def resolve_effective_niche(niche: Optional[str], message: str) -> str:
+    """Prefer onboarding niche; else a hint from the user's question."""
+    clean = (niche or "").strip()
+    if clean and clean != "(not set)":
+        return clean
+    return extract_niche_hint_from_message(message or "")
+
+
 def should_search_market(message: str, niche: Optional[str]) -> bool:
     """Return True when the user's intent clearly benefits from market context."""
     if not message or not niche:
