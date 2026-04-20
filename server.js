@@ -267,7 +267,171 @@ function summarizeAnalytics(posts) {
   };
 }
 
-function buildCreatorProfile(state) {
+const CREATOR_PROFILE_LOCALE = {
+  en: "en-US",
+  ro: "ro-RO",
+  it: "it-IT",
+  de: "de-DE",
+  fr: "fr-FR",
+};
+
+function normalizeCreatorLanguage(input) {
+  const raw = String(input || "").trim().toLowerCase();
+  if (raw.startsWith("ro")) return "ro";
+  if (raw.startsWith("it")) return "it";
+  if (raw.startsWith("de")) return "de";
+  if (raw.startsWith("fr")) return "fr";
+  return "en";
+}
+
+function getCreatorAdviceCopy(language) {
+  if (language === "ro") {
+    return {
+      superCarouselTitle: "Caruseluri puternice",
+      superCarouselBody: (viewsText) => `Postarile tale multi-imagine au in medie ${viewsText} vizualizari - continua pe formatul asta.`,
+      superShareTitle: "Rata buna de distribuire",
+      superShareBody: "Oamenii iti distribuie activ continutul - asta e aur pentru crestere organica.",
+      superEngagementTitle: "Rata mare de engagement",
+      superEngagementBody: (engText) => `Ai in medie ${engText} engagement - mult peste mediana de ~2% a creatorilor.`,
+      superReachTitle: "Reach mare pentru dimensiunea ta",
+      superReachBody: (viewsText, followersText) => `Postarile recente au adunat ${viewsText} vizualizari - foarte bine pentru ${followersText} followeri.`,
+      superVideoTitle: "Storytelling video puternic",
+      superVideoBody: "Videourile tale performeaza mai bine decat postarile statice - acesta e un avantaj real.",
+      superDefaultTitle: "Esti consecvent",
+      superDefaultBody: (postsText) => `Ai publicat ${postsText} postari - consecventa este baza pe care se construieste cresterea.`,
+      unlockCommentsTitle: "Comentariile sunt putine",
+      unlockCommentsBody: "Hai sa construim descrieri care provoaca discutii - mai multe comentarii inseamna reach mai bun.",
+      unlockCadenceTitle: "Postezi inconstant",
+      unlockCadenceBody: (ppwText) => `Ai doar ~${ppwText} postari/saptamana - pierdem crestere, hai sa facem un ritm clar.`,
+      unlockCaptionTitle: "Descrierile sunt prea scurte",
+      unlockCaptionBody: "Hai sa adaugam storytelling care conecteaza - descrierile mai specifice transforma vizualizarile in fani.",
+      unlockHooksTitle: "Reels-urile sunt sub potential",
+      unlockHooksBody: "Te ajut sa creezi hook-uri care opresc scroll-ul - aici ai cel mai mare potential.",
+      unlockSavesTitle: "Salvarile sunt putine",
+      unlockSavesBody: "Continutul salvat este continut valoros. Hai sa adaugam unghiuri practice care merita salvate.",
+      unlockDefaultTitle: "E momentul sa scalezi",
+      unlockDefaultBody: "Fundatia este solida - acum dublam ce functioneaza si amplificam reach-ul.",
+    };
+  }
+  if (language === "it") {
+    return {
+      superCarouselTitle: "Ottimi caroselli",
+      superCarouselBody: (viewsText) => `I tuoi post multi-immagine fanno in media ${viewsText} visualizzazioni: punta su questo formato.`,
+      superShareTitle: "Condivisioni forti",
+      superShareBody: "Le persone condividono attivamente i tuoi contenuti: questo e oro per la crescita organica.",
+      superEngagementTitle: "Engagement elevato",
+      superEngagementBody: (engText) => `Stai facendo in media ${engText} di engagement: ben sopra la mediana creator di ~2%.`,
+      superReachTitle: "Reach alto per la tua dimensione",
+      superReachBody: (viewsText, followersText) => `I post recenti hanno totalizzato ${viewsText} visualizzazioni: ottimo per ${followersText} follower.`,
+      superVideoTitle: "Storytelling video forte",
+      superVideoBody: "I tuoi video performano meglio dei post statici: e un vantaggio concreto.",
+      superDefaultTitle: "Sei costante",
+      superDefaultBody: (postsText) => `Hai pubblicato ${postsText} post: la costanza e la base su cui cresce tutto.`,
+      unlockCommentsTitle: "Commenti bassi",
+      unlockCommentsBody: "Costruiamo caption che aprono conversazioni: piu commenti = piu reach.",
+      unlockCadenceTitle: "Pubblicazione irregolare",
+      unlockCadenceBody: (ppwText) => `Solo ~${ppwText} post a settimana: stiamo lasciando crescita sul tavolo, creiamo un ritmo.`,
+      unlockCaptionTitle: "Caption troppo brevi",
+      unlockCaptionBody: "Aggiungiamo storytelling che connette: caption piu specifiche trasformano le view in fan.",
+      unlockHooksTitle: "I Reels rendono meno",
+      unlockHooksBody: "Ti aiuto a creare hook che fermano lo scroll: qui c'e il tuo maggiore margine.",
+      unlockSavesTitle: "Salvataggi bassi",
+      unlockSavesBody: "Contenuto salvato = contenuto utile. Aggiungiamo angoli pratici che vale la pena salvare.",
+      unlockDefaultTitle: "E ora di scalare",
+      unlockDefaultBody: "Le basi sono solide: ora raddoppiamo cio che funziona e aumentiamo il reach.",
+    };
+  }
+  if (language === "de") {
+    return {
+      superCarouselTitle: "Starke Carousels",
+      superCarouselBody: (viewsText) => `Deine Multi-Image-Posts erzielen im Schnitt ${viewsText} Views - setze staerker auf dieses Format.`,
+      superShareTitle: "Starke Share-Rate",
+      superShareBody: "Deine Inhalte werden aktiv geteilt - das ist pures Gold fuer organisches Wachstum.",
+      superEngagementTitle: "Hohe Engagement-Rate",
+      superEngagementBody: (engText) => `Du erreichst im Schnitt ${engText} Engagement - deutlich ueber dem Creator-Median von ~2%.`,
+      superReachTitle: "Grosse Reichweite fuer deine Groesse",
+      superReachBody: (viewsText, followersText) => `Deine letzten Posts haben ${viewsText} Views geholt - stark bei ${followersText} Followern.`,
+      superVideoTitle: "Starkes Video-Storytelling",
+      superVideoBody: "Deine Videos performen besser als statische Posts - das ist ein klarer Vorteil.",
+      superDefaultTitle: "Du bleibst dran",
+      superDefaultBody: (postsText) => `Du hast ${postsText} Beitraege veroefentlicht - Konstanz ist das Fundament fuer Wachstum.`,
+      unlockCommentsTitle: "Wenige Kommentare",
+      unlockCommentsBody: "Lass uns Captions bauen, die Gesprache ausloesen - mehr Kommentare bedeuten mehr Reichweite.",
+      unlockCadenceTitle: "Unregelmaessiges Posten",
+      unlockCadenceBody: (ppwText) => `Nur ~${ppwText} Posts/Woche - wir lassen Wachstum liegen, lass uns einen Rhythmus aufbauen.`,
+      unlockCaptionTitle: "Captions sind zu kurz",
+      unlockCaptionBody: "Mehr Storytelling verbindet besser - laengere, konkrete Captions machen aus Views echte Fans.",
+      unlockHooksTitle: "Reels unterperformen",
+      unlockHooksBody: "Ich helfe dir bei Hooks, die den Scroll stoppen - hier liegt dein groesster Hebel.",
+      unlockSavesTitle: "Wenig Saves",
+      unlockSavesBody: "Was gespeichert wird, hat echten Wert. Lass uns mehr praktische Save-Hooks einbauen.",
+      unlockDefaultTitle: "Zeit zu skalieren",
+      unlockDefaultBody: "Dein Fundament ist stark - jetzt verstaerken wir, was funktioniert, und vergroessern die Reichweite.",
+    };
+  }
+  if (language === "fr") {
+    return {
+      superCarouselTitle: "Carrousels performants",
+      superCarouselBody: (viewsText) => `Tes publications multi-images font en moyenne ${viewsText} vues - mise davantage sur ce format.`,
+      superShareTitle: "Bon taux de partage",
+      superShareBody: "Les gens partagent activement ton contenu - c'est de l'or pour la croissance organique.",
+      superEngagementTitle: "Fort taux d'engagement",
+      superEngagementBody: (engText) => `Tu affiches en moyenne ${engText} d'engagement - bien au-dessus de la mediane creator d'environ 2%.`,
+      superReachTitle: "Grande portee pour ta taille",
+      superReachBody: (viewsText, followersText) => `Tes posts recents ont genere ${viewsText} vues - excellent pour ${followersText} abonnes.`,
+      superVideoTitle: "Storytelling video solide",
+      superVideoBody: "Tes videos performent mieux que les posts statiques - c'est un vrai avantage.",
+      superDefaultTitle: "Tu es regulier",
+      superDefaultBody: (postsText) => `Tu as publie ${postsText} posts - la regularite est la base de toute croissance.`,
+      unlockCommentsTitle: "Peu de commentaires",
+      unlockCommentsBody: "Creons des captions qui lancent la conversation - plus de commentaires = meilleure portee.",
+      unlockCadenceTitle: "Publication irreguliere",
+      unlockCadenceBody: (ppwText) => `Seulement ~${ppwText} posts/semaine - on laisse de la croissance sur la table, construisons un rythme.`,
+      unlockCaptionTitle: "Captions trop courtes",
+      unlockCaptionBody: "Ajoutons du storytelling qui connecte - des captions plus precises convertissent les vues en fans.",
+      unlockHooksTitle: "Les Reels sous-performent",
+      unlockHooksBody: "Je vais t'aider a trouver des hooks qui stoppent le scroll - c'est ton plus gros levier.",
+      unlockSavesTitle: "Peu de sauvegardes",
+      unlockSavesBody: "Un contenu sauvegarde est un contenu utile. Ajoutons des angles pratiques a forte valeur.",
+      unlockDefaultTitle: "Il est temps de scaler",
+      unlockDefaultBody: "Ta base est solide - maintenant on renforce ce qui marche et on amplifie la portee.",
+    };
+  }
+  return {
+    superCarouselTitle: "Carousel mastery",
+    superCarouselBody: (viewsText) => `Your multi-image posts average ${viewsText} views - lean into this format.`,
+    superShareTitle: "Strong share rate",
+    superShareBody: "People actively share your content - that is organic growth gold.",
+    superEngagementTitle: "High engagement rate",
+    superEngagementBody: (engText) => `You are averaging ${engText} engagement - well above the ~2% creator median.`,
+    superReachTitle: "Massive reach for your size",
+    superReachBody: (viewsText, followersText) => `Your recent posts pulled ${viewsText} views - that's huge for ${followersText} followers.`,
+    superVideoTitle: "Video-first storytelling",
+    superVideoBody: "Your videos travel further than static posts - that's a real edge.",
+    superDefaultTitle: "You're showing up",
+    superDefaultBody: (postsText) => `You've published ${postsText} posts - consistency is the foundation everything else builds on.`,
+    unlockCommentsTitle: "Your comments are low",
+    unlockCommentsBody: "Let's craft captions that spark conversation - more comments means better reach.",
+    unlockCadenceTitle: "Posting is inconsistent",
+    unlockCadenceBody: (ppwText) => `Only ~${ppwText} posts/week - we're leaving growth on the table, let's build a rhythm.`,
+    unlockCaptionTitle: "Captions are minimal",
+    unlockCaptionBody: "Let's add storytelling that connects - longer, specific captions convert viewers into fans.",
+    unlockHooksTitle: "Reels are underperforming",
+    unlockHooksBody: "I'll help you nail hooks that stop the scroll - this is your biggest unlock.",
+    unlockSavesTitle: "Saves are low",
+    unlockSavesBody: "Content people save = content they want to revisit. Let's add practical value hooks.",
+    unlockDefaultTitle: "Time to scale",
+    unlockDefaultBody: "Your foundation is solid - let's double down on what's working and amplify reach.",
+  };
+}
+
+function buildCreatorProfile(state, language = "en") {
+  const normalizedLanguage = normalizeCreatorLanguage(language);
+  const locale = CREATOR_PROFILE_LOCALE[normalizedLanguage] || CREATOR_PROFILE_LOCALE.en;
+  const copy = getCreatorAdviceCopy(normalizedLanguage);
+  const formatInt = (value) => Number(value || 0).toLocaleString(locale);
+  const formatOneDecimal = (value) =>
+    Number(value || 0).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const posts = Array.isArray(state?.posts) ? state.posts : [];
   const integrations = state?.integrations || {};
   const user = state?.user || {};
@@ -379,86 +543,86 @@ function buildCreatorProfile(state) {
   if (byType.carousel.length >= 2 && avgViewsByType.carousel && avgViewsByType.carousel > (avgViewsByType.image || 0)) {
     superpower.push({
       icon: "carousel",
-      title: "Carousel mastery",
-      body: `Your multi-image posts average ${avgViewsByType.carousel.toLocaleString()} views — lean into this format.`,
+      title: copy.superCarouselTitle,
+      body: copy.superCarouselBody(formatInt(avgViewsByType.carousel)),
     });
   }
   if (shareRate > 0.01) {
     superpower.push({
       icon: "share",
-      title: "Strong share rate",
-      body: "People actively share your content — that is organic growth gold.",
+      title: copy.superShareTitle,
+      body: copy.superShareBody,
     });
   }
   if (avgEngagementRate > 0.04) {
     superpower.push({
       icon: "engagement",
-      title: "High engagement rate",
-      body: `You are averaging ${(avgEngagementRate * 100).toFixed(1)}% engagement — well above the ~2% creator median.`,
+      title: copy.superEngagementTitle,
+      body: copy.superEngagementBody(`${formatOneDecimal(avgEngagementRate * 100)}%`),
     });
   }
   if (followerCount > 0 && totalViews / Math.max(1, followerCount) > 5) {
     superpower.push({
       icon: "reach",
-      title: "Massive reach for your size",
-      body: `Your recent posts pulled ${totalViews.toLocaleString()} views — that's huge for ${followerCount.toLocaleString()} followers.`,
+      title: copy.superReachTitle,
+      body: copy.superReachBody(formatInt(totalViews), formatInt(followerCount)),
     });
   }
   if (byType.video.length >= 2 && avgViewsByType.video && avgViewsByType.video > (avgViewsByType.image || 0) * 1.3) {
     superpower.push({
       icon: "video",
-      title: "Video-first storytelling",
-      body: "Your videos travel further than static posts — that's a real edge.",
+      title: copy.superVideoTitle,
+      body: copy.superVideoBody,
     });
   }
   if (!superpower.length && recentPosts.length > 0) {
     superpower.push({
       icon: "consistency",
-      title: "You're showing up",
-      body: `You've published ${recentPosts.length} posts — consistency is the foundation everything else builds on.`,
+      title: copy.superDefaultTitle,
+      body: copy.superDefaultBody(formatInt(recentPosts.length)),
     });
   }
 
   if (commentRate < 0.002 && totalReach > 0) {
     unlock.push({
       icon: "comments",
-      title: "Your comments are low",
-      body: "Let's craft captions that spark conversation — more comments means better reach.",
+      title: copy.unlockCommentsTitle,
+      body: copy.unlockCommentsBody,
     });
   }
   if (postsPerWeek < 2) {
     unlock.push({
       icon: "cadence",
-      title: "Posting is inconsistent",
-      body: `Only ~${postsPerWeek.toFixed(1)} posts/week — we're leaving growth on the table, let's build a rhythm.`,
+      title: copy.unlockCadenceTitle,
+      body: copy.unlockCadenceBody(formatOneDecimal(postsPerWeek)),
     });
   }
   if (avgCaptionLen > 0 && avgCaptionLen < 60) {
     unlock.push({
       icon: "caption",
-      title: "Captions are minimal",
-      body: "Let's add storytelling that connects — longer, specific captions convert viewers into fans.",
+      title: copy.unlockCaptionTitle,
+      body: copy.unlockCaptionBody,
     });
   }
   if (byType.video.length && avgViewsByType.video && avgViewsByType.image && avgViewsByType.video < avgViewsByType.image * 0.7) {
     unlock.push({
       icon: "hooks",
-      title: "Reels are underperforming",
-      body: "I'll help you nail hooks that stop the scroll — this is your biggest unlock.",
+      title: copy.unlockHooksTitle,
+      body: copy.unlockHooksBody,
     });
   }
   if (saveRate < 0.005 && totalReach > 0) {
     unlock.push({
       icon: "saves",
-      title: "Saves are low",
-      body: "Content people save = content they want to revisit. Let's add practical value hooks.",
+      title: copy.unlockSavesTitle,
+      body: copy.unlockSavesBody,
     });
   }
   if (!unlock.length) {
     unlock.push({
       icon: "scale",
-      title: "Time to scale",
-      body: "Your foundation is solid — let's double down on what's working and amplify reach.",
+      title: copy.unlockDefaultTitle,
+      body: copy.unlockDefaultBody,
     });
   }
 
@@ -1126,9 +1290,9 @@ async function agentRespond(state, { message, userId, sessionId, language }) {
       reason: String(error?.message || error),
       name: error?.name,
     });
-    return {
-      role: "assistant",
-      content:
+  return {
+    role: "assistant",
+    content:
         "I could not reach the AI provider right now. Please verify AI_PROVIDER and provider credentials in .env, then try again.",
       action: "provider_error",
       payload: { reason: error.message },
@@ -1440,8 +1604,8 @@ const server = http.createServer(async (req, res) => {
       const lockedUsername = state.integrations[platform]?.lockedUsername || null;
       const incomingId = String(profile.id || "").trim();
       if (lockedId && incomingId && String(lockedId) !== incomingId) {
-        sendRedirect(
-          res,
+      sendRedirect(
+        res,
           integrationRedirectUrl(
             platform,
             false,
@@ -1656,6 +1820,7 @@ const server = http.createServer(async (req, res) => {
         success_url: successUrl,
         cancel_url: cancelUrl,
         customer_email: user.email,
+        allow_promotion_codes: true,
         line_items: [lineItem],
         metadata: {
           userId: String(user.id),
@@ -1995,7 +2160,8 @@ const server = http.createServer(async (req, res) => {
     const user = await requireAuth(req, res);
     if (!user) return;
     const state = bindStateToUser(await getStateForUser(user.id), user);
-    sendJson(res, 200, buildCreatorProfile(state));
+    const language = parsed.searchParams.get("language") || "en";
+    sendJson(res, 200, buildCreatorProfile(state, language));
     return;
   }
 
@@ -2259,8 +2425,8 @@ const server = http.createServer(async (req, res) => {
 
 async function startServer() {
   await ensureAppState();
-  server.listen(PORT, () => {
-    console.log(`PostPilot Agent running on http://localhost:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`PostPilot Agent running on http://localhost:${PORT}`);
     // Boot-time config summary — helps answer "is feature X actually
     // configured?" without digging through the dashboard.
     const flag = (v) => (v ? "set" : "MISSING");

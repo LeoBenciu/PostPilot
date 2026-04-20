@@ -2839,7 +2839,7 @@ function getScoreMeta(scoreKey) {
 
 async function loadCreatorProfile() {
   try {
-    const data = await api("/api/creator/profile");
+    const data = await api(`/api/creator/profile?language=${encodeURIComponent(currentLanguage || "en")}`);
     creatorProfile = data;
     renderHomeDashboard(data);
     return data;
