@@ -4,6 +4,10 @@ const YAML = require("yaml");
 
 const DEFAULT_MAX_INPUT_CHARS = 4000;
 const DEFAULT_MAX_OUTPUT_CHARS = 6000;
+const SKIP_RATE_PROXY_TARGET_SECONDS = Math.max(
+  1,
+  Number(process.env.POSTPILOT_SKIP_RATE_PROXY_TARGET_SECONDS || 3),
+);
 
 const YAML_CONFIG_DIR = path.join(
   __dirname,
@@ -469,6 +473,16 @@ function formatStatsSection(ctx) {
   if (stats.avgEngagementRate != null) {
     lines.push(`Average engagement rate: ${stats.avgEngagementRate}%`);
   }
+  if (stats.avgSkipRateProxy != null && Number(stats.reelsWithSkipRateProxy || 0) > 0) {
+    lines.push(
+      `Reels skip-rate proxy (target ${stats.skipRateProxyTargetSeconds || SKIP_RATE_PROXY_TARGET_SECONDS}s watch): ` +
+        `${stats.avgSkipRateProxy}% across ${stats.reelsWithSkipRateProxy} reels`,
+    );
+  }
+  if (Array.isArray(stats.skipRateProxyTrend) && stats.skipRateProxyTrend.length >= 2) {
+    const trendText = stats.skipRateProxyTrend.map((v) => `${v}%`).join(" -> ");
+    lines.push(`Skip-rate trend (oldest -> newest): ${trendText} (${stats.skipRateProxyTrendDirection})`);
+  }
   const topER = stats.topPostByEngagementRate;
   if (topER) {
     lines.push(
@@ -498,6 +512,8 @@ function formatPostsSection(ctx, limit = 12) {
       if (p.saved) parts.push(`${p.saved} saved`);
       if (p.shares) parts.push(`${p.shares} shares`);
       if (p.videoViews) parts.push(`${p.videoViews} video views`);
+      if (Number(p.avgWatchTime || 0) > 0) parts.push(`${p.avgWatchTime}s avg watch`);
+      if (p.skipRateProxy != null) parts.push(`skip proxy ${p.skipRateProxy}%`);
       if (p.engagementRate != null) parts.push(`ER ${p.engagementRate}%`);
       const text = p.text || "(no caption)";
       return `[${i + 1}] ${p.type || "Post"} — ${p.postedAt || "unknown date"} — ${parts.join(", ")}\n"${text}"`;
@@ -685,6 +701,84 @@ function computeEngagementRate(p) {
   return Math.round((interactions / impressions) * 10000) / 100;
 }
 
+function isVideoLikePost(p) {
+  const type = String(p?.mediaType || "").toUpperCase();
+  return type === "VIDEO" || type === "REEL" || type === "REELS";
+}
+
+function inferAvgWatchTimeSeconds(p) {
+  const avgWatch = Number(p?.avgWatchTime || 0);
+  if (Number.isFinite(avgWatch) && avgWatch > 0) return avgWatch;
+  const totalWatch = Number(p?.totalWatchTime || 0);
+  const views = Number(p?.videoViews || p?.impressions || 0);
+  if (Number.isFinite(totalWatch) && totalWatch > 0 && Number.isFinite(views) && views > 0) {
+    return totalWatch / views;
+  }
+  return 0;
+}
+
+function computeSkipRateProxy(p, targetSeconds = SKIP_RATE_PROXY_TARGET_SECONDS) {
+  if (!isVideoLikePost(p)) return null;
+  const avgWatch = inferAvgWatchTimeSeconds(p);
+  if (!Number.isFinite(avgWatch) || avgWatch <= 0) return null;
+  const target = Math.max(0.1, Number(targetSeconds) || 3);
+  const retentionRatio = Math.max(0, Math.min(1, avgWatch / target));
+  const skipRate = (1 - retentionRatio) * 100;
+  return Math.round(skipRate * 10) / 10;
+}
+
+function summarizeSkipRateTrend(posts, targetSeconds = SKIP_RATE_PROXY_TARGET_SECONDS) {
+  const series = (Array.isArray(posts) ? posts : [])
+    .map((p) => ({
+      ts: p?.postedAt ? new Date(p.postedAt).getTime() : 0,
+      skipRate: computeSkipRateProxy(p, targetSeconds),
+    }))
+    .filter((x) => x.ts > 0 && x.skipRate != null && Number.isFinite(x.skipRate))
+    .sort((a, b) => a.ts - b.ts);
+
+  if (!series.length) {
+    return {
+      avgSkipRateProxy: null,
+      skipRateProxyTrend: [],
+      skipRateProxyTrendDirection: "insufficient_data",
+      reelsWithSkipRateProxy: 0,
+    };
+  }
+
+  const average =
+    Math.round((series.reduce((sum, x) => sum + x.skipRate, 0) / series.length) * 10) / 10;
+
+  const windowCount = Math.min(3, series.length);
+  const trend = [];
+  let cursor = 0;
+  const baseSize = Math.floor(series.length / windowCount);
+  let remainder = series.length % windowCount;
+  for (let i = 0; i < windowCount; i += 1) {
+    const size = baseSize + (remainder > 0 ? 1 : 0);
+    if (remainder > 0) remainder -= 1;
+    const chunk = series.slice(cursor, cursor + size);
+    cursor += size;
+    const chunkAvg = chunk.reduce((sum, x) => sum + x.skipRate, 0) / Math.max(chunk.length, 1);
+    trend.push(Math.round(chunkAvg * 10) / 10);
+  }
+
+  let direction = "flat";
+  if (trend.length >= 2) {
+    const delta = trend[trend.length - 1] - trend[0];
+    if (delta >= 1) direction = "worsening";
+    else if (delta <= -1) direction = "improving";
+  } else {
+    direction = "insufficient_data";
+  }
+
+  return {
+    avgSkipRateProxy: average,
+    skipRateProxyTrend: trend,
+    skipRateProxyTrendDirection: direction,
+    reelsWithSkipRateProxy: series.length,
+  };
+}
+
 function extractFirstName(state) {
   const candidates = [
     state?.user?.name,
@@ -714,6 +808,11 @@ function computeAccountStats(allPosts) {
       postsWithZeroComments: 0,
       postsWithZeroCommentsPct: 0,
       avgEngagementRate: null,
+      avgSkipRateProxy: null,
+      skipRateProxyTrend: [],
+      skipRateProxyTrendDirection: "insufficient_data",
+      reelsWithSkipRateProxy: 0,
+      skipRateProxyTargetSeconds: SKIP_RATE_PROXY_TARGET_SECONDS,
       avgLikes: 0,
       avgComments: 0,
       topPostByEngagementRate: null,
@@ -753,6 +852,7 @@ function computeAccountStats(allPosts) {
   }
   const avgER = ers.length ? Math.round((ers.reduce((a, b) => a + b, 0) / ers.length) * 100) / 100 : null;
   const daysSinceLast = last ? Math.round((now - last) / day) : null;
+  const skipSummary = summarizeSkipRateTrend(posts, SKIP_RATE_PROXY_TARGET_SECONDS);
   return {
     totalPosts: posts.length,
     postsLast30Days: last30,
@@ -761,6 +861,11 @@ function computeAccountStats(allPosts) {
     postsWithZeroComments: zeroComments,
     postsWithZeroCommentsPct: Math.round((zeroComments / posts.length) * 100),
     avgEngagementRate: avgER,
+    avgSkipRateProxy: skipSummary.avgSkipRateProxy,
+    skipRateProxyTrend: skipSummary.skipRateProxyTrend,
+    skipRateProxyTrendDirection: skipSummary.skipRateProxyTrendDirection,
+    reelsWithSkipRateProxy: skipSummary.reelsWithSkipRateProxy,
+    skipRateProxyTargetSeconds: SKIP_RATE_PROXY_TARGET_SECONDS,
     avgLikes: Math.round(likesSum / posts.length),
     avgComments: Math.round(commentsSum / posts.length),
     topPostByEngagementRate: topER
@@ -799,21 +904,27 @@ function buildCrewContext({ state, connectedPlatforms, language, message }) {
     message: state._lastUserMessageForPrompt || message || "",
     max: 20,
   });
-  const posts = selected.map((p) => ({
-    platform: p.platform || "",
-    type: formatMediaType(p.mediaType || ""),
-    postedAt: p.postedAt || "",
-    likes: Number(p.likes || 0),
-    comments: Number(p.comments || 0),
-    impressions: Number(p.impressions || 0),
-    reach: Number(p.reach || 0),
-    saved: Number(p.saved || 0),
-    shares: Number(p.shares || 0),
-    videoViews: Number(p.videoViews || 0),
-    engagementRate: computeEngagementRate(p),
-    text: truncate(p.text || "", 500),
-    permalink: p.permalink || "",
-  }));
+  const posts = selected.map((p) => {
+    const avgWatch = inferAvgWatchTimeSeconds(p);
+    return {
+      platform: p.platform || "",
+      type: formatMediaType(p.mediaType || ""),
+      postedAt: p.postedAt || "",
+      likes: Number(p.likes || 0),
+      comments: Number(p.comments || 0),
+      impressions: Number(p.impressions || 0),
+      reach: Number(p.reach || 0),
+      saved: Number(p.saved || 0),
+      shares: Number(p.shares || 0),
+      videoViews: Number(p.videoViews || 0),
+      avgWatchTime: avgWatch > 0 ? Math.round(avgWatch * 10) / 10 : 0,
+      totalWatchTime: Number(p.totalWatchTime || 0),
+      skipRateProxy: computeSkipRateProxy(p, SKIP_RATE_PROXY_TARGET_SECONDS),
+      engagementRate: computeEngagementRate(p),
+      text: truncate(p.text || "", 500),
+      permalink: p.permalink || "",
+    };
+  });
   return {
     account: {
       ...(state.user || {}),

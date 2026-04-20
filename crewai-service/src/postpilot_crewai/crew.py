@@ -55,6 +55,11 @@ def _format_stats(context: dict[str, Any]) -> str:
     zero_comments = stats.get("postsWithZeroComments") or 0
     zero_comments_pct = stats.get("postsWithZeroCommentsPct") or 0
     avg_er = stats.get("avgEngagementRate")
+    avg_skip = stats.get("avgSkipRateProxy")
+    skip_trend = stats.get("skipRateProxyTrend") or []
+    skip_direction = stats.get("skipRateProxyTrendDirection") or "flat"
+    skip_sample = stats.get("reelsWithSkipRateProxy") or 0
+    skip_target = stats.get("skipRateProxyTargetSeconds") or 3
     avg_likes = stats.get("avgLikes") or 0
     avg_comments = stats.get("avgComments") or 0
 
@@ -70,6 +75,17 @@ def _format_stats(context: dict[str, Any]) -> str:
     lines.append(f"Average per post: {avg_likes} likes, {avg_comments} comments")
     if avg_er is not None:
         lines.append(f"Average engagement rate: {avg_er}%")
+    if avg_skip is not None and skip_sample:
+        lines.append(
+            f"Reels skip-rate proxy (target {skip_target}s watch): "
+            f"{avg_skip}% across {skip_sample} reels"
+        )
+    if isinstance(skip_trend, list) and len(skip_trend) >= 2:
+        trend_text = " -> ".join([f"{v}%" for v in skip_trend])
+        lines.append(
+            f"Skip-rate trend (oldest -> newest): {trend_text} "
+            f"({skip_direction})"
+        )
 
     top_er = stats.get("topPostByEngagementRate")
     if top_er:
@@ -135,6 +151,8 @@ def _format_posts(context: dict[str, Any], limit: int = 12) -> str:
         saved = p.get("saved") or 0
         shares = p.get("shares") or 0
         video_views = p.get("videoViews") or 0
+        avg_watch = p.get("avgWatchTime") or 0
+        skip_rate = p.get("skipRateProxy")
         er = p.get("engagementRate")
         perf_parts = [f"{likes} likes", f"{comments} comments"]
         if impressions:
@@ -147,6 +165,10 @@ def _format_posts(context: dict[str, Any], limit: int = 12) -> str:
             perf_parts.append(f"{shares} shares")
         if video_views:
             perf_parts.append(f"{video_views} video views")
+        if avg_watch:
+            perf_parts.append(f"{avg_watch}s avg watch")
+        if skip_rate is not None:
+            perf_parts.append(f"skip proxy {skip_rate}%")
         if er is not None:
             perf_parts.append(f"ER {er}%")
         text = _truncate(p.get("text"), 500) or "(no caption)"
