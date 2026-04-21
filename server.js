@@ -41,7 +41,7 @@ const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 14);
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID || "";
-const STRIPE_MONTHLY_EUR_CENTS = Number(process.env.STRIPE_MONTHLY_EUR_CENTS || 2900);
+const STRIPE_MONTHLY_EUR_CENTS = Number(process.env.STRIPE_MONTHLY_EUR_CENTS || 900);
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
 function sendJson(res, statusCode, payload) {
@@ -850,7 +850,7 @@ function isPaymentComplete(state) {
 function markBillingPaid(state, payload = {}) {
   state.user.billing.status = "paid";
   state.user.billing.plan = "monthly";
-  state.user.billing.amountEur = 30;
+  state.user.billing.amountEur = 9;
   state.user.billing.currency = "EUR";
   state.user.billing.interval = "month";
   state.user.billing.paidAt = nowIso();
@@ -1249,7 +1249,7 @@ function agentGuardReply(state) {
     return { content: "Complete onboarding in Settings so I can personalize your strategy and voice.", action: "onboarding_required" };
   }
   if (!isPaymentComplete(state)) {
-    return { content: "Payment is required before using the AI coach. Please complete your 29 Euro/month subscription.", action: "payment_required" };
+    return { content: "Payment is required before using the AI coach. Please complete your 9 Euro/month subscription.", action: "payment_required" };
   }
   const connected = activePlatforms(state);
   if (!connected.length) {
@@ -2220,7 +2220,7 @@ const server = http.createServer(async (req, res) => {
       const language = typeof body.language === "string" ? body.language : "";
       if (!isPaymentComplete(state)) {
         sendJson(res, 402, {
-          error: "Payment required. Complete your 29 Euro/month subscription to use the AI coach.",
+          error: "Payment required. Complete your 9 Euro/month subscription to use the AI coach.",
           action: "payment_required",
         });
         return;
