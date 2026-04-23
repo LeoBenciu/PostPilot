@@ -165,6 +165,7 @@ async function fetchLinkedInPostsAndAnalytics(accessToken, profile) {
     }
     posts.push({
       platform: "linkedin",
+      sourceId: postUrn || "",
       text,
       likes,
       comments,
@@ -258,6 +259,7 @@ async function fetchInstagramPostsAndAnalytics(accessToken) {
     const engagementFromInsights = Number(insights.engagement || 0) || totalInteractions;
     return {
       platform: "instagram",
+      sourceId: item.id || "",
       text: item.caption || "",
       likes: Number(item.like_count || 0),
       comments: Number(item.comments_count || 0),

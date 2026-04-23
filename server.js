@@ -899,9 +899,15 @@ function bindStateToUser(state, user) {
 }
 
 function upsertPosts(state, newPosts) {
-  const seen = new Set(state.posts.map((p) => `${p.platform}:${p.postedAt}:${p.text}`));
+  const identityKey = (p) => {
+    const platform = String(p?.platform || "");
+    const sourceId = String(p?.sourceId || "").trim();
+    if (platform && sourceId) return `${platform}:id:${sourceId}`;
+    return `${platform}:legacy:${String(p?.postedAt || "")}:${String(p?.text || "")}`;
+  };
+  const seen = new Set(state.posts.map((p) => identityKey(p)));
   for (const post of newPosts) {
-    const key = `${post.platform}:${post.postedAt}:${post.text}`;
+    const key = identityKey(post);
     if (!seen.has(key)) {
       state.posts.push(post);
       seen.add(key);
