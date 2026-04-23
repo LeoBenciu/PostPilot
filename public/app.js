@@ -2363,6 +2363,26 @@ function renderPaymentStep() {
 }
 
 let suppressOnboardRouting = false;
+let hasRunRefreshSync = false;
+
+async function runSyncOnPageRefresh() {
+  if (hasRunRefreshSync) return;
+  hasRunRefreshSync = true;
+  if (!hasAnyIntegrationConnected(accountState)) return;
+  try {
+    await api("/api/integrations/sync", "POST", {});
+    await loadAccountState();
+    try {
+      await loadCreatorProfile();
+    } catch (_err) {
+      // Non-blocking: profile refresh should not block chat usage.
+    }
+    const analyticsVisible = !document.getElementById("analyticsView")?.classList.contains("hidden");
+    if (analyticsVisible) await loadAnalyticsView();
+  } catch (err) {
+    console.warn("Auto-sync on refresh failed:", err?.message || err);
+  }
+}
 
 async function loadAccountState() {
   accountState = await api("/api/account");
@@ -2424,6 +2444,9 @@ async function unlockChat(toastMessage) {
   } catch (_error) {
     // non-blocking
   }
+  // When the user refreshes/re-enters an existing session, kick one sync pass
+  // so newly published posts show up without requiring manual sync actions.
+  runSyncOnPageRefresh().catch(() => {});
 }
 
 async function handleGoogleAuth(source) {
