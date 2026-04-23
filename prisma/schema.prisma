@@ -25,6 +25,7 @@ model User {
   updatedAt    DateTime  @updatedAt
   sessions     Session[]
   state        UserState?
+  earlyAccess  EarlyAccessRequest?
 }
 
 model UserState {
@@ -56,4 +57,26 @@ model OAuthState {
   expiresAt  DateTime
   usedAt     DateTime?
   createdAt  DateTime @default(now())
+}
+
+model EarlyAccessRequest {
+  id                    String   @id @default(cuid())
+  email                 String   @unique
+  fullName              String
+  phone                 String?
+  instagramHandle       String?
+  message               String?
+  status                String   @default("pending")
+  accessApproved        Boolean  @default(false)
+  approvalTokenHash     String   @unique
+  requestedAt           DateTime @default(now())
+  approvedAt            DateTime?
+  internalEmailSentAt   DateTime?
+  acknowledgedEmailSentAt DateTime?
+  accessEmailSentAt     DateTime?
+  approvedBy            String?
+  userId                Int?     @unique
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }

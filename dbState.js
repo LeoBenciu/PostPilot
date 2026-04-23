@@ -153,6 +153,111 @@ async function updateUserProfile(userId, { fullName, email }) {
   return prisma.user.update({ where: { id: userId }, data });
 }
 
+async function findEarlyAccessRequestByEmail(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail) return null;
+  return prisma.earlyAccessRequest.findUnique({
+    where: { email: normalizedEmail },
+  });
+}
+
+async function upsertEarlyAccessRequest({
+  fullName,
+  email,
+  phone,
+  instagramHandle,
+  message,
+  approvalTokenHash,
+}) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedName = String(fullName || "").trim();
+  const normalizedPhone = String(phone || "").trim() || null;
+  const normalizedIgHandle = String(instagramHandle || "")
+    .trim()
+    .replace(/^@+/, "") || null;
+  const normalizedMessage = String(message || "").trim() || null;
+  const now = new Date();
+
+  return prisma.earlyAccessRequest.upsert({
+    where: { email: normalizedEmail },
+    update: {
+      fullName: normalizedName,
+      phone: normalizedPhone,
+      instagramHandle: normalizedIgHandle,
+      message: normalizedMessage,
+      status: "pending",
+      accessApproved: false,
+      approvalTokenHash,
+      requestedAt: now,
+      approvedAt: null,
+      internalEmailSentAt: null,
+      acknowledgedEmailSentAt: null,
+      accessEmailSentAt: null,
+      approvedBy: null,
+    },
+    create: {
+      email: normalizedEmail,
+      fullName: normalizedName,
+      phone: normalizedPhone,
+      instagramHandle: normalizedIgHandle,
+      message: normalizedMessage,
+      status: "pending",
+      accessApproved: false,
+      approvalTokenHash,
+      requestedAt: now,
+    },
+  });
+}
+
+async function findEarlyAccessRequestByRawApprovalToken(rawToken) {
+  const token = String(rawToken || "").trim();
+  if (!token) return null;
+  const tokenHash = hashToken(token);
+  return prisma.earlyAccessRequest.findUnique({
+    where: { approvalTokenHash: tokenHash },
+  });
+}
+
+async function approveEarlyAccessRequest(requestId, approvedBy = "") {
+  const normalizedApprovedBy = String(approvedBy || "").trim() || null;
+  return prisma.earlyAccessRequest.update({
+    where: { id: requestId },
+    data: {
+      status: "approved",
+      accessApproved: true,
+      approvedAt: new Date(),
+      approvedBy: normalizedApprovedBy,
+    },
+  });
+}
+
+async function markEarlyAccessEmailSent(email, type) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail) return;
+  const now = new Date();
+  const data = {};
+  if (type === "internal") data.internalEmailSentAt = now;
+  if (type === "acknowledged") data.acknowledgedEmailSentAt = now;
+  if (type === "access") data.accessEmailSentAt = now;
+  if (!Object.keys(data).length) return;
+  await prisma.earlyAccessRequest.update({
+    where: { email: normalizedEmail },
+    data,
+  });
+}
+
+async function linkEarlyAccessRequestToUser(email, userId) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail || !userId) return;
+  await prisma.earlyAccessRequest.update({
+    where: { email: normalizedEmail },
+    data: {
+      userId: Number(userId),
+      status: "active",
+    },
+  });
+}
+
 async function getStateForUser(userId) {
   const row = await prisma.userState.findUnique({
     where: { userId },
@@ -258,6 +363,12 @@ module.exports = {
   findUserByGoogleSub,
   createOrLinkGoogleUser,
   updateUserProfile,
+  findEarlyAccessRequestByEmail,
+  upsertEarlyAccessRequest,
+  findEarlyAccessRequestByRawApprovalToken,
+  approveEarlyAccessRequest,
+  markEarlyAccessEmailSent,
+  linkEarlyAccessRequestToUser,
   getStateForUser,
   saveStateForUser,
   createSession,

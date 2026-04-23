@@ -95,8 +95,8 @@
           </div>
 
           <form class="signup-card" id="signupForm">
-            <h2 id="signupTitle">Try PostPilot</h2>
-            <button type="button" class="google-btn" id="googleSignupBtn">
+            <h2 id="signupTitle">Request Early Access</h2>
+            <button type="button" class="google-btn hidden" id="googleSignupBtn">
               <img
                 src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                 alt=""
@@ -105,7 +105,7 @@
               />
               <span>Continue with Google</span>
             </button>
-            <div class="divider">or</div>
+            <div class="divider hidden" id="signupDivider">or</div>
             <label>
               <span id="signupFullNameLabel">Full name</span>
               <input id="signupFullName" type="text" placeholder="" required />
@@ -115,15 +115,30 @@
               <input id="signupEmail" type="email" placeholder="" required />
             </label>
             <label>
-              <span id="signupPasswordLabel">Password</span>
-              <input id="signupPassword" type="password" placeholder="" minlength="6" required />
+              <span id="signupPhoneLabel">Phone number</span>
+              <input id="signupPhone" type="tel" placeholder="+40 7xx xxx xxx" required />
             </label>
-            <label class="checkbox-row">
+            <label>
+              <span id="signupInstagramLabel">Instagram handle</span>
+              <input id="signupInstagramHandle" type="text" placeholder="@yourhandle" required />
+            </label>
+            <label>
+              <span id="signupMessageLabel">Short message</span>
+              <textarea id="signupMessage" rows="3" placeholder="What are you building with PostPilot?" required></textarea>
+            </label>
+            <label id="signupPasswordRow" class="hidden">
+              <span id="signupPasswordLabel">Password</span>
+              <input id="signupPassword" type="password" placeholder="" minlength="8" />
+            </label>
+            <label class="checkbox-row" id="tipsOptInRow">
               <input id="tipsOptIn" type="checkbox" />
               <span id="tipsOptInLabel">Send me Creator tips and other opportunities</span>
             </label>
-            <button type="submit" class="cta-btn" id="signupSubmitBtn">Create account</button>
+            <button type="submit" class="cta-btn" id="signupSubmitBtn">Request access</button>
             <p class="small form-feedback" id="signupFeedback"></p>
+            <p class="small">
+              <a href="#" id="switchCreateAccountMode">Already approved? Create your account</a>
+            </p>
             <p class="small"><span id="alreadyAccountText">Already have an account?</span> <a href="#" id="openSignin">Sign in</a></p>
           </form>
         </div>
