@@ -37,6 +37,9 @@ const authToast = document.getElementById("authToast");
 const onboardingModal = document.getElementById("onboardFlow");
 let onboardingHideTimer = null;
 let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || "ro";
+let currentAgentMode = "cards";
+let latestVisualPayload = null;
+let cardExpansionOrder = [];
 
 const I18N = {
   en: {
@@ -1857,6 +1860,7 @@ async function streamChat(message, sessionId) {
   let buffer = "";
   let fullText = "";
   let lastAction = "ai_reply";
+  let finalPayload = null;
   let timedOut = false;
 
   let idleTimer = null;
@@ -1900,6 +1904,7 @@ async function streamChat(message, sessionId) {
           }
           if (data.done) {
             lastAction = data.action || lastAction;
+            if (data.payload) finalPayload = data.payload;
           }
           if (data.error) {
             handle.append(`\nError: ${data.error}`);
@@ -1913,7 +1918,7 @@ async function streamChat(message, sessionId) {
     handle.finish(timedOut ? t("streamTimeoutFallback") : null);
   }
 
-  return { content: fullText, action: lastAction };
+  return { content: fullText, action: lastAction, payload: finalPayload };
 }
 
 function setComposerBusy(busy) {
@@ -1953,13 +1958,242 @@ function setActiveView(view) {
 function refreshAgentEmptyState() {
   const messagesEl = document.getElementById("messages");
   const emptyEl = document.getElementById("agentEmptyState");
+  const visualBoard = document.getElementById("visualBoard");
   const scoresEl = document.getElementById("agentScores");
   if (!messagesEl || !emptyEl) return;
   const hasMessages = messagesEl.children.length > 0;
   emptyEl.classList.toggle("hidden", hasMessages);
   messagesEl.classList.toggle("hidden", !hasMessages);
+  if (visualBoard) visualBoard.classList.toggle("hidden", !hasMessages || !latestVisualPayload || currentAgentMode === "list");
   if (scoresEl) scoresEl.classList.toggle("is-compact", hasMessages);
   if (resetChatBtn) resetChatBtn.classList.toggle("hidden", !hasMessages);
+}
+
+function captureUiEvent(name, props = {}) {
+  if (!window.posthog || typeof window.posthog.capture !== "function") return;
+  try {
+    window.posthog.capture(name, props);
+  } catch (_e) {
+    // Best effort only.
+  }
+}
+
+function cardBody(html = "") {
+  const div = document.createElement("div");
+  div.className = "visual-card";
+  div.innerHTML = html;
+  return div;
+}
+
+function actionButton(label, onClick, primary = false) {
+  const btn = document.createElement("button");
+  btn.className = primary ? "" : "secondary";
+  btn.type = "button";
+  btn.textContent = label;
+  btn.addEventListener("click", onClick);
+  return btn;
+}
+
+function copyText(text) {
+  if (!navigator.clipboard?.writeText) return;
+  navigator.clipboard.writeText(String(text || "")).catch(() => {});
+}
+
+function setAgentMode(mode) {
+  currentAgentMode = mode;
+  document.querySelectorAll(".agent-view-mode-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.agentMode === mode);
+  });
+  const messagesEl = document.getElementById("messages");
+  if (messagesEl) messagesEl.classList.toggle("hidden", mode === "cards");
+  renderVisualBoard(latestVisualPayload);
+  captureUiEvent("agent_mode_changed", { mode });
+  refreshAgentEmptyState();
+}
+
+function enforceMaxExpandedCards(cardId) {
+  if (cardExpansionOrder.includes(cardId)) {
+    cardExpansionOrder = cardExpansionOrder.filter((id) => id !== cardId);
+  }
+  cardExpansionOrder.push(cardId);
+  while (cardExpansionOrder.length > 2) {
+    const removed = cardExpansionOrder.shift();
+    const node = document.querySelector(`[data-card-id="${removed}"]`);
+    if (node) node.open = false;
+  }
+}
+
+function buildDetailsCard(title, cardId, bodyBuilder) {
+  const details = document.createElement("details");
+  details.className = "visual-card";
+  details.dataset.cardId = cardId;
+  const summary = document.createElement("summary");
+  summary.textContent = title;
+  details.appendChild(summary);
+  details.addEventListener("toggle", () => {
+    if (details.open) enforceMaxExpandedCards(cardId);
+  });
+  bodyBuilder(details);
+  return details;
+}
+
+function renderVisualBoard(payload) {
+  const board = document.getElementById("visualBoard");
+  const tldr = document.getElementById("visualTldr");
+  const cards = document.getElementById("visualCards");
+  if (!board || !tldr || !cards) return;
+  cards.innerHTML = "";
+  if (!payload || currentAgentMode === "list") {
+    board.classList.add("hidden");
+    return;
+  }
+  board.classList.remove("hidden");
+  const bullets = Array.isArray(payload.summary?.bullets) ? payload.summary.bullets : [];
+  tldr.innerHTML = `
+    <h3>${escapeHtml(payload.summary?.headline || "Quick summary")}</h3>
+    <p>${bullets.slice(0, 3).map((b) => `• ${escapeHtml(b)}`).join("<br>")}</p>
+  `;
+
+  const nextPost = payload.nextPost || {};
+  const nextCard = cardBody(`
+    <h4>Next Post • ${escapeHtml(nextPost.postDay || "")} #${escapeHtml(String(nextPost.postNumber || ""))}</h4>
+    <p>${escapeHtml(nextPost.hook || "")}</p>
+    <div class="visual-pill-row">
+      ${(nextPost.formatPills || []).map((pill) => `<span class="visual-pill">${escapeHtml(pill)}</span>`).join("")}
+    </div>
+  `);
+  const nextActions = document.createElement("div");
+  nextActions.className = "visual-actions";
+  nextActions.appendChild(actionButton("See full script", () => {
+    document.querySelector("[data-card-id='script-card']")?.setAttribute("open", "open");
+    captureUiEvent("visual_card_action", { card: "next_post", action: "see_script" });
+  }, true));
+  nextActions.appendChild(actionButton("Regenerate", () => {
+    sendPrompt("Regenerate this post idea with a stronger hook");
+    captureUiEvent("visual_card_action", { card: "next_post", action: "regenerate" });
+  }));
+  nextCard.appendChild(nextActions);
+  cards.appendChild(nextCard);
+
+  const weekCard = buildDetailsCard("Week Plan", "week-plan-card", (details) => {
+    const rows = Array.isArray(payload.weekPlan) ? payload.weekPlan.slice(0, 7) : [];
+    const wrap = document.createElement("div");
+    rows.forEach((row) => {
+      const div = document.createElement("div");
+      div.className = `visual-week-row ${row.status === "today" ? "today" : ""}`;
+      div.innerHTML = `
+        <strong>${escapeHtml(row.day || "")}</strong>
+        <span class="visual-pill">${escapeHtml(row.format || "")}</span>
+        <span>${escapeHtml(row.topic || "")}</span>
+        <span>${escapeHtml(row.postTime || "")}</span>
+        <span class="status-dot ${escapeHtml(row.status || "upcoming")}"></span>
+      `;
+      wrap.appendChild(div);
+    });
+    details.appendChild(wrap);
+  });
+  cards.appendChild(weekCard);
+
+  const hookCard = buildDetailsCard("Hook Picker", "hook-picker-card", (details) => {
+    const hooks = Array.isArray(payload.hooks) ? payload.hooks.slice(0, 3) : [];
+    hooks.forEach((h) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "secondary";
+      item.style.width = "100%";
+      item.style.textAlign = "left";
+      item.style.marginBottom = "8px";
+      item.innerHTML = `<strong>Variant ${escapeHtml(String(h.variant || ""))}</strong><br>${escapeHtml(h.hook || "")}<br><small>${escapeHtml(h.reason || "")}</small>`;
+      item.addEventListener("click", () => {
+        nextCard.querySelector("p").textContent = h.hook || "";
+        captureUiEvent("hook_variant_selected", { variant: h.variant || 0 });
+      });
+      details.appendChild(item);
+    });
+  });
+  cards.appendChild(hookCard);
+
+  const scriptCard = buildDetailsCard("Script", "script-card", (details) => {
+    const beats = Array.isArray(payload.script?.beats) ? payload.script.beats.slice(0, 3) : [];
+    beats.forEach((beat) => {
+      const block = document.createElement("div");
+      block.style.borderLeft = beat.tone === "blue" ? "3px solid #3d76cc" : beat.tone === "coral" ? "3px solid #d56f67" : "3px solid #c23160";
+      block.style.paddingLeft = "8px";
+      block.style.marginBottom = "8px";
+      block.innerHTML = `<strong>${escapeHtml(beat.label || "")} • ${escapeHtml(beat.timestamp || "")}</strong><p>${escapeHtml(beat.text || "")}</p><small>${escapeHtml(beat.note || "")}</small>`;
+      details.appendChild(block);
+    });
+  });
+  cards.appendChild(scriptCard);
+
+  const captionCard = buildDetailsCard("Caption", "caption-card", (details) => {
+    const body = document.createElement("p");
+    body.textContent = payload.caption?.text || "";
+    body.style.whiteSpace = "pre-line";
+    details.appendChild(body);
+    const tags = document.createElement("p");
+    tags.style.opacity = "0.7";
+    tags.textContent = (payload.caption?.hashtags || []).join(" ");
+    details.appendChild(tags);
+    const actions = document.createElement("div");
+    actions.className = "visual-actions";
+    actions.appendChild(actionButton("Copy", () => {
+      copyText(`${payload.caption?.text || ""}\n\n${(payload.caption?.hashtags || []).join(" ")}`);
+      captureUiEvent("visual_card_action", { card: "caption", action: "copy" });
+    }, true));
+    actions.appendChild(actionButton("Regenerate", () => sendPrompt("Regenerate this caption with stronger CTA")));
+    details.appendChild(actions);
+  });
+  cards.appendChild(captionCard);
+
+  const scoreCard = buildDetailsCard("Score", "score-card", (details) => {
+    const metrics = Array.isArray(payload.scores?.metrics) ? payload.scores.metrics : [];
+    metrics.slice(0, 5).forEach((metric) => {
+      const row = document.createElement("div");
+      row.className = "visual-score-row";
+      row.innerHTML = `<span>${escapeHtml(metric.label || "")}</span><strong>${escapeHtml(String(metric.value || 0))}</strong>`;
+      const bar = document.createElement("div");
+      bar.className = "visual-score-bar";
+      const fill = document.createElement("span");
+      fill.className = metric.color || "amber";
+      fill.style.width = `${Math.max(0, Math.min(100, Number(metric.value || 0) * 10))}%`;
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      details.appendChild(row);
+    });
+  });
+  cards.appendChild(scoreCard);
+
+  const decisionCard = cardBody(`
+    <h4>Decision</h4>
+    <p><strong>Recommendation:</strong> ${escapeHtml(payload.decision?.recommendation || "")}</p>
+    <p><strong>Tradeoff:</strong> ${escapeHtml(payload.decision?.tradeoff || "")}</p>
+  `);
+  cards.appendChild(decisionCard);
+
+  const progressCard = cardBody(`
+    <h4>Progress</h4>
+    <p>${escapeHtml(payload.progress?.stage || "")} (${escapeHtml(String(payload.progress?.completed || 0))}/${escapeHtml(String(payload.progress?.total || 0))})</p>
+    <p>${(payload.threadMap || []).map((item) => `${item.status === "current" ? "→" : "•"} ${escapeHtml(item.label || "")}`).join("<br>")}</p>
+  `);
+  cards.appendChild(progressCard);
+
+  const betaCard = cardBody(`
+    <h4>Beta Feedback</h4>
+    <p>Is this visual format helping you move faster?</p>
+  `);
+  const betaActions = document.createElement("div");
+  betaActions.className = "visual-actions";
+  betaActions.appendChild(actionButton("Useful", () => {
+    captureUiEvent("visual_beta_feedback", { value: "positive" });
+    showToast("Thanks, we will keep improving this view.");
+  }, true));
+  betaActions.appendChild(actionButton("Needs work", () => {
+    captureUiEvent("visual_beta_feedback", { value: "negative" });
+    sendPrompt("Adjust this visual output: reduce noise and improve clarity.");
+  }));
+  betaCard.appendChild(betaActions);
+  cards.appendChild(betaCard);
 }
 
 const analyticsCharts = {};
@@ -2635,6 +2869,13 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
     addMessage("user", message);
 
     const result = await streamChat(message, sessionId);
+    if (result?.payload?.visual) {
+      latestVisualPayload = result.payload.visual;
+      renderVisualBoard(latestVisualPayload);
+      captureUiEvent("visual_payload_rendered", {
+        cards: Object.keys(latestVisualPayload || {}).length,
+      });
+    }
     if (result.action === "onboarding_required") {
       setOnboardingMode("onboarding");
       showOnboardingModal();
@@ -2660,6 +2901,8 @@ resetChatBtn?.addEventListener("click", async () => {
     await api("/api/agent/conversation/reset", "POST", { sessionId });
   const messages = document.getElementById("messages");
   messages.innerHTML = "";
+    latestVisualPayload = null;
+    renderVisualBoard(null);
     refreshAgentEmptyState();
   } catch (err) {
     showToast(`Could not reset chat: ${err.message}`);
@@ -2668,6 +2911,10 @@ resetChatBtn?.addEventListener("click", async () => {
 
 agentViewBtn?.addEventListener("click", () => {
   setActiveView("agent");
+});
+
+document.querySelectorAll(".agent-view-mode-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setAgentMode(btn.dataset.agentMode || "cards"));
 });
 
 analyticsViewBtn?.addEventListener("click", async () => {
@@ -3109,6 +3356,7 @@ document.getElementById("edgeStartBtn")?.addEventListener("click", () => {
 renderConversation([]);
 applyLanguage();
 setActiveView("agent");
+setAgentMode("cards");
 
 const authQueryState = getAuthQueryState();
 let handledFreshGoogleAuth = false;

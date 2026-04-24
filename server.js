@@ -681,6 +681,210 @@ function generateWeeklyPlan({ goal, postsPerWeek, focus }) {
   return plan;
 }
 
+function parseHashtags(text) {
+  const matches = String(text || "").match(/#[\p{L}\p{N}_]+/gu);
+  if (!matches) return [];
+  return [...new Set(matches)].slice(0, 12);
+}
+
+function firstNonEmptyLine(text) {
+  return String(text || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean) || "";
+}
+
+function scoreToColor(value) {
+  if (value >= 7) return "green";
+  if (value >= 4) return "amber";
+  return "red";
+}
+
+function buildVisualPayloadSchema() {
+  return {
+    version: "1.0",
+    summary: { headline: "", bullets: [] },
+    nextPost: {
+      postDay: "",
+      postNumber: 0,
+      hook: "",
+      formatPills: [],
+      actions: {
+        primary: { type: "see_script", label: "See full script" },
+        secondary: { type: "regenerate", label: "Regenerate" },
+      },
+    },
+    weekPlan: [],
+    hooks: [],
+    script: { beats: [] },
+    caption: { text: "", hashtags: [] },
+    scores: { title: "", metrics: [] },
+    decision: { recommendation: "", alternative: "", tradeoff: "", confidence: 0 },
+    progress: { stage: "", completed: 0, total: 0 },
+    threadMap: [],
+  };
+}
+
+function validateVisualPayload(payload) {
+  if (!payload || typeof payload !== "object") return false;
+  const requiredTopLevel = [
+    "version",
+    "summary",
+    "nextPost",
+    "weekPlan",
+    "hooks",
+    "script",
+    "caption",
+    "scores",
+    "decision",
+    "progress",
+    "threadMap",
+  ];
+  for (const key of requiredTopLevel) {
+    if (!(key in payload)) return false;
+  }
+  if (!Array.isArray(payload.summary?.bullets)) return false;
+  if (!Array.isArray(payload.weekPlan)) return false;
+  if (!Array.isArray(payload.hooks)) return false;
+  if (!Array.isArray(payload.script?.beats)) return false;
+  if (!Array.isArray(payload.caption?.hashtags)) return false;
+  if (!Array.isArray(payload.scores?.metrics)) return false;
+  if (!Array.isArray(payload.threadMap)) return false;
+  return true;
+}
+
+function buildVisualPayload({ state, message, content, sessionId }) {
+  const schema = buildVisualPayloadSchema();
+  const text = String(content || "").trim();
+  const lines = text.split(/\r?\n/).map((line) => line.trim());
+  const topLine = firstNonEmptyLine(text) || "New content direction ready";
+  const bullets = lines
+    .filter((line) => /^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line))
+    .map((line) => line.replace(/^[-*\d.\s]+/, "").trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  const fallbackBullets = [
+    "Use the selected hook as your opening line.",
+    "Keep the body focused on one practical takeaway.",
+    "End with one clear engagement CTA.",
+  ];
+  const goal = extractGoal(message);
+  const topic = extractTopic(message);
+  const inferredFormat = /carousel/i.test(message) ? "Carousel" : "Reel";
+  const planned = generateWeeklyPlan({ goal, postsPerWeek: 7, focus: topic });
+  const weekPlan = planned.slice(0, 7).map((row, idx) => ({
+    day: row.day,
+    format: /carousel/i.test(row.format) ? "Carousel" : "Reel",
+    topic: row.prompt.replace(/^Create a /i, ""),
+    postTime: ["10:00", "12:00", "14:00", "16:00", "18:00", "11:00", "13:00"][idx] || "12:00",
+    status: idx === 0 ? "today" : "upcoming",
+  }));
+  const paragraphChunks = text
+    .split(/\n{2,}/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+  const hookBase = topLine.replace(/^#+\s*/, "");
+  const hooks = [1, 2, 3].map((n) => ({
+    variant: n,
+    hook:
+      n === 1
+        ? hookBase
+        : n === 2
+          ? `Most creators get this wrong: ${hookBase}`
+          : `Before you post again, read this: ${hookBase}`,
+    reason:
+      n === 1
+        ? "Direct and clear hook aligned to your request."
+        : n === 2
+          ? "Adds tension to increase stop rate."
+          : "Curiosity-led angle to trigger opens.",
+  }));
+  const scriptBeats = [0, 1, 2].map((idx) => ({
+    label: `Beat ${idx + 1}`,
+    timestamp: ["00:00", "00:08", "00:18"][idx],
+    text:
+      paragraphChunks[idx] ||
+      [
+        `Open with the core insight: ${hookBase}.`,
+        "Deliver one specific framework or example.",
+        "Close with one clear CTA and next step.",
+      ][idx],
+    note:
+      [
+        "Use display hook text on screen.",
+        "Switch to a practical proof point.",
+        "End with one CTA and pause for response.",
+      ][idx],
+    tone: ["accent", "blue", "coral"][idx],
+  }));
+  const hashtags = parseHashtags(text);
+  const captionText = text || generateDraft({
+    topic,
+    platform: extractPlatform(message),
+    goal,
+    voiceProfile: state.voiceProfile,
+  });
+  const profile = buildCreatorProfile(state);
+  const momentum = Number(profile.scores?.momentum || 0) / 10;
+  const consistency = Number(profile.scores?.consistency || 0) / 10;
+  const growth = Number(profile.scores?.growth || 0) / 10;
+  const metricRows = [
+    { label: "Hook Strength", value: Math.max(1, Math.min(10, Math.round(momentum))) },
+    { label: "Retention Potential", value: Math.max(1, Math.min(10, Math.round(growth))) },
+    { label: "Clarity", value: Math.max(1, Math.min(10, Math.round(consistency))) },
+    { label: "CTA Strength", value: Math.max(1, Math.min(10, Math.round((momentum + growth) / 2))) },
+    { label: "Brand Fit", value: Math.max(1, Math.min(10, Math.round((consistency + growth) / 2))) },
+  ].map((row) => ({ ...row, color: scoreToColor(row.value) }));
+  const convo = getConversation(state, sessionId || "default");
+  const recent = convo.slice(-4);
+  const threadMap = recent.map((item, idx) => ({
+    id: idx + 1,
+    label:
+      item.role === "user"
+        ? `Request: ${String(item.content || "").slice(0, 46)}`
+        : `Response: ${String(item.content || "").slice(0, 46)}`,
+    status: idx === recent.length - 1 ? "current" : "done",
+  }));
+  const payload = {
+    ...schema,
+    summary: {
+      headline: topLine.slice(0, 140),
+      bullets: bullets.length ? bullets : fallbackBullets,
+    },
+    nextPost: {
+      postDay: weekPlan[0]?.day || "Mon",
+      postNumber: Math.max(1, (state.posts || []).length + 1),
+      hook: hookBase.slice(0, 180),
+      formatPills: [inferredFormat, "30-45 sec", "Direct to camera"],
+      actions: schema.nextPost.actions,
+    },
+    weekPlan,
+    hooks,
+    script: { beats: scriptBeats },
+    caption: {
+      text: captionText,
+      hashtags: hashtags.length ? hashtags : ["#creator", "#contentstrategy", "#postpilot"],
+    },
+    scores: {
+      title: "Performance Score",
+      metrics: metricRows,
+    },
+    decision: {
+      recommendation: "Lead with the strongest hook variant and publish at your planned slot.",
+      alternative: "Use carousel format if you need more explanation depth.",
+      tradeoff: "Reels can reach wider; carousels can improve saves.",
+      confidence: 0.78,
+    },
+    progress: {
+      stage: "draft_ready",
+      completed: 5,
+      total: 5,
+    },
+    threadMap,
+  };
+  return validateVisualPayload(payload) ? payload : schema;
+}
+
 function repurpose({ sourceText, target }) {
   const base = (sourceText || "").trim();
   if (!base) return "";
@@ -1289,7 +1493,15 @@ async function agentRespond(state, { message, userId, sessionId, language }) {
       role: "assistant",
       content: response.content,
       action: response.action || "ai_reply",
-      payload: { provider: response.provider || "unknown" },
+      payload: {
+        provider: response.provider || "unknown",
+        visual: buildVisualPayload({
+          state,
+          message,
+          content: response.content,
+          sessionId,
+        }),
+      },
     };
   } catch (error) {
     console.error("[PostPilot][AI] agentRespond provider failure", {
@@ -2263,14 +2475,14 @@ const server = http.createServer(async (req, res) => {
         } catch (_e) { /* socket closed */ }
       }, 15000);
     };
-    const safeEnd = (action, fallbackToken) => {
+    const safeEnd = (action, fallbackToken, payload = null) => {
       stopHeartbeat();
       if (res.writableEnded) return;
       try {
         if (fallbackToken) {
           res.write(`data: ${JSON.stringify({ token: fallbackToken })}\n\n`);
         }
-        res.write(`data: ${JSON.stringify({ done: true, action: action || "ai_reply" })}\n\n`);
+        res.write(`data: ${JSON.stringify({ done: true, action: action || "ai_reply", payload })}\n\n`);
       } catch (_e) { /* socket closed */ }
       try { res.end(); } catch (_e) { /* socket closed */ }
     };
@@ -2340,6 +2552,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       let fullContent = "";
+      let visualPayload = null;
       try {
         for await (const event of streamAgentReply({
           message,
@@ -2370,7 +2583,13 @@ const server = http.createServer(async (req, res) => {
             "The AI provider returned no response. Please try again.",
           );
         } else {
-          safeEnd("ai_reply");
+          visualPayload = buildVisualPayload({
+            state,
+            message,
+            content: fullContent,
+            sessionId,
+          });
+          safeEnd("ai_reply", null, { visual: visualPayload });
         }
       } catch (streamErr) {
         console.error("[PostPilot][AI] stream error", streamErr?.message);
