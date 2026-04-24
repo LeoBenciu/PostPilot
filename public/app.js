@@ -1611,8 +1611,249 @@ function renderInlineMarkdown(raw) {
   return html;
 }
 
+/* ================================================================
+   CARD RENDERERS — turn structured JSON into rich visual cards
+   ================================================================ */
+
+function pillClass(format) {
+  const f = String(format || "").toLowerCase();
+  if (f.includes("reel")) return "pp-pill--reel";
+  if (f.includes("carousel")) return "pp-pill--carousel";
+  if (f.includes("story") || f.includes("stories")) return "pp-pill--story";
+  if (f.includes("image") || f.includes("photo")) return "pp-pill--image";
+  return "pp-pill--default";
+}
+
+function renderPill(label) {
+  return `<span class="pp-pill ${pillClass(label)}">${escapeHtml(label)}</span>`;
+}
+
+function scoreColor(value) {
+  const v = Number(value) || 0;
+  if (v >= 7) return "green";
+  if (v >= 4) return "amber";
+  return "red";
+}
+
+function renderCardNextPost(data) {
+  const kicker = data.kicker || data.label || "";
+  const hook = escapeHtml(data.hook || data.text || "");
+  const pills = Array.isArray(data.pills) ? data.pills : (data.format ? [data.format] : []);
+  if (data.duration) pills.push(data.duration);
+  if (data.setup) pills.push(data.setup);
+
+  let html = `<div class="pp-card pp-card--next-post">`;
+  html += `<div class="pp-card-header"><span class="pp-card-header-icon">📌</span>${escapeHtml(kicker)}</div>`;
+  html += `<div class="pp-next-post-hook">"${hook}"</div>`;
+  if (pills.length) {
+    html += `<div class="pp-pills">${pills.map(renderPill).join("")}</div>`;
+  }
+  html += `<div class="pp-card-actions">`;
+  html += `<button class="pp-card-btn pp-card-btn--primary" data-card-action="prompt" data-prompt="Show me the full script for this post">See full script</button>`;
+  html += `<button class="pp-card-btn pp-card-btn--secondary" data-card-action="prompt" data-prompt="Regenerate this post idea with a different angle">Regenerate</button>`;
+  html += `</div></div>`;
+  return html;
+}
+
+function renderCardScore(data) {
+  const title = data.title || "Post Score";
+  const metrics = Array.isArray(data.metrics) ? data.metrics : [];
+
+  let html = `<div class="pp-card pp-card--score">`;
+  html += `<div class="pp-card-header"><span class="pp-card-header-icon">📊</span>${escapeHtml(title)}</div>`;
+  html += `<div class="pp-score-rows">`;
+  for (const m of metrics) {
+    const val = Number(m.value || m.score || 0);
+    const pct = Math.min(100, Math.max(0, val * 10));
+    const color = scoreColor(val);
+    html += `<div class="pp-score-row">`;
+    html += `<span class="pp-score-label">${escapeHtml(m.label || m.name || "")}</span>`;
+    html += `<div class="pp-score-bar-bg"><div class="pp-score-bar-fill pp-score-bar-fill--${color}" style="width:${pct}%"></div></div>`;
+    html += `<span class="pp-score-value pp-score-value--${color}">${val}</span>`;
+    html += `</div>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+function renderCardWeekPlan(data) {
+  const title = data.title || "This Week's Plan";
+  const days = Array.isArray(data.days) ? data.days : [];
+
+  let html = `<div class="pp-card pp-card--week-plan">`;
+  html += `<div class="pp-card-header"><span class="pp-card-header-icon">📅</span>${escapeHtml(title)}</div>`;
+  html += `<div class="pp-week-rows">`;
+  for (const d of days) {
+    const status = String(d.status || "upcoming").toLowerCase();
+    const isToday = status === "today";
+    const rowClass = isToday ? "pp-week-row pp-week-row--today" : "pp-week-row";
+    html += `<div class="${rowClass}">`;
+    html += `<span class="pp-week-day">${escapeHtml(d.day || "")}</span>`;
+    html += d.format ? renderPill(d.format) : `<span class="pp-pill pp-pill--default">—</span>`;
+    html += `<span class="pp-week-topic">${escapeHtml(d.topic || d.title || "")}</span>`;
+    html += `<span class="pp-week-time">${escapeHtml(d.time || "")}</span>`;
+    html += `<span class="pp-week-status pp-week-status--${status}"></span>`;
+    html += `</div>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+function renderCardHookPicker(data) {
+  const title = data.title || "Pick Your Hook";
+  const options = Array.isArray(data.options) ? data.options : [];
+
+  let html = `<div class="pp-card pp-card--hook-picker">`;
+  html += `<div class="pp-card-header"><span class="pp-card-header-icon">🎯</span>${escapeHtml(title)}</div>`;
+  html += `<div class="pp-hook-options">`;
+  for (let i = 0; i < options.length; i++) {
+    const opt = options[i];
+    const label = opt.label || `Option ${i + 1}`;
+    html += `<div class="pp-hook-option" data-card-action="hook-select">`;
+    html += `<div class="pp-hook-variant">${escapeHtml(label)}</div>`;
+    html += `<div class="pp-hook-text">"${escapeHtml(opt.hook || opt.text || "")}"</div>`;
+    if (opt.reason) html += `<div class="pp-hook-reason">${escapeHtml(opt.reason)}</div>`;
+    html += `</div>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+function renderCardScript(data) {
+  const title = data.title || "Script";
+  const beats = Array.isArray(data.beats) ? data.beats : [];
+
+  let html = `<div class="pp-card pp-card--script">`;
+  html += `<div class="pp-card-header"><span class="pp-card-header-icon">🎬</span>${escapeHtml(title)}</div>`;
+  html += `<div class="pp-script-beats">`;
+  for (let i = 0; i < beats.length; i++) {
+    const beat = beats[i];
+    const num = i + 1;
+    const beatLabel = beat.label || `Beat ${num}`;
+    const time = beat.time || beat.timestamp || "";
+    html += `<div class="pp-script-beat pp-script-beat--${Math.min(num, 3)}">`;
+    html += `<div class="pp-script-beat-header">`;
+    html += `<span class="pp-script-beat-label">${escapeHtml(beatLabel)}</span>`;
+    if (time) html += `<span class="pp-script-beat-time">${escapeHtml(time)}</span>`;
+    html += `</div>`;
+    html += `<div class="pp-script-beat-text">${escapeHtml(beat.text || beat.content || "")}</div>`;
+    if (beat.note || beat.production) {
+      html += `<div class="pp-script-beat-note">${escapeHtml(beat.note || beat.production || "")}</div>`;
+    }
+    html += `</div>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+function renderCardCaption(data) {
+  const caption = data.caption || data.text || "";
+  const hashtags = data.hashtags || "";
+  // Split caption text, preserving line breaks
+  const captionHtml = escapeHtml(caption);
+  const hashtagsHtml = hashtags ? escapeHtml(hashtags) : "";
+
+  let html = `<div class="pp-card pp-card--caption">`;
+  html += `<div class="pp-card-header"><span class="pp-card-header-icon">✏️</span>Caption</div>`;
+  html += `<div class="pp-caption-text">${captionHtml}</div>`;
+  if (hashtagsHtml) html += `<div class="pp-caption-hashtags">${hashtagsHtml}</div>`;
+  html += `<div class="pp-card-actions">`;
+  html += `<button class="pp-card-btn pp-card-btn--secondary" data-card-action="copy-caption">📋 Copy</button>`;
+  html += `<button class="pp-card-btn pp-card-btn--secondary" data-card-action="prompt" data-prompt="Regenerate this caption with a different angle">🔄 Regenerate</button>`;
+  html += `</div></div>`;
+  return html;
+}
+
+function renderCard(type, data) {
+  try {
+    switch (type) {
+      case "next_post": return renderCardNextPost(data);
+      case "score": return renderCardScore(data);
+      case "week_plan": return renderCardWeekPlan(data);
+      case "hook_picker": return renderCardHookPicker(data);
+      case "script": return renderCardScript(data);
+      case "caption": return renderCardCaption(data);
+      default: return null;
+    }
+  } catch (err) {
+    console.warn("[PostPilot] Card render error:", type, err);
+    return null;
+  }
+}
+
+/* ================================================================
+   CARD INTERACTIONS — delegated event handlers
+   ================================================================ */
+
+document.addEventListener("click", (e) => {
+  const target = e.target.closest("[data-card-action]");
+  if (!target) return;
+  const action = target.dataset.cardAction;
+
+  // Hook picker: toggle selection
+  if (action === "hook-select") {
+    const container = target.closest(".pp-hook-options");
+    if (!container) return;
+    container.querySelectorAll(".pp-hook-option").forEach((el) => el.classList.remove("pp-hook-option--selected"));
+    target.classList.add("pp-hook-option--selected");
+    return;
+  }
+
+  // Copy caption to clipboard
+  if (action === "copy-caption") {
+    const card = target.closest(".pp-card--caption");
+    if (!card) return;
+    const captionEl = card.querySelector(".pp-caption-text");
+    const hashtagsEl = card.querySelector(".pp-caption-hashtags");
+    let text = captionEl ? captionEl.textContent : "";
+    if (hashtagsEl) text += "\n\n" + hashtagsEl.textContent;
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      target.classList.add("pp-card-btn--copied");
+      const original = target.innerHTML;
+      target.innerHTML = "✓ Copied";
+      setTimeout(() => {
+        target.classList.remove("pp-card-btn--copied");
+        target.innerHTML = original;
+      }, 1800);
+    }).catch(() => {});
+    return;
+  }
+
+  // Send a follow-up prompt
+  if (action === "prompt") {
+    const prompt = target.dataset.prompt;
+    if (prompt && typeof sendPrompt === "function") {
+      sendPrompt(prompt);
+    }
+    return;
+  }
+});
+
+/* ================================================================
+   MARKDOWN RENDERER — enhanced to detect card blocks
+   ================================================================ */
+
 function renderMarkdown(raw) {
-  const lines = String(raw || "").replace(/\r\n/g, "\n").split("\n");
+  const text = String(raw || "").replace(/\r\n/g, "\n");
+
+  // Pre-pass: extract card blocks and replace with placeholders
+  const cardPlaceholders = [];
+  const cardBlockRegex = /```card:(\w+)\s*\n([\s\S]*?)```/g;
+  const preprocessed = text.replace(cardBlockRegex, (_match, type, body) => {
+    let data;
+    try {
+      data = JSON.parse(body.trim());
+    } catch (_e) {
+      return _match; // leave broken JSON as-is for normal markdown rendering
+    }
+    const cardHtml = renderCard(type, data);
+    if (!cardHtml) return _match; // unknown card type — show raw
+    const idx = cardPlaceholders.length;
+    cardPlaceholders.push(cardHtml);
+    return `\n%%PPCARD_${idx}%%\n`;
+  });
+
+  const lines = preprocessed.split("\n");
   const blocks = [];
   let paragraph = [];
   let listType = "";
@@ -1633,6 +1874,16 @@ function renderMarkdown(raw) {
   };
 
   for (const line of lines) {
+    // Card placeholder injection
+    const cardMatch = line.match(/^%%PPCARD_(\d+)%%$/);
+    if (cardMatch) {
+      flushParagraph();
+      flushList();
+      const idx = Number(cardMatch[1]);
+      if (cardPlaceholders[idx]) blocks.push(cardPlaceholders[idx]);
+      continue;
+    }
+
     const headingMatch = line.match(/^\s{0,3}(#{1,3})\s+(.+)$/);
     if (headingMatch) {
       flushParagraph();

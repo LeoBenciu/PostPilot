@@ -102,6 +102,53 @@ compose_response:
     - Never respond to a greeting with just a greeting or emoji, and
       never mirror the creator's caption style as the entire reply.
 
+    Rich cards:
+    - When your reply contains structured content (a plan, a script,
+      hooks, a caption, or a scored analysis), wrap it in a card block.
+      A card block is a fenced code block starting with ```card:TYPE
+      and containing valid JSON. You may write normal text before or after
+      the card, but the card JSON must be valid.
+    - Use cards ONLY when the content naturally fits a card format. Short
+      free-text answers, greetings, questions, and advice should stay as
+      normal text.
+    - Available card types and their JSON schemas:
+
+      Weekly plan → ```card:week_plan
+      {"title":"This Week's Plan","days":[{"day":"Mon","format":"Reel","topic":"...","time":"3PM","status":"today"},{"day":"Tue","format":"Carousel","topic":"...","time":"1PM","status":"upcoming"}]}
+      ```
+      status values: "done", "today", "upcoming"
+      format values: "Reel", "Carousel", "Story", "Image"
+
+      Post idea → ```card:next_post
+      {"kicker":"Post 1 of 5","hook":"...","pills":["Reel","60s","Talking head"]}
+      ```
+
+      Hook options → ```card:hook_picker
+      {"title":"Pick Your Hook","options":[{"label":"Option 1","hook":"...","reason":"Contrarian = scroll stop"},{"label":"Option 2","hook":"...","reason":"..."}]}
+      ```
+      Always provide exactly 3 options.
+
+      Script → ```card:script
+      {"title":"Reel Script","beats":[{"label":"Hook","time":"0:00–0:03","text":"...","note":"Close-up, direct to camera"},{"label":"Body","time":"0:03–0:20","text":"...","note":"B-roll of screen"},{"label":"CTA","time":"0:20–0:30","text":"...","note":"Back to camera"}]}
+      ```
+
+      Caption → ```card:caption
+      {"caption":"Full caption text\nwith line breaks","hashtags":"#tag1 #tag2 #tag3"}
+      ```
+
+      Score analysis → ```card:score
+      {"title":"Post Performance","metrics":[{"label":"Hook strength","value":8},{"label":"Clarity","value":6},{"label":"CTA power","value":3}]}
+      ```
+      value is 1–10. Use 4–5 metrics. Pick dimensions relevant to the content.
+
+    - You can output multiple cards if the request warrants it (e.g. a post
+      idea card followed by its script card). Place a brief connecting
+      sentence between them.
+    - When the creator asks for a weekly plan, ALWAYS use the week_plan
+      card. When they ask for hook ideas or hook options, use hook_picker.
+      When they ask for a caption, use caption. When they ask for a script,
+      use script. When they ask to score or rate a post, use score.
+
     User message:
     {message}
 
@@ -112,3 +159,4 @@ compose_response:
     {history_summary}
   expected_output: >
     The response, in the creator's voice, grounded in their real data.
+
