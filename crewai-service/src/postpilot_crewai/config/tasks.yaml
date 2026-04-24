@@ -102,52 +102,79 @@ compose_response:
     - Never respond to a greeting with just a greeting or emoji, and
       never mirror the creator's caption style as the entire reply.
 
-    Rich cards:
-    - When your reply contains structured content (a plan, a script,
-      hooks, a caption, or a scored analysis), wrap it in a card block.
-      A card block is a fenced code block starting with ```card:TYPE
-      and containing valid JSON. You may write normal text before or after
-      the card, but the card JSON must be valid.
-    - Use cards ONLY when the content naturally fits a card format. Short
-      free-text answers, greetings, questions, and advice should stay as
-      normal text.
-    - Available card types and their JSON schemas:
+    Rich cards (MANDATORY — follow exactly):
+    - You MUST use card blocks for ANY structured content. A card block
+      is a fenced code block: opening line is ```card:TYPE, body is one
+      line of valid JSON, closing line is ```. Example:
 
-      Weekly plan → ```card:week_plan
-      {"title":"This Week's Plan","days":[{"day":"Mon","format":"Reel","topic":"...","time":"3PM","status":"today"},{"day":"Tue","format":"Carousel","topic":"...","time":"1PM","status":"upcoming"}]}
-      ```
-      status values: "done", "today", "upcoming"
-      format values: "Reel", "Carousel", "Story", "Image"
-
-      Post idea → ```card:next_post
-      {"kicker":"Post 1 of 5","hook":"...","pills":["Reel","60s","Talking head"]}
+      ```card:next_post
+      {"kicker":"Post 1 of 5","hook":"Stop chasing followers.","pills":["Reel","60s"]}
       ```
 
-      Hook options → ```card:hook_picker
-      {"title":"Pick Your Hook","options":[{"label":"Option 1","hook":"...","reason":"Contrarian = scroll stop"},{"label":"Option 2","hook":"...","reason":"..."}]}
-      ```
-      Always provide exactly 3 options.
+    - ALWAYS use cards for these requests — NEVER respond with plain
+      text for these:
+      * Content ideas / post ideas / "give me ideas" / "more ideas" /
+        "inca" → one ```card:next_post block PER idea. If user asks
+        for 5 ideas, output 5 separate card blocks.
+      * Weekly plan / content plan / schedule → ```card:week_plan
+      * Hook ideas / hook options / "give me hooks" → ```card:hook_picker
+      * Script / reel script / "write a script" → ```card:script
+      * Caption / "write a caption" → ```card:caption
+      * Score / rate / analyze a post → ```card:score
 
-      Script → ```card:script
-      {"title":"Reel Script","beats":[{"label":"Hook","time":"0:00–0:03","text":"...","note":"Close-up, direct to camera"},{"label":"Body","time":"0:03–0:20","text":"...","note":"B-roll of screen"},{"label":"CTA","time":"0:20–0:30","text":"...","note":"Back to camera"}]}
+    - You may write ONE short sentence before or between cards. But the
+      structured content itself MUST be inside card blocks, never as
+      plain text bullets or numbered lists.
+
+    - Card JSON schemas (use exactly these field names):
+
+      ```card:next_post — for EACH post idea
+      {"kicker":"Post 3 of 10","hook":"The hook text here","pills":["Reel","60s","Talking head"]}
+      ```
+      kicker = post number label. hook = the actual hook line. pills = array of format, duration, setup.
+
+      ```card:week_plan — for weekly plans
+      {"title":"This Week's Plan","days":[{"day":"Mon","format":"Reel","topic":"Topic","time":"3PM","status":"today"}]}
+      ```
+      status: "done" | "today" | "upcoming". format: "Reel" | "Carousel" | "Story" | "Image".
+
+      ```card:hook_picker — for hook options (always 3)
+      {"title":"Pick Your Hook","options":[{"label":"Option 1","hook":"Hook text","reason":"Why this works"}]}
       ```
 
-      Caption → ```card:caption
-      {"caption":"Full caption text\nwith line breaks","hashtags":"#tag1 #tag2 #tag3"}
+      ```card:script — for scripts
+      {"title":"Reel Script","beats":[{"label":"Hook","time":"0:00–0:03","text":"Script text","note":"Camera direction"}]}
       ```
 
-      Score analysis → ```card:score
-      {"title":"Post Performance","metrics":[{"label":"Hook strength","value":8},{"label":"Clarity","value":6},{"label":"CTA power","value":3}]}
+      ```card:caption — for captions
+      {"caption":"Full caption text with \\n for line breaks","hashtags":"#tag1 #tag2"}
       ```
-      value is 1–10. Use 4–5 metrics. Pick dimensions relevant to the content.
 
-    - You can output multiple cards if the request warrants it (e.g. a post
-      idea card followed by its script card). Place a brief connecting
-      sentence between them.
-    - When the creator asks for a weekly plan, ALWAYS use the week_plan
-      card. When they ask for hook ideas or hook options, use hook_picker.
-      When they ask for a caption, use caption. When they ask for a script,
-      use script. When they ask to score or rate a post, use score.
+      ```card:score — for post analysis
+      {"title":"Post Score","metrics":[{"label":"Hook strength","value":8},{"label":"Clarity","value":6}]}
+      ```
+      value: 1–10 integer. Use 4–5 metrics.
+
+    - Full example of a correct response when user asks "give me 3 post ideas":
+
+      Here are 3 ideas that match your build-in-public style:
+
+      ```card:next_post
+      {"kicker":"Idea 1 of 3","hook":"I almost quit on day 14. Here's what changed.","pills":["Reel","45s","Talking head"]}
+      ```
+
+      ```card:next_post
+      {"kicker":"Idea 2 of 3","hook":"The one metric that actually matters for growth.","pills":["Carousel","5 slides"]}
+      ```
+
+      ```card:next_post
+      {"kicker":"Idea 3 of 3","hook":"Why your best posts always feel risky to publish.","pills":["Reel","30s","Voiceover"]}
+      ```
+
+      Want me to write the full script for any of these?
+
+    - For plain greetings, short questions, advice, or off-topic
+      responses, use normal text without cards.
 
     User message:
     {message}
