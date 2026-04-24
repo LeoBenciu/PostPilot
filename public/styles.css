@@ -522,9 +522,6 @@ body {
   z-index: 5;
   padding: 0;
   pointer-events: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .agent-reset-btn {
@@ -544,164 +541,8 @@ body {
   box-shadow: 0 14px 26px rgba(120, 28, 50, 0.22);
 }
 
-#agentView .agent-view-toggle {
-  pointer-events: auto;
-  display: inline-flex;
-  gap: 6px;
-  padding: 4px;
-  border-radius: 999px;
-  border: 1px solid #f0dde2;
-  background: rgba(255, 250, 251, 0.96);
-}
-
-#agentView .agent-view-mode-btn {
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  min-width: 72px;
-}
-
-#agentView .agent-view-mode-btn.active {
-  background: #d50032;
-  color: #fff;
-  border-color: #d50032;
-}
-
-#agentView .visual-board {
-  margin: 82px 24px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-#agentView .visual-tldr {
-  border: 1px solid #f1dee3;
-  background: #fff;
-  border-radius: 14px;
-  padding: 12px 14px;
-}
-
-#agentView .visual-tldr h3 {
-  margin: 0 0 6px;
-  font-size: 15px;
-  color: #7f2d45;
-}
-
-#agentView .visual-tldr p {
-  margin: 0;
-  font-size: 13px;
-  color: #5c3040;
-}
-
-#agentView .visual-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 10px;
-}
-
-#agentView .visual-card {
-  border: 1px solid #f0dde3;
-  background: #fff;
-  border-radius: 14px;
-  padding: 12px;
-  box-shadow: 0 2px 10px rgba(120, 28, 50, 0.05);
-}
-
-#agentView .visual-card h4 {
-  margin: 0 0 8px;
-  font-size: 14px;
-  color: #7f2d45;
-}
-
-#agentView .visual-card summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: #7f2d45;
-  margin-bottom: 8px;
-}
-
-#agentView .visual-pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-#agentView .visual-pill {
-  font-size: 11px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #fdf2f6;
-  border: 1px solid #f3d7df;
-  color: #94445a;
-}
-
-#agentView .visual-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-#agentView .visual-actions button {
-  border-radius: 10px;
-  padding: 7px 9px;
-  font-size: 12px;
-}
-
-#agentView .visual-score-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  margin: 8px 0 4px;
-  align-items: center;
-}
-
-#agentView .visual-score-bar {
-  grid-column: 1 / span 2;
-  height: 6px;
-  border-radius: 999px;
-  background: #f4e7eb;
-  overflow: hidden;
-}
-
-#agentView .visual-score-bar > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-}
-
-#agentView .visual-score-bar > span.green { background: #1d9f5d; }
-#agentView .visual-score-bar > span.amber { background: #d08b18; }
-#agentView .visual-score-bar > span.red { background: #c74a4a; }
-
-#agentView .visual-week-row {
-  display: grid;
-  grid-template-columns: 42px 70px 1fr 60px 12px;
-  gap: 8px;
-  align-items: center;
-  font-size: 12px;
-  margin-bottom: 6px;
-}
-
-#agentView .visual-week-row.today {
-  background: #fff4f7;
-  border-radius: 10px;
-  padding: 4px 6px;
-}
-
-#agentView .status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  justify-self: end;
-}
-
-#agentView .status-dot.done { background: #1d9f5d; }
-#agentView .status-dot.today { background: #d50032; }
-#agentView .status-dot.upcoming { background: #c9a4b1; }
-
 #agentView .messages {
-  padding-top: 16px;
+  padding-top: 72px;
   flex: 1 1 0;
   min-height: 0;
 }
@@ -763,6 +604,7 @@ body {
   white-space: normal;
   word-break: break-word;
   max-width: 78%;
+  overflow-x: auto;
 }
 
 .msg-bubble p,
@@ -801,6 +643,7 @@ body {
   border-radius: 4px 18px 18px 18px;
   color: #2d1218;
   box-shadow: 0 2px 10px rgba(120, 28, 50, 0.05);
+  max-width: min(100%, 920px);
 }
 
 .msg-row.assistant .msg-bubble code {
@@ -827,6 +670,127 @@ body {
 .msg-row.user .msg-bubble a {
   color: #fff;
   text-decoration: underline;
+}
+
+/* Structured AI HTML cards (pp-*) */
+.msg-bubble .pp-cards {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.msg-bubble .pp-card {
+  grid-column: span 12;
+  border: 1px solid #efd3da;
+  background: #fffbfc;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.msg-bubble .pp-card.pp-card-half {
+  grid-column: span 6;
+}
+
+.msg-bubble .pp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.msg-bubble .pp-card-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.msg-bubble .pp-card-subtitle {
+  margin: 0;
+  color: #7f5b64;
+  font-size: 12px;
+}
+
+.msg-bubble .pp-pill-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 0;
+}
+
+.msg-bubble .pp-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #efcfda;
+  background: #fff;
+  color: #814554;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.msg-bubble .pp-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.msg-bubble .pp-card-actions button {
+  width: auto;
+  min-width: 120px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.msg-bubble .pp-card-primary {
+  background: #1f0d12;
+  border: 1px solid #1f0d12;
+  color: #fff;
+}
+
+.msg-bubble .pp-card-secondary {
+  background: #fff;
+  border: 1px solid #ecd0d8;
+  color: #43222c;
+}
+
+.msg-bubble .pp-score-row {
+  margin: 9px 0;
+}
+
+.msg-bubble .pp-score-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.msg-bubble .pp-score-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #f8e7eb;
+  overflow: hidden;
+}
+
+.msg-bubble .pp-score-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: #d50032;
+}
+
+@media (max-width: 768px) {
+  .msg-row.assistant .msg-bubble {
+    max-width: 100%;
+  }
+
+  .msg-bubble .pp-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
 .streaming-cursor {
@@ -2047,8 +2011,6 @@ pre {
   .agent-toolbar {
     top: 8px;
     right: 12px;
-    left: 12px;
-    justify-content: space-between;
   }
 
   .agent-reset-btn {
@@ -2058,28 +2020,8 @@ pre {
     gap: 5px;
   }
 
-  #agentView .agent-view-toggle {
-    gap: 4px;
-    padding: 3px;
-  }
-
-  #agentView .agent-view-mode-btn {
-    min-width: 58px;
-    font-size: 11px;
-    padding: 6px 8px;
-  }
-
-  #agentView .visual-board {
-    margin: 56px 12px 0;
-    gap: 8px;
-  }
-
-  #agentView .visual-cards {
-    grid-template-columns: 1fr;
-  }
-
   #agentView .messages {
-    padding-top: 10px;
+    padding-top: 52px;
   }
 
   .messages {

@@ -16,6 +16,21 @@ compose_response:
     - On analysis or advice requests, prefer one opening line, a short
       list, and one Quick win. Don't fragment the list into "what works /
       what drags down / what to do" subsections — one list is enough.
+    - Prefer structured HTML cards over plain prose whenever the answer has
+      multiple parts (ideas, plans, scripts, comparisons, weekly plans).
+      Return only an HTML fragment (no markdown fences, no explanations about
+      formatting) using classes that start with "pp-".
+    - Use this structure:
+      - wrapper: <div class="pp-cards"> ... </div>
+      - card: <section class="pp-card"> ... </section>
+      - title: <h3 class="pp-card-title">...</h3>
+      - pills: <div class="pp-pill-row"><span class="pp-pill">...</span></div>
+      - actions: <div class="pp-card-actions"><button class="pp-card-primary">...</button></div>
+      - score rows: <div class="pp-score-row">...</div> with track/bar classes.
+    - Keep HTML safe and simple:
+      use only tags div, section, article, header, h1-h4, p, ul, ol, li,
+      span, strong, em, small, button, hr, br. No inline styles, no scripts,
+      no external embeds, no links unless explicitly asked.
 
     Using the data:
     - When you mention a post, anchor it to something real in it (a phrase
