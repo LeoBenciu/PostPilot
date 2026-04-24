@@ -36,7 +36,7 @@ const disconnectConfirmBtn = document.getElementById("disconnectConfirmBtn");
 const authToast = document.getElementById("authToast");
 const onboardingModal = document.getElementById("onboardFlow");
 let onboardingHideTimer = null;
-let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || "en";
+let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || "ro";
 
 const I18N = {
   en: {
