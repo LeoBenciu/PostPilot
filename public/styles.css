@@ -604,7 +604,6 @@ body {
   white-space: normal;
   word-break: break-word;
   max-width: 78%;
-  overflow-x: auto;
 }
 
 .msg-bubble p,
@@ -643,7 +642,6 @@ body {
   border-radius: 4px 18px 18px 18px;
   color: #2d1218;
   box-shadow: 0 2px 10px rgba(120, 28, 50, 0.05);
-  max-width: min(100%, 920px);
 }
 
 .msg-row.assistant .msg-bubble code {
@@ -670,127 +668,6 @@ body {
 .msg-row.user .msg-bubble a {
   color: #fff;
   text-decoration: underline;
-}
-
-/* Structured AI HTML cards (pp-*) */
-.msg-bubble .pp-cards {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.msg-bubble .pp-card {
-  grid-column: span 12;
-  border: 1px solid #efd3da;
-  background: #fffbfc;
-  border-radius: 14px;
-  padding: 12px;
-}
-
-.msg-bubble .pp-card.pp-card-half {
-  grid-column: span 6;
-}
-
-.msg-bubble .pp-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.msg-bubble .pp-card-title {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-
-.msg-bubble .pp-card-subtitle {
-  margin: 0;
-  color: #7f5b64;
-  font-size: 12px;
-}
-
-.msg-bubble .pp-pill-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 10px 0 0;
-}
-
-.msg-bubble .pp-pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  border: 1px solid #efcfda;
-  background: #fff;
-  color: #814554;
-  padding: 3px 10px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.msg-bubble .pp-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-
-.msg-bubble .pp-card-actions button {
-  width: auto;
-  min-width: 120px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 13px;
-}
-
-.msg-bubble .pp-card-primary {
-  background: #1f0d12;
-  border: 1px solid #1f0d12;
-  color: #fff;
-}
-
-.msg-bubble .pp-card-secondary {
-  background: #fff;
-  border: 1px solid #ecd0d8;
-  color: #43222c;
-}
-
-.msg-bubble .pp-score-row {
-  margin: 9px 0;
-}
-
-.msg-bubble .pp-score-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-
-.msg-bubble .pp-score-track {
-  width: 100%;
-  height: 8px;
-  border-radius: 999px;
-  background: #f8e7eb;
-  overflow: hidden;
-}
-
-.msg-bubble .pp-score-bar {
-  height: 100%;
-  border-radius: inherit;
-  background: #d50032;
-}
-
-@media (max-width: 768px) {
-  .msg-row.assistant .msg-bubble {
-    max-width: 100%;
-  }
-
-  .msg-bubble .pp-cards {
-    grid-template-columns: 1fr;
-  }
 }
 
 .streaming-cursor {

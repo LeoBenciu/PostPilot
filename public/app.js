@@ -1677,122 +1677,6 @@ function renderMarkdown(raw) {
   return blocks.join("");
 }
 
-const ALLOWED_HTML_TAGS = new Set([
-  "div",
-  "section",
-  "article",
-  "header",
-  "h1",
-  "h2",
-  "h3",
-  "h4",
-  "p",
-  "ul",
-  "ol",
-  "li",
-  "span",
-  "strong",
-  "em",
-  "small",
-  "button",
-  "hr",
-  "br",
-]);
-
-const ALLOWED_HTML_CLASSES = new Set([
-  "pp-cards",
-  "pp-card",
-  "pp-card-header",
-  "pp-card-title",
-  "pp-card-subtitle",
-  "pp-card-body",
-  "pp-card-half",
-  "pp-card-actions",
-  "pp-card-primary",
-  "pp-card-secondary",
-  "pp-pill-row",
-  "pp-pill",
-  "pp-week-row",
-  "pp-week-day",
-  "pp-week-format",
-  "pp-week-topic",
-  "pp-week-time",
-  "pp-week-status",
-  "pp-week-status-dot",
-  "pp-week-today",
-  "pp-option",
-  "pp-option-reason",
-  "pp-option-selected",
-  "pp-beat",
-  "pp-beat-label",
-  "pp-beat-note",
-  "pp-beat-accent",
-  "pp-beat-blue",
-  "pp-beat-coral",
-  "pp-caption",
-  "pp-hashtags",
-  "pp-score-row",
-  "pp-score-label",
-  "pp-score-value",
-  "pp-score-track",
-  "pp-score-bar",
-]);
-
-function sanitizeHtmlFragment(raw) {
-  const template = document.createElement("template");
-  template.innerHTML = String(raw || "");
-
-  const walk = (node) => {
-    if (!node) return;
-    const children = Array.from(node.childNodes);
-    for (const child of children) {
-      if (child.nodeType === Node.ELEMENT_NODE) {
-        const tag = child.tagName.toLowerCase();
-        if (!ALLOWED_HTML_TAGS.has(tag)) {
-          const text = document.createTextNode(child.textContent || "");
-          child.replaceWith(text);
-          continue;
-        }
-
-        const attrs = Array.from(child.attributes || []);
-        for (const attr of attrs) {
-          const name = attr.name.toLowerCase();
-          if (name === "class") {
-            const safe = String(attr.value || "")
-              .split(/\s+/)
-              .filter((cls) => ALLOWED_HTML_CLASSES.has(cls))
-              .join(" ");
-            if (safe) child.setAttribute("class", safe);
-            else child.removeAttribute("class");
-            continue;
-          }
-          child.removeAttribute(attr.name);
-        }
-      }
-      walk(child);
-    }
-  };
-
-  walk(template.content);
-  return template.innerHTML.trim();
-}
-
-function looksLikeHtml(raw) {
-  const text = String(raw || "").trim();
-  if (!text) return false;
-  if (!/^<(div|section|article|header)\b/i.test(text)) return false;
-  return /class\s*=\s*["'][^"']*pp-/i.test(text);
-}
-
-function renderMessageContent(raw) {
-  const text = String(raw || "");
-  if (looksLikeHtml(text)) {
-    const sanitized = sanitizeHtmlFragment(text);
-    if (sanitized) return sanitized;
-  }
-  return renderMarkdown(text);
-}
-
 function createMsgRow(role) {
   const row = document.createElement("div");
   row.className = `msg-row ${role}`;
@@ -1832,7 +1716,7 @@ function addMessage(role, content) {
   const messages = document.getElementById("messages");
   const wasAtBottom = isMessagesNearBottom(messages);
   const { row, bubble } = createMsgRow(role);
-  bubble.innerHTML = renderMessageContent(content);
+  bubble.innerHTML = renderMarkdown(content);
   messages.appendChild(row);
   // A user sending a new message always snaps to bottom — they expect to see
   // their own message. For assistant completions, respect the user's scroll.
@@ -1929,7 +1813,7 @@ function addStreamingMessage() {
       cursor.remove();
       const text = rawText || fallbackText || "";
       if (text) {
-        bubble.innerHTML = renderMessageContent(text);
+        bubble.innerHTML = renderMarkdown(text);
       } else {
         // Never leave the user staring at an empty bubble — show a clear
         // "something went wrong" message if no tokens arrived.
