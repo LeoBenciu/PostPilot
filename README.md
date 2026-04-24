@@ -42,9 +42,6 @@ docker run --name postpilot-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=post
    - `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`
    - `STRIPE_PRICE_ID` (optional, if you use Stripe Dashboard prices)
    - `STRIPE_MONTHLY_EUR_CENTS` (default `3000`)
-   - `EARLY_ACCESS_INTERNAL_EMAIL`
-   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
-   - `EARLY_ACCESS_TUTORIAL_URL` (optional)
 
 4. Run Prisma migration + client generation:
 
@@ -97,8 +94,6 @@ Then use in root `.env`:
 ## Main API endpoints
 
 - `GET /api/health`
-- `POST /api/early-access/request` (`fullName`, `email`, `phone`, `instagramHandle`, `message`)
-- `GET /api/early-access/status?email=...`
 - `POST /api/auth/signup` (`fullName`, `email`, `password`)
 - `POST /api/auth/signin` (`email`, `password`)
 - `POST /api/auth/signout`

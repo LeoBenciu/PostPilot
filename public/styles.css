@@ -852,7 +852,6 @@ body {
 }
 
 input,
-textarea,
 button,
 pre {
   width: 100%;
@@ -861,11 +860,6 @@ pre {
   background: var(--surface);
   color: var(--text);
   padding: 10px 12px;
-}
-
-textarea {
-  resize: vertical;
-  min-height: 90px;
 }
 
 button {

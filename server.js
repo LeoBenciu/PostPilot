@@ -5,7 +5,6 @@ const { URL } = require("url");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const Stripe = require("stripe");
-const nodemailer = require("nodemailer");
 require("dotenv").config();
 const {
   ensureAppState,
@@ -21,12 +20,6 @@ const {
   revokeSession,
   createOAuthState,
   consumeOAuthState,
-  findEarlyAccessRequestByEmail,
-  upsertEarlyAccessRequest,
-  findEarlyAccessRequestByRawApprovalToken,
-  approveEarlyAccessRequest,
-  markEarlyAccessEmailSent,
-  linkEarlyAccessRequestToUser,
   closeDb,
 } = require("./dbState");
 const { generateAgentReply, streamAgentReply } = require("./aiClient");
@@ -50,17 +43,6 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID || "";
 const STRIPE_MONTHLY_EUR_CENTS = Number(process.env.STRIPE_MONTHLY_EUR_CENTS || 900);
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
-const EARLY_ACCESS_INTERNAL_EMAIL =
-  process.env.EARLY_ACCESS_INTERNAL_EMAIL || "nextcorpromania@gmail.com";
-const SMTP_HOST = process.env.SMTP_HOST || "";
-const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_SECURE = String(process.env.SMTP_SECURE || "false").toLowerCase() === "true";
-const SMTP_USER = process.env.SMTP_USER || "";
-const SMTP_PASS = process.env.SMTP_PASS || "";
-const SMTP_FROM = process.env.SMTP_FROM || "PostPilot <no-reply@postpilot.app>";
-const EARLY_ACCESS_TUTORIAL_URL = process.env.EARLY_ACCESS_TUTORIAL_URL || "";
-
-let mailTransport = null;
 
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, { "Content-Type": "application/json" });
@@ -840,54 +822,6 @@ function requestOrigin(req) {
   return `${proto}://${req.headers.host}`;
 }
 
-function hasSmtpConfig() {
-  return Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
-}
-
-function getMailTransport() {
-  if (!hasSmtpConfig()) return null;
-  if (mailTransport) return mailTransport;
-  mailTransport = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
-  return mailTransport;
-}
-
-async function sendEmail({ to, subject, text, html }) {
-  const transport = getMailTransport();
-  if (!transport) {
-    console.log(`[PostPilot][email-disabled] to=${to} subject="${subject}"`);
-    return { sent: false, reason: "smtp_not_configured" };
-  }
-  await transport.sendMail({
-    from: SMTP_FROM,
-    to,
-    subject,
-    text,
-    html,
-  });
-  return { sent: true };
-}
-
-function earlyAccessApproveUrl(origin, token) {
-  return `${origin}/early-access/approve?token=${encodeURIComponent(token)}`;
-}
-
-function escapeHtml(raw) {
-  return String(raw || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
 async function resolveUserIdFromStripeEventObject(obj) {
   const fromMeta = Number(obj?.metadata?.userId || 0);
   if (fromMeta) return fromMeta;
@@ -1381,227 +1315,6 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === "POST" && pathname === "/api/early-access/request") {
-    try {
-      const body = await readBody(req);
-      const fullName = String(body.fullName || "").trim();
-      const email = String(body.email || "").trim().toLowerCase();
-      const phone = String(body.phone || "").trim();
-      const instagramHandle = String(body.instagramHandle || "").trim().replace(/^@+/, "");
-      const message = String(body.message || "").trim();
-      if (!fullName || !email || !phone || !instagramHandle || !message) {
-        sendJson(res, 400, { error: "Name, email, phone, Instagram handle, and message are required." });
-        return;
-      }
-
-      const existingUser = await findUserByEmail(email);
-      if (existingUser) {
-        sendJson(res, 409, { error: "An account already exists for this email. Please sign in." });
-        return;
-      }
-
-      const existingRequest = await findEarlyAccessRequestByEmail(email);
-      if (existingRequest?.accessApproved) {
-        sendJson(res, 200, {
-          ok: true,
-          status: "approved",
-          message: "You are already approved. Create your account to continue onboarding.",
-        });
-        return;
-      }
-
-      const token = crypto.randomBytes(24).toString("hex");
-      const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-      await upsertEarlyAccessRequest({
-        fullName,
-        email,
-        phone,
-        instagramHandle,
-        message,
-        approvalTokenHash: tokenHash,
-      });
-
-      const origin = requestOrigin(req);
-      const approveUrl = earlyAccessApproveUrl(origin, token);
-      const safeName = escapeHtml(fullName);
-      const safeEmail = escapeHtml(email);
-      const safePhone = escapeHtml(phone);
-      const safeHandle = escapeHtml(`@${instagramHandle}`);
-      const safeMessage = escapeHtml(message);
-
-      try {
-        await sendEmail({
-          to: EARLY_ACCESS_INTERNAL_EMAIL,
-          subject: `Early access request: ${fullName} (${email})`,
-          text:
-            `New PostPilot early-access request\n\n` +
-            `Name: ${fullName}\nEmail: ${email}\nPhone: ${phone}\nInstagram: @${instagramHandle}\n\n` +
-            `Message:\n${message}\n\n` +
-            `After adding this user as a Meta tester, approve access:\n${approveUrl}\n`,
-          html:
-            `<p>New PostPilot early-access request.</p>` +
-            `<ul>` +
-            `<li><strong>Name:</strong> ${safeName}</li>` +
-            `<li><strong>Email:</strong> ${safeEmail}</li>` +
-            `<li><strong>Phone:</strong> ${safePhone}</li>` +
-            `<li><strong>Instagram:</strong> ${safeHandle}</li>` +
-            `</ul>` +
-            `<p><strong>Message:</strong><br/>${safeMessage.replaceAll("\n", "<br/>")}</p>` +
-            `<p>After adding this user as a Meta tester, click to approve:</p>` +
-            `<p><a href="${approveUrl}">Approve early-access user</a></p>`,
-        });
-        await markEarlyAccessEmailSent(email, "internal");
-      } catch (emailErr) {
-        console.error("[PostPilot][early-access] failed to send internal approval email:", emailErr?.message);
-      }
-
-      try {
-        await sendEmail({
-          to: email,
-          subject: "PostPilot early access request received",
-          text:
-            `Hey ${fullName},\n\n` +
-            `We received your early-access request for PostPilot.\n` +
-            `Our team is reviewing your info and will approve access shortly.\n\n` +
-            `You will get a second email with onboarding steps once your access is approved.`,
-          html:
-            `<p>Hey ${safeName},</p>` +
-            `<p>We received your early-access request for PostPilot.</p>` +
-            `<p>Our team is reviewing your info and will approve access shortly.</p>` +
-            `<p>You will get a second email with onboarding steps once your access is approved.</p>`,
-        });
-        await markEarlyAccessEmailSent(email, "acknowledged");
-      } catch (emailErr) {
-        console.error("[PostPilot][early-access] failed to send acknowledgment email:", emailErr?.message);
-      }
-
-      sendJson(res, 202, { ok: true, status: "pending" });
-    } catch (err) {
-      sendJson(res, 400, { error: err.message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && pathname === "/api/early-access/status") {
-    try {
-      const email = String(parsed.searchParams.get("email") || "").trim().toLowerCase();
-      if (!email) {
-        sendJson(res, 400, { error: "Email is required." });
-        return;
-      }
-      const request = await findEarlyAccessRequestByEmail(email);
-      if (!request) {
-        sendJson(res, 200, { status: "none", approved: false });
-        return;
-      }
-      sendJson(res, 200, {
-        status: request.status || (request.accessApproved ? "approved" : "pending"),
-        approved: Boolean(request.accessApproved),
-        approvedAt: request.approvedAt,
-      });
-    } catch (err) {
-      sendJson(res, 400, { error: err.message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && pathname === "/early-access/approve") {
-    const token = String(parsed.searchParams.get("token") || "").trim();
-    if (!token) {
-      res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
-      res.end("<h1>Missing approval token</h1>");
-      return;
-    }
-    try {
-      const request = await findEarlyAccessRequestByRawApprovalToken(token);
-      if (!request) {
-        res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
-        res.end("<h1>Invalid or expired approval token</h1>");
-        return;
-      }
-
-      const wasAlreadyApproved = Boolean(request.accessApproved);
-      if (!wasAlreadyApproved) {
-        await approveEarlyAccessRequest(
-          request.id,
-          String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || ""),
-        );
-      }
-
-      const origin = requestOrigin(req);
-      const signupUrl = `${origin}/?access=approved&email=${encodeURIComponent(request.email)}`;
-      if (!wasAlreadyApproved) {
-        try {
-          const tutorialLine = EARLY_ACCESS_TUTORIAL_URL
-            ? `\nTutorial: ${EARLY_ACCESS_TUTORIAL_URL}\n`
-            : "\nTutorial: A short GIF/screenshots walkthrough is included in-app during onboarding.\n";
-          const tutorialHtml = EARLY_ACCESS_TUTORIAL_URL
-            ? `<p><a href="${EARLY_ACCESS_TUTORIAL_URL}">Watch the short tutorial (GIF/screenshots)</a></p>`
-            : `<p>A short tutorial (GIF/screenshots) is included in onboarding after login.</p>`;
-          await sendEmail({
-            to: request.email,
-            subject: "You're in: PostPilot early access approved",
-            text:
-              `You're approved for PostPilot early access.\n\n` +
-              `Before connecting Instagram, accept the Meta tester invite in Facebook settings:\n` +
-              `facebook.com/settings -> Apps and Websites -> Tester Invites.\n\n` +
-              tutorialLine +
-              `Then continue onboarding here:\n${signupUrl}\n\n` +
-              `Tip: tester invites expire in 7 days. Please accept within 48 hours.`,
-            html:
-              `<p>You are approved for <strong>PostPilot early access</strong>.</p>` +
-              `<p><strong>Next steps:</strong></p>` +
-              `<ol>` +
-              `<li>Accept the Meta tester invite in Facebook settings.</li>` +
-              `<li>Review the tutorial steps and screenshots below.</li>` +
-              `<li>Open PostPilot and continue onboarding.</li>` +
-              `<li>Connect Instagram once invite acceptance is complete.</li>` +
-              `</ol>` +
-              tutorialHtml +
-              `<p><a href="${signupUrl}">Continue onboarding</a></p>` +
-              `<p>Tester invites expire in 7 days, so please accept within 48 hours.</p>`,
-          });
-          await markEarlyAccessEmailSent(request.email, "access");
-        } catch (emailErr) {
-          console.error("[PostPilot][early-access] failed to send access-approved email:", emailErr?.message);
-        }
-      }
-
-      const safeName = escapeHtml(request.fullName || "creator");
-      const statusLine = wasAlreadyApproved
-        ? "This request was already approved."
-        : "Access has been approved and the user has been notified.";
-      const html = `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Early Access Approved</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fff7f9; color: #231018; margin: 0; padding: 24px; }
-    .card { max-width: 640px; margin: 36px auto; background: #fff; border: 1px solid #f3d5d8; border-radius: 16px; padding: 24px; }
-    h1 { margin-top: 0; }
-    p { line-height: 1.5; }
-    a { color: #d50032; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>Approved: ${safeName}</h1>
-    <p>${escapeHtml(statusLine)}</p>
-    <p>The CTA sent to the user points to: <a href="${signupUrl}">${signupUrl}</a></p>
-  </div>
-</body>
-</html>`;
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      res.end(html);
-    } catch (err) {
-      res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" });
-      res.end(`<h1>Approval failed</h1><p>${escapeHtml(err.message)}</p>`);
-    }
-    return;
-  }
-
   if (req.method === "GET" && pathname === "/api/auth/session") {
     try {
       const user = await getAuthedUser(req);
@@ -1640,15 +1353,6 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const earlyAccess = await findEarlyAccessRequestByEmail(email);
-      if (!earlyAccess?.accessApproved) {
-        sendJson(res, 403, {
-          error:
-            "This account is in early access. Submit the request form first and wait for approval.",
-        });
-        return;
-      }
-
       const existing = await findUserByEmail(email);
       if (existing) {
         sendJson(res, 409, { error: "Account already exists. Please sign in." });
@@ -1657,11 +1361,6 @@ const server = http.createServer(async (req, res) => {
 
       const passwordHash = await bcrypt.hash(password, 12);
       const user = await createUserWithPassword({ fullName, email, passwordHash });
-      try {
-        await linkEarlyAccessRequestToUser(email, user.id);
-      } catch (_err) {
-        // Non-blocking: account creation should still succeed if link fails.
-      }
       const session = await createSession(user.id, SESSION_TTL_DAYS);
       setSessionCookie(req, res, session.token, session.expiresAt);
       sendJson(res, 201, {
@@ -1827,26 +1526,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const existingByEmail = await findUserByEmail(email);
-      if (!existingByEmail) {
-        const earlyAccess = await findEarlyAccessRequestByEmail(email);
-        if (!earlyAccess?.accessApproved) {
-          sendRedirect(
-            res,
-            authRedirectUrl(source, "early_access_required", "request_and_approval_required"),
-          );
-          return;
-        }
-      }
-
       const user = await createOrLinkGoogleUser({ googleSub, email, fullName });
-      if (!existingByEmail) {
-        try {
-          await linkEarlyAccessRequestToUser(email, user.id);
-        } catch (_err) {
-          // Non-blocking.
-        }
-      }
       const state = bindStateToUser(await getStateForUser(user.id), user);
       updateOnboardingCompletion(state);
       await saveStateForUser(user.id, state);

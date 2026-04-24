@@ -12,7 +12,6 @@ const signinFeedback = document.getElementById("signinFeedback");
 const signinModal = document.getElementById("signinModal");
 const openSignin = document.getElementById("openSignin");
 const openTrialBtn = document.getElementById("openTrialBtn");
-const switchCreateAccountMode = document.getElementById("switchCreateAccountMode");
 const closeSignin = document.getElementById("closeSignin");
 const closeOnboarding = document.getElementById("closeOnboarding");
 const disconnectBtn = document.getElementById("disconnectBtn");
@@ -38,7 +37,6 @@ const authToast = document.getElementById("authToast");
 const onboardingModal = document.getElementById("onboardFlow");
 let onboardingHideTimer = null;
 let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || "en";
-let signupMode = "request";
 
 const I18N = {
   en: {
@@ -81,23 +79,14 @@ const I18N = {
     finalCtaClosing: "That is PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Studio 2026 - Designed for independent creators.",
-    signupTitle: "Request Early Access",
+    signupTitle: "Try PostPilot",
     continueGoogle: "Continue with Google",
     or: "or",
     fullName: "Full name",
     emailAddress: "Email address",
-    phoneNumber: "Phone number",
-    instagramHandle: "Instagram handle",
-    shortMessage: "Short message",
     password: "Password",
     tipsOptIn: "Send me Creator tips and other opportunities",
     createAccount: "Create account",
-    requestAccess: "Request access",
-    approvedToggleLink: "Already approved? Create your account",
-    requestModeTitle: "Request Early Access",
-    createModeTitle: "Create Your Account",
-    requestSubmitted:
-      "Request received. Check your inbox - we'll email you as soon as your beta access is approved.",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Already have an account?",
@@ -222,9 +211,6 @@ const I18N = {
     signinPasswordPh: "Enter your password",
     signupPhFullName: "Enter your full name",
     signupPhEmail: "you@example.com",
-    signupPhPhone: "+40 7xx xxx xxx",
-    signupPhInstagram: "@yourhandle",
-    signupPhMessage: "Tell us what you're building with PostPilot.",
     signupPhPassword: "Create a password",
     accountPhName: "Your name",
     accountPhEmail: "you@domain.com",
@@ -331,16 +317,9 @@ const I18N = {
     or: "sau",
     fullName: "Nume complet",
     emailAddress: "Adresa de email",
-    phoneNumber: "Numar de telefon",
-    instagramHandle: "Handle Instagram",
-    shortMessage: "Mesaj scurt",
     password: "Parola",
     tipsOptIn: "Trimite-mi sfaturi pentru creatori si alte oportunitati",
     createAccount: "Creeaza cont",
-    requestAccess: "Solicita acces",
-    approvedToggleLink: "Esti deja aprobat? Creeaza-ti contul",
-    requestModeTitle: "Solicita acces timpuriu",
-    createModeTitle: "Creeaza-ti contul",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Ai deja cont?",
@@ -471,9 +450,6 @@ const I18N = {
     signinPasswordPh: "Introdu parola",
     signupPhFullName: "Introdu numele complet",
     signupPhEmail: "exemplu@email.com",
-    signupPhPhone: "+40 7xx xxx xxx",
-    signupPhInstagram: "@utilizatorulTau",
-    signupPhMessage: "Spune-ne ce construiesti cu PostPilot.",
     signupPhPassword: "Creeaza o parola",
     accountPhName: "Numele tau",
     accountPhEmail: "tu@domeniu.com",
@@ -1311,12 +1287,9 @@ function applyLanguage() {
   setTextIfExists("signupTitle", t("signupTitle"));
   setTextIfExists("signupFullNameLabel", t("fullName"));
   setTextIfExists("signupEmailLabel", t("emailAddress"));
-  setTextIfExists("signupPhoneLabel", t("phoneNumber"));
-  setTextIfExists("signupInstagramLabel", t("instagramHandle"));
-  setTextIfExists("signupMessageLabel", t("shortMessage"));
   setTextIfExists("signupPasswordLabel", t("password"));
   setTextIfExists("tipsOptInLabel", t("tipsOptIn"));
-  setTextIfExists("switchCreateAccountMode", t("approvedToggleLink"));
+  setTextIfExists("signupSubmitBtn", t("createAccount"));
   const signupGuarantee1Text = t("guarantee1");
   setTextIfExists("signupGuarantee1", signupGuarantee1Text);
   const signupGuarantee1El = document.getElementById("signupGuarantee1");
@@ -1406,11 +1379,7 @@ function applyLanguage() {
 
   setPlaceholderIfExists("signupFullName", t("signupPhFullName"));
   setPlaceholderIfExists("signupEmail", t("signupPhEmail"));
-  setPlaceholderIfExists("signupPhone", t("signupPhPhone"));
-  setPlaceholderIfExists("signupInstagramHandle", t("signupPhInstagram"));
-  setPlaceholderIfExists("signupMessage", t("signupPhMessage"));
   setPlaceholderIfExists("signupPassword", t("signupPhPassword"));
-  applySignupModeUi();
 
   setTextIfExists("signinTitle", t("signInModalTitle"));
   setTextIfExists("signinEmailLabelText", t("emailAddress"));
@@ -1515,8 +1484,6 @@ function getAuthQueryState() {
     authDetail: params.get("authDetail"),
     source: params.get("source") || "signup",
     checkout: params.get("checkout"),
-    access: params.get("access"),
-    accessEmail: params.get("email"),
     integration: params.get("integration"),
     integrationAuth: params.get("integrationAuth"),
     integrationError: params.get("integrationError"),
@@ -1610,38 +1577,6 @@ function showFeedback(target, message) {
 function clearFeedback() {
   showFeedback(signupFeedback, "");
   showFeedback(signinFeedback, "");
-}
-
-function setSignupMode(mode) {
-  signupMode = mode === "create" ? "create" : "request";
-  applySignupModeUi();
-}
-
-function applySignupModeUi() {
-  const isCreateMode = signupMode === "create";
-  const passwordRow = document.getElementById("signupPasswordRow");
-  const phoneRow = document.getElementById("signupPhone")?.closest("label");
-  const instagramRow = document.getElementById("signupInstagramHandle")?.closest("label");
-  const messageRow = document.getElementById("signupMessage")?.closest("label");
-  const tipsRow = document.getElementById("tipsOptInRow");
-  const googleBtn = document.getElementById("googleSignupBtn");
-  const divider = document.getElementById("signupDivider");
-  const passwordInput = document.getElementById("signupPassword");
-
-  if (passwordRow) passwordRow.classList.toggle("hidden", !isCreateMode);
-  if (phoneRow) phoneRow.classList.toggle("hidden", isCreateMode);
-  if (instagramRow) instagramRow.classList.toggle("hidden", isCreateMode);
-  if (messageRow) messageRow.classList.toggle("hidden", isCreateMode);
-  if (tipsRow) tipsRow.classList.toggle("hidden", isCreateMode);
-  if (googleBtn) googleBtn.classList.toggle("hidden", !isCreateMode);
-  if (divider) divider.classList.toggle("hidden", !isCreateMode);
-  if (passwordInput) {
-    passwordInput.required = isCreateMode;
-  }
-
-  setText("signupTitle", isCreateMode ? t("createModeTitle") : t("requestModeTitle"));
-  setText("signupSubmitBtn", isCreateMode ? t("createAccount") : t("requestAccess"));
-  setText("switchCreateAccountMode", isCreateMode ? t("requestAccess") : t("approvedToggleLink"));
 }
 
 function escapeHtml(raw) {
@@ -2549,50 +2484,17 @@ signupForm.addEventListener("submit", async (event) => {
 
   const fullName = document.getElementById("signupFullName").value.trim();
   const email = document.getElementById("signupEmail").value.trim().toLowerCase();
-  const password = document.getElementById("signupPassword").value || "";
-  const phone = document.getElementById("signupPhone")?.value.trim() || "";
-  const instagramHandle = document.getElementById("signupInstagramHandle")?.value.trim() || "";
-  const message = document.getElementById("signupMessage")?.value.trim() || "";
+  const password = document.getElementById("signupPassword").value;
 
-  if (!fullName || !email) {
+  if (!fullName || !email || !password) {
     showFeedback(signupFeedback, "Please complete all required fields.");
     return;
   }
 
   try {
-    if (signupMode === "create") {
-      if (!password) {
-        showFeedback(signupFeedback, "Please set a password.");
-        return;
-      }
-      await api("/api/auth/signup", "POST", { fullName, email, password });
-      signupForm.reset();
-      setSignupMode("request");
-      await unlockChat(`Welcome to PostPilot, ${fullName}!`);
-      return;
-    }
-
-    if (!phone || !instagramHandle || !message) {
-      showFeedback(signupFeedback, "Please complete all required fields.");
-      return;
-    }
-
-    const data = await api("/api/early-access/request", "POST", {
-      fullName,
-      email,
-      phone,
-      instagramHandle,
-      message,
-    });
-    if (data?.status === "approved") {
-      showFeedback(signupFeedback, "You are already approved. Set your password to continue.");
-      setSignupMode("create");
-      const passwordInput = document.getElementById("signupPassword");
-      if (passwordInput) passwordInput.focus();
-      return;
-    }
-    signupForm.reset();
-    showFeedback(signupFeedback, t("requestSubmitted"));
+    await api("/api/auth/signup", "POST", { fullName, email, password });
+  signupForm.reset();
+    await unlockChat(`Welcome to PostPilot, ${fullName}!`);
   } catch (err) {
     showFeedback(signupFeedback, err.message);
   }
@@ -2617,12 +2519,6 @@ openSignin.addEventListener("click", (event) => {
   event.preventDefault();
   clearFeedback();
   signinModal.classList.remove("hidden");
-});
-
-switchCreateAccountMode?.addEventListener("click", (event) => {
-  event.preventDefault();
-  clearFeedback();
-  setSignupMode(signupMode === "create" ? "request" : "create");
 });
 
 openTrialBtn.addEventListener("click", () => {
@@ -3216,15 +3112,6 @@ setActiveView("agent");
 
 const authQueryState = getAuthQueryState();
 let handledFreshGoogleAuth = false;
-if (authQueryState.access === "approved") {
-  setSignupMode("create");
-  if (authQueryState.accessEmail) {
-    const signupEmailInput = document.getElementById("signupEmail");
-    if (signupEmailInput) signupEmailInput.value = authQueryState.accessEmail;
-  }
-  showFeedback(signupFeedback, "Access approved. Create your account to continue onboarding.");
-  clearAuthQueryParams();
-}
 if (authQueryState.authError) {
   const target = authQueryState.source === "signin" ? signinFeedback : signupFeedback;
   showFeedback(
