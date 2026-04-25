@@ -3505,9 +3505,24 @@ if (!WAITLIST_MODE && !handledFreshGoogleAuth) {
     .then((session) => {
       if (session.authenticated) {
         unlockChat(`Welcome back, ${session.user.fullName}.`).catch((err) => {
-      showFeedback(signupFeedback, `Could not restore session: ${err.message}`);
-    });
-  }
+          showFeedback(signupFeedback, `Could not restore session: ${err.message}`);
+        });
+      }
     })
     .catch(() => {});
 }
+
+if (!WAITLIST_MODE) {
+  const heroAuthContainer = document.querySelector(".hero-auth-container");
+  const authModalCard = document.querySelector(".auth-modal-card");
+  const signupForm = document.getElementById("signupForm");
+  
+  if (heroAuthContainer && authModalCard && signupForm) {
+    signupForm.classList.add("hidden");
+    authModalCard.classList.remove("hidden");
+    const closeBtn = document.getElementById("closeSignin");
+    if (closeBtn) closeBtn.classList.add("hidden");
+    heroAuthContainer.appendChild(authModalCard);
+  }
+}
+

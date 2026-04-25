@@ -105,6 +105,31 @@ body {
   align-items: center;
 }
 
+.hero-graphic-container {
+  margin-top: 2rem;
+  perspective: 1000px;
+}
+
+.hero-graphic {
+  width: 120%;
+  max-width: 600px;
+  height: auto;
+  border-radius: 20px;
+  transform: rotateY(12deg) rotateX(4deg);
+  box-shadow: -20px 30px 60px rgba(213, 0, 50, 0.15);
+  transition: transform 0.5s ease;
+}
+
+.hero-graphic:hover {
+  transform: rotateY(0deg) rotateX(0deg) scale(1.02);
+}
+
+.hero-auth-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .badge {
   display: inline-block;
   margin: 0 0 1.2rem;
