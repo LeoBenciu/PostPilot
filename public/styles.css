@@ -108,23 +108,20 @@ body {
 
 .hero-graphic-background {
   position: absolute;
-  top: -10%;
-  right: -15%;
-  width: 800px;
+  top: -14%;
+  right: -22%;
+  width: min(980px, 72vw);
   height: auto;
   z-index: 0;
-  opacity: 0.85;
+  opacity: 0.95;
   pointer-events: none;
-  perspective: 1200px;
 }
 
 .hero-graphic {
   width: 100%;
   height: auto;
-  transform: rotateY(-15deg) rotateX(10deg) scale(1.1);
-  mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
-  -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
-  filter: drop-shadow(0 30px 60px rgba(213, 0, 50, 0.2));
+  transform: rotate(-2deg) scale(1.02);
+  filter: drop-shadow(0 24px 44px rgba(12, 6, 9, 0.22));
 }
 
 .hero-copy, .hero-auth-container {
@@ -2235,12 +2232,7 @@ pre {
 #authGate {
   position: relative;
   overflow: hidden;
-  background-image:
-    linear-gradient(90deg, rgba(255, 247, 250, 0.92) 0%, rgba(255, 247, 250, 0.82) 40%, rgba(255, 247, 250, 0.45) 68%, rgba(255, 247, 250, 0.3) 100%),
-    url("/landing-bg.png");
-  background-size: cover, cover;
-  background-position: center center, right center;
-  background-repeat: no-repeat;
+  background: linear-gradient(180deg, #fff8fb 0%, #fff2f7 42%, #fff7fa 100%);
 }
 
 #authGate::before,
@@ -2559,8 +2551,8 @@ pre {
   }
 
   #authGate .hero-graphic-background {
-    opacity: 0.1;
-    right: -40%;
+    opacity: 0.45;
+    right: -32%;
     top: 0;
   }
 
