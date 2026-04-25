@@ -2,6 +2,7 @@ const LANGUAGE_KEY = "postpilot_language";
 const sessionId = "session-main";
 let accountState = null;
 let isSendingMessage = false;
+const WAITLIST_MODE = document.body?.dataset?.mode === "waitlist";
 
 const authGate = document.getElementById("authGate");
 const chatApp = document.getElementById("chatApp");
@@ -79,14 +80,14 @@ const I18N = {
     finalCtaClosing: "That is PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Studio 2026 - Designed for independent creators.",
-    signupTitle: "Try PostPilot",
+    signupTitle: "Join the waitlist",
     continueGoogle: "Continue with Google",
     or: "or",
     fullName: "Full name",
     emailAddress: "Email address",
     password: "Password",
     tipsOptIn: "Send me Creator tips and other opportunities",
-    createAccount: "Create account",
+    createAccount: "Join waitlist",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Already have an account?",
@@ -312,14 +313,14 @@ const I18N = {
     finalCtaClosing: "Acesta este PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Construit pentru creatorii independenti.",
-    signupTitle: "Incearca PostPilot",
+    signupTitle: "Intra pe lista de asteptare",
     continueGoogle: "Continua cu Google",
     or: "sau",
     fullName: "Nume complet",
     emailAddress: "Adresa de email",
     password: "Parola",
     tipsOptIn: "Trimite-mi sfaturi pentru creatori si alte oportunitati",
-    createAccount: "Creeaza cont",
+    createAccount: "Intra pe lista",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Ai deja cont?",
@@ -551,14 +552,14 @@ const I18N = {
     finalCtaClosing: "Questo e PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Creato per creator indipendenti.",
-    signupTitle: "Prova PostPilot",
+    signupTitle: "Unisciti alla waitlist",
     continueGoogle: "Continua con Google",
     or: "oppure",
     fullName: "Nome completo",
     emailAddress: "Indirizzo email",
     password: "Password",
     tipsOptIn: "Inviami consigli per creator e altre opportunita",
-    createAccount: "Crea account",
+    createAccount: "Entra in waitlist",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Hai gia un account?",
@@ -778,14 +779,14 @@ const I18N = {
     finalCtaClosing: "Das ist PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Entwickelt fuer unabhaengige Creator.",
-    signupTitle: "Probiere PostPilot",
+    signupTitle: "Zur Warteliste anmelden",
     continueGoogle: "Mit Google fortfahren",
     or: "oder",
     fullName: "Vollstaendiger Name",
     emailAddress: "E-Mail-Adresse",
     password: "Passwort",
     tipsOptIn: "Sende mir Creator-Tipps und weitere Moeglichkeiten",
-    createAccount: "Konto erstellen",
+    createAccount: "Zur Warteliste",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Du hast bereits ein Konto?",
@@ -1005,14 +1006,14 @@ const I18N = {
     finalCtaClosing: "C'est PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Concu pour les createurs independants.",
-    signupTitle: "Essayez PostPilot",
+    signupTitle: "Rejoindre la liste d'attente",
     continueGoogle: "Continuer avec Google",
     or: "ou",
     fullName: "Nom complet",
     emailAddress: "Adresse e-mail",
     password: "Mot de passe",
     tipsOptIn: "Envoyez-moi des conseils createur et d'autres opportunites",
-    createAccount: "Creer un compte",
+    createAccount: "Rejoindre la liste",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Vous avez deja un compte ?",
@@ -1565,12 +1566,14 @@ function hideOnboardingModal() {
 }
 
 function showToast(message) {
+  if (!authToast) return;
   authToast.textContent = message;
   authToast.classList.remove("hidden");
   window.setTimeout(() => authToast.classList.add("hidden"), 3500);
 }
 
 function showFeedback(target, message) {
+  if (!target) return;
   target.textContent = message;
 }
 
@@ -1637,7 +1640,8 @@ function scoreColor(value) {
 
 function renderCardNextPost(data) {
   const kicker = data.kicker || data.label || "";
-  const hook = escapeHtml(data.hook || data.text || "");
+  const rawHook = data.hook || data.text || "";
+  const hook = escapeHtml(rawHook);
   const pills = Array.isArray(data.pills) ? data.pills : (data.format ? [data.format] : []);
   if (data.duration) pills.push(data.duration);
   if (data.setup) pills.push(data.setup);
@@ -1648,9 +1652,14 @@ function renderCardNextPost(data) {
   if (pills.length) {
     html += `<div class="pp-pills">${pills.map(renderPill).join("")}</div>`;
   }
+  
+  const btnText = currentLanguage === 'ro' ? "Vezi scriptul complet" : "See full script";
+  const promptText = currentLanguage === 'ro' 
+      ? `Arată-mi scriptul complet pentru această postare: ${rawHook}` 
+      : `Show me the full script for this post: ${rawHook}`;
+
   html += `<div class="pp-card-actions">`;
-  html += `<button class="pp-card-btn pp-card-btn--primary" data-card-action="prompt" data-prompt="Show me the full script for this post">See full script</button>`;
-  html += `<button class="pp-card-btn pp-card-btn--secondary" data-card-action="prompt" data-prompt="Regenerate this post idea with a different angle">Regenerate</button>`;
+  html += `<button class="pp-card-btn pp-card-btn--primary" data-card-action="prompt" data-prompt="${escapeHtml(promptText)}">${btnText}</button>`;
   html += `</div></div>`;
   return html;
 }
@@ -2729,29 +2738,39 @@ async function connectPlatform(platform) {
   }
 }
 
-signupForm.addEventListener("submit", async (event) => {
+signupForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearFeedback();
 
-  const fullName = document.getElementById("signupFullName").value.trim();
   const email = document.getElementById("signupEmail").value.trim().toLowerCase();
-  const password = document.getElementById("signupPassword").value;
 
-  if (!fullName || !email || !password) {
-    showFeedback(signupFeedback, "Please complete all required fields.");
+  if (!email) {
+    showFeedback(signupFeedback, "Please enter your email address.");
     return;
   }
 
   try {
+    if (WAITLIST_MODE) {
+      await api("/api/waitlist", "POST", { email });
+      signupForm.reset();
+      showFeedback(signupFeedback, "You're on the list. We will keep you posted.");
+      return;
+    }
+    const fullName = document.getElementById("signupFullName").value.trim();
+    const password = document.getElementById("signupPassword").value;
+    if (!fullName || !password) {
+      showFeedback(signupFeedback, "Please complete all required fields.");
+      return;
+    }
     await api("/api/auth/signup", "POST", { fullName, email, password });
-  signupForm.reset();
+    signupForm.reset();
     await unlockChat(`Welcome to PostPilot, ${fullName}!`);
   } catch (err) {
     showFeedback(signupFeedback, err.message);
   }
 });
 
-signinForm.addEventListener("submit", async (event) => {
+signinForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearFeedback();
 
@@ -2766,22 +2785,22 @@ signinForm.addEventListener("submit", async (event) => {
   }
 });
 
-openSignin.addEventListener("click", (event) => {
+openSignin?.addEventListener("click", (event) => {
   event.preventDefault();
   clearFeedback();
   signinModal.classList.remove("hidden");
 });
 
-openTrialBtn.addEventListener("click", () => {
+openTrialBtn?.addEventListener("click", () => {
   clearFeedback();
-  document.getElementById("signupFullName").focus();
+  document.getElementById("signupEmail")?.focus();
 });
 
-closeSignin.addEventListener("click", () => {
+closeSignin?.addEventListener("click", () => {
   signinModal.classList.add("hidden");
 });
 
-closeOnboarding.addEventListener("click", () => {
+closeOnboarding?.addEventListener("click", () => {
   if (!paymentCompleted()) {
     setText("onboardingError", t("paymentRequiredBeforeContinuing"));
     setOnboardingMode("payment");
@@ -2808,7 +2827,7 @@ async function performDisconnect() {
   showToast(t("disconnectToast"));
 }
 
-disconnectBtn.addEventListener("click", () => {
+disconnectBtn?.addEventListener("click", () => {
   disconnectConfirmModal?.classList.remove("hidden");
 });
 
@@ -2820,7 +2839,7 @@ disconnectConfirmBtn?.addEventListener("click", async () => {
   await performDisconnect();
 });
 
-signinModal.addEventListener("click", (event) => {
+signinModal?.addEventListener("click", (event) => {
   if (event.target === signinModal) signinModal.classList.add("hidden");
 });
 
@@ -2833,8 +2852,8 @@ disconnectConfirmModal?.addEventListener("click", (event) => {
   if (event.target === disconnectConfirmModal) disconnectConfirmModal.classList.add("hidden");
 });
 
-googleSignupBtn.addEventListener("click", () => handleGoogleAuth("signup"));
-googleSigninBtn.addEventListener("click", () => handleGoogleAuth("signin"));
+googleSignupBtn?.addEventListener("click", () => handleGoogleAuth("signup"));
+googleSigninBtn?.addEventListener("click", () => handleGoogleAuth("signin"));
 connectLinkedinBtn?.addEventListener("click", () => connectPlatform("linkedin"));
 connectInstagramBtn?.addEventListener("click", () => connectPlatform("instagram"));
 
@@ -3416,7 +3435,7 @@ if (authQueryState.integrationError && authQueryState.integration) {
   clearAuthQueryParams();
 }
 
-if (authQueryState.googleAuth === "success") {
+if (!WAITLIST_MODE && authQueryState.googleAuth === "success") {
   handledFreshGoogleAuth = true;
   unlockChat(t("googleConnected")).catch((err) => {
     const target = authQueryState.source === "signin" ? signinFeedback : signupFeedback;
@@ -3425,7 +3444,7 @@ if (authQueryState.googleAuth === "success") {
   clearAuthQueryParams();
 }
 
-if (!handledFreshGoogleAuth) {
+if (!WAITLIST_MODE && !handledFreshGoogleAuth) {
   api("/api/auth/session")
     .then((session) => {
       if (session.authenticated) {

@@ -42,6 +42,14 @@ docker run --name postpilot-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=post
    - `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`
    - `STRIPE_PRICE_ID` (optional, if you use Stripe Dashboard prices)
    - `STRIPE_MONTHLY_EUR_CENTS` (default `3000`)
+   - Waitlist email notifications (for landing form):
+     - `WAITLIST_NOTIFY_TO` (default `nextcorpromania@gmail.com`)
+     - Either `WAITLIST_SMTP_URL` or:
+       - `WAITLIST_SMTP_HOST`
+       - `WAITLIST_SMTP_PORT`
+       - `WAITLIST_SMTP_USER`
+       - `WAITLIST_SMTP_PASS`
+     - Optional `WAITLIST_FROM_EMAIL`
 
 4. Run Prisma migration + client generation:
 

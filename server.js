@@ -4,6 +4,7 @@ const path = require("path");
 const { URL } = require("url");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
 const Stripe = require("stripe");
 require("dotenv").config();
 const {
@@ -43,6 +44,72 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID || "";
 const STRIPE_MONTHLY_EUR_CENTS = Number(process.env.STRIPE_MONTHLY_EUR_CENTS || 900);
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
+const WAITLIST_NOTIFY_TO = (process.env.WAITLIST_NOTIFY_TO || "nextcorpromania@gmail.com").trim();
+const WAITLIST_FROM_EMAIL = (process.env.WAITLIST_FROM_EMAIL || process.env.SMTP_FROM || process.env.SMTP_USER || "").trim();
+const WAITLIST_SMTP_URL = (process.env.WAITLIST_SMTP_URL || process.env.SMTP_URL || "").trim();
+const WAITLIST_SMTP_HOST = (process.env.WAITLIST_SMTP_HOST || process.env.SMTP_HOST || "").trim();
+const WAITLIST_SMTP_PORT = Number(process.env.WAITLIST_SMTP_PORT || process.env.SMTP_PORT || 587);
+const WAITLIST_SMTP_SECURE = String(
+  process.env.WAITLIST_SMTP_SECURE || process.env.SMTP_SECURE || (WAITLIST_SMTP_PORT === 465 ? "true" : "false")
+).toLowerCase() === "true";
+const WAITLIST_SMTP_USER = (process.env.WAITLIST_SMTP_USER || process.env.SMTP_USER || "").trim();
+const WAITLIST_SMTP_PASS = (process.env.WAITLIST_SMTP_PASS || process.env.SMTP_PASS || "").trim();
+let waitlistMailer = null;
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+}
+
+function getWaitlistMailer() {
+  if (waitlistMailer) return waitlistMailer;
+  if (WAITLIST_SMTP_URL) {
+    waitlistMailer = nodemailer.createTransport(WAITLIST_SMTP_URL);
+    return waitlistMailer;
+  }
+  if (!WAITLIST_SMTP_HOST || !WAITLIST_SMTP_PORT || !WAITLIST_SMTP_USER || !WAITLIST_SMTP_PASS) {
+    return null;
+  }
+  waitlistMailer = nodemailer.createTransport({
+    host: WAITLIST_SMTP_HOST,
+    port: WAITLIST_SMTP_PORT,
+    secure: WAITLIST_SMTP_SECURE,
+    auth: {
+      user: WAITLIST_SMTP_USER,
+      pass: WAITLIST_SMTP_PASS,
+    },
+  });
+  return waitlistMailer;
+}
+
+async function sendWaitlistEmail({ email, req }) {
+  const transporter = getWaitlistMailer();
+  if (!transporter) {
+    throw new Error("Waitlist email is not configured. Set WAITLIST_SMTP_URL or SMTP host/user/pass env vars.");
+  }
+  const fromEmail = WAITLIST_FROM_EMAIL || WAITLIST_SMTP_USER;
+  if (!fromEmail) {
+    throw new Error("Missing sender email. Set WAITLIST_FROM_EMAIL or SMTP_USER.");
+  }
+  const now = new Date().toISOString();
+  const ip =
+    String(req.headers["x-forwarded-for"] || "")
+      .split(",")[0]
+      .trim() || req.socket?.remoteAddress || "unknown";
+  const userAgent = String(req.headers["user-agent"] || "unknown");
+  await transporter.sendMail({
+    from: fromEmail,
+    to: WAITLIST_NOTIFY_TO,
+    subject: "New PostPilot waitlist signup",
+    text: [
+      "A new waitlist signup was received.",
+      "",
+      `Email: ${email}`,
+      `Timestamp: ${now}`,
+      `IP: ${ip}`,
+      `User-Agent: ${userAgent}`,
+    ].join("\n"),
+  });
+}
 
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, { "Content-Type": "application/json" });
@@ -1428,6 +1495,22 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, { ok: true });
     } catch (err) {
       sendJson(res, 400, { error: err.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/waitlist") {
+    try {
+      const body = await readBody(req);
+      const email = String(body.email || "").trim().toLowerCase();
+      if (!isValidEmail(email)) {
+        sendJson(res, 400, { error: "Please enter a valid email address." });
+        return;
+      }
+      await sendWaitlistEmail({ email, req });
+      sendJson(res, 200, { ok: true });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message || "Failed to submit waitlist request." });
     }
     return;
   }
