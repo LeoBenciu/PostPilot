@@ -2407,7 +2407,7 @@ pre {
 }
 
 #authGate .hero-copy h1 {
-  font-size: clamp(2.45rem, 5.7vw, 4.9rem);
+  font-size: clamp(2.15rem, 5.1vw, 4.35rem);
   line-height: 1.02;
   letter-spacing: -0.05em;
 }
@@ -2584,7 +2584,7 @@ pre {
   }
 
   #authGate .hero-copy h1 {
-    font-size: 2rem;
+    font-size: 1.82rem;
   }
 
   #authGate .hero-copy #heroSubtitle {

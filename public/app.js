@@ -95,6 +95,7 @@ const I18N = {
     password: "Password",
     tipsOptIn: "Send me Creator tips and other opportunities",
     createAccount: "Join waitlist",
+    waitlistCounterText: "creators already on the waitlist",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Already have an account?",
@@ -283,8 +284,8 @@ const I18N = {
   ro: {
     language: "Limba",
     heroBadge: "Acces Timpuriu - Oferta Limitata",
-    heroTitleMain: "Creste-ti comunitatea.",
-    heroTitleAccent: "Cu propriul tau coach AI.",
+    heroTitleMain: "De ce nu crești pe Instagram?",
+    heroTitleAccent: "PostPilot îți răspunde.",
     heroSubtitle: "Primeste zilnic idei virale personalizate si increderea de a le publica.",
     signal1: "Prompturi personalizate zilnic",
     signal2: "Feedback adaptat vocii tale",
@@ -331,6 +332,7 @@ const I18N = {
     password: "Parola",
     tipsOptIn: "Trimite-mi sfaturi pentru creatori si alte oportunitati",
     createAccount: "Intra pe lista",
+    waitlistCounterText: "creatori sunt deja pe lista de asteptare",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Ai deja cont?",
@@ -573,6 +575,7 @@ const I18N = {
     password: "Password",
     tipsOptIn: "Inviami consigli per creator e altre opportunita",
     createAccount: "Entra in waitlist",
+    waitlistCounterText: "creator sono gia in waitlist",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Hai gia un account?",
@@ -803,6 +806,7 @@ const I18N = {
     password: "Passwort",
     tipsOptIn: "Sende mir Creator-Tipps und weitere Moeglichkeiten",
     createAccount: "Zur Warteliste",
+    waitlistCounterText: "Creator sind bereits auf der Warteliste",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Du hast bereits ein Konto?",
@@ -1033,6 +1037,7 @@ const I18N = {
     password: "Mot de passe",
     tipsOptIn: "Envoyez-moi des conseils createur et d'autres opportunites",
     createAccount: "Rejoindre la liste",
+    waitlistCounterText: "createurs sont deja sur la liste d'attente",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Vous avez deja un compte ?",
@@ -1313,6 +1318,7 @@ function applyLanguage() {
   setTextIfExists("signupPasswordLabel", t("password"));
   setTextIfExists("tipsOptInLabel", t("tipsOptIn"));
   setTextIfExists("signupSubmitBtn", t("createAccount"));
+  setTextIfExists("waitlistCounterText", t("waitlistCounterText"));
   const signupGuarantee1Text = t("guarantee1");
   setTextIfExists("signupGuarantee1", signupGuarantee1Text);
   const signupGuarantee1El = document.getElementById("signupGuarantee1");
