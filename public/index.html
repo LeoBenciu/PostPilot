@@ -1,71 +1,461 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <title>PostPilot - AI Coach</title>
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/styles.css" />
-    <script>
-      // iOS Safari ignores `user-scalable=no` in the viewport meta tag, so we
-      // also have to block the gestures at the event level. This kills:
-      //   - pinch-zoom (two-finger touchmove + Safari `gesture*` events)
-      //   - double-tap zoom (two quick taps inside ~350ms)
-      //   - ctrl/meta + wheel zoom on desktop-sized touch screens
-      (function () {
-        document.addEventListener(
-          "touchmove",
-          function (e) {
-            if (e.touches && e.touches.length > 1) e.preventDefault();
-          },
-          { passive: false }
-        );
-        ["gesturestart", "gesturechange", "gestureend"].forEach(function (evt) {
-          document.addEventListener(evt, function (e) {
-            e.preventDefault();
-          });
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>PostPilot - AI Coach</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script>
+    // iOS Safari ignores `user-scalable=no` in the viewport meta tag, so we
+    // also have to block the gestures at the event level. This kills:
+    //   - pinch-zoom (two-finger touchmove + Safari `gesture*` events)
+    //   - double-tap zoom (two quick taps inside ~350ms)
+    //   - ctrl/meta + wheel zoom on desktop-sized touch screens
+    (function () {
+      document.addEventListener(
+        "touchmove",
+        function (e) {
+          if (e.touches && e.touches.length > 1) e.preventDefault();
+        },
+        { passive: false }
+      );
+      ["gesturestart", "gesturechange", "gestureend"].forEach(function (evt) {
+        document.addEventListener(evt, function (e) {
+          e.preventDefault();
         });
-        var lastTouchEnd = 0;
-        document.addEventListener(
-          "touchend",
-          function (e) {
-            var now = Date.now();
-            if (now - lastTouchEnd <= 350) e.preventDefault();
-            lastTouchEnd = now;
-          },
-          { passive: false }
-        );
-        document.addEventListener(
-          "wheel",
-          function (e) {
-            if (e.ctrlKey || e.metaKey) e.preventDefault();
-          },
-          { passive: false }
-        );
-      })();
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-    <script>
-      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Dr qr Ci Br Zr Pr capture calculateEventProperties Ur register register_once register_for_session unregister unregister_for_session Xr getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync Jr identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty Gr Hr createPersonProfile setInternalOrTestUser Wr Fr tn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing $r debug ki Yr getPageViewId captureTraceFeedback captureTraceMetric Rr".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-      posthog.init('phc_yMyU3jK5XJE9Jv2zEXsX865DiCmHzU4Qn3RBAVKE7oMW', {
-          api_host: 'https://eu.i.posthog.com',
-          defaults: '2026-01-30',
-          person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
-      })
-    </script>
-  </head>
-  <body data-mode="waitlist">
-    <div class="language-switch">
-      <label id="languageLabel" for="languageSelect">Language</label>
-      <select id="languageSelect" aria-label="Select site language">
+      });
+      var lastTouchEnd = 0;
+      document.addEventListener(
+        "touchend",
+        function (e) {
+          var now = Date.now();
+          if (now - lastTouchEnd <= 350) e.preventDefault();
+          lastTouchEnd = now;
+        },
+        { passive: false }
+      );
+      document.addEventListener(
+        "wheel",
+        function (e) {
+          if (e.ctrlKey || e.metaKey) e.preventDefault();
+        },
+        { passive: false }
+      );
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script>
+    !function (t, e) { var o, n, p, r; e.__SV || (window.posthog && window.posthog.__loaded) || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.crossOrigin = "anonymous", p.async = !0, p.src = s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "init Dr qr Ci Br Zr Pr capture calculateEventProperties Ur register register_once register_for_session unregister unregister_for_session Xr getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync Jr identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty Gr Hr createPersonProfile setInternalOrTestUser Wr Fr tn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing $r debug ki Yr getPageViewId captureTraceFeedback captureTraceMetric Rr".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
+    posthog.init('phc_yMyU3jK5XJE9Jv2zEXsX865DiCmHzU4Qn3RBAVKE7oMW', {
+      api_host: 'https://eu.i.posthog.com',
+      defaults: '2026-01-30',
+      person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+    })
+  </script>
+</head>
+
+<body data-mode="waitlist">
+  <div class="language-switch">
+    <label id="languageLabel" for="languageSelect">Language</label>
+    <select id="languageSelect" aria-label="Select site language">
+      <option value="en">English</option>
+      <option value="ro">Romanian</option>
+      <option value="it">Italian</option>
+      <option value="de">German</option>
+      <option value="fr">French</option>
+    </select>
+  </div>
+
+  <main id="authGate">
+    <section class="hero section">
+      <div class="container hero-layout">
+        <div class="hero-copy">
+          <img src="/logo.png" alt="PostPilot logo" class="hero-logo" />
+          <p class="badge" id="heroBadge">Early Access - Limited Time Offer</p>
+          <h1>
+            <span id="heroTitleMain">Grow Your Following.</span>
+            <span id="heroTitleAccent">With Your Own AI Coach.</span>
+          </h1>
+          <p class="muted" id="heroSubtitle">
+            Get personalized viral idea a day - and the confidence to post it.
+          </p>
+          <div class="hero-signals">
+            <span class="hero-signal" id="signal1">Daily custom prompts</span>
+            <span class="hero-signal" id="signal2">Voice-aware feedback</span>
+            <span class="hero-signal" id="signal3">No fluff. Just clarity.</span>
+          </div>
+        </div>
+
+        <form class="signup-card" id="signupForm">
+          <h2 id="signupTitle">Join the waitlist</h2>
+          <label>
+            <span id="signupEmailLabel">Email address</span>
+            <input id="signupEmail" type="email" placeholder="" required />
+          </label>
+          <button type="submit" class="cta-btn" id="signupSubmitBtn">Join waitlist</button>
+          <p class="small form-feedback" id="signupFeedback"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title" id="achieveTitle">What You'll Achieve</h2>
+        <p class="section-subtitle" id="achieveSubtitle">PostPilot doesn't just give you ideas. It transforms how you
+          create.</p>
+        <div class="achieve-grid">
+          <article class="card feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <rect x="8" y="14" width="3" height="3"></rect>
+              </svg>
+            </div>
+            <h3 id="feature1Title">Build your audience faster</h3>
+            <p class="muted" id="feature1Text">Consistent, quality content that resonates with your ideal followers</p>
+          </article>
+          <article class="card feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="M4 8h16"></path>
+                <path d="M8 4l-2 4"></path>
+                <path d="M12 4l-2 4"></path>
+                <path d="M16 4l-2 4"></path>
+              </svg>
+            </div>
+            <h3 id="feature2Title">Find your creative rhythm</h3>
+            <p class="muted" id="feature2Text">Discover what works for you and turn it into your signature style</p>
+          </article>
+          <article class="card feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9a6 6 0 1 1 12 0c0 3-3 4-3 6a3 3 0 0 1-6 0c0-2-3-3-3-6Z"></path>
+                <path d="M12 21a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2Z"></path>
+              </svg>
+            </div>
+            <h3 id="feature3Title">Show up confidently, every day</h3>
+            <p class="muted" id="feature3Text">No more overthinking or second-guessing your content</p>
+          </article>
+          <article class="card feature-card highlight">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"></path>
+                <path d="m19 9-5 5-4-4-3 3"></path>
+                <circle cx="19" cy="9" r="2"></circle>
+              </svg>
+            </div>
+            <h3 id="feature4Title">Turn posting from a chore to a habit</h3>
+            <p class="muted" id="feature4Text">Make content creation feel natural, not forced</p>
+          </article>
+          <article class="card feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-6M6 20V10M18 20V4"></path>
+              </svg>
+            </div>
+            <h3 id="feature5Title">Deep Profile Analysis</h3>
+            <p class="muted" id="feature5Text">We scan your past content to figure out your true superpower.</p>
+          </article>
+          <article class="card feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <h3 id="feature6Title">Captions &amp; Hashtags</h3>
+            <p class="muted" id="feature6Text">No more wasting time thinking of descriptions. You get ready-to-copy
+              text.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title" id="socialProofTitle">Creators Love PostPilot</h2>
+        <p class="section-subtitle" id="socialProofSubtitle">Join thousands who've found their creative confidence</p>
+        <div class="testimonials">
+          <article class="card">
+            <p id="testimonial1Quote">"It's actually looked at my Instagram and told me what my audience was seeing."
+            </p>
+            <div class="person">
+              <div class="avatar">E</div>
+              <div>
+                <strong>Emma Thompson</strong>
+                <p id="testimonial1Role">Freedom &amp; Purpose Coach</p>
+              </div>
+            </div>
+          </article>
+          <article class="card">
+            <p id="testimonial2Quote">"It gave me confidence in my voice again - like I finally knew what to say."</p>
+            <div class="person">
+              <div class="avatar">O</div>
+              <div>
+                <strong>Oliver Bennett</strong>
+                <p id="testimonial2Role">Life &amp; Fitness Glow-Up Coach</p>
+              </div>
+            </div>
+          </article>
+          <article class="card">
+            <p id="testimonial3Quote">"It told me the truth - no fluff, no fake praise. Exactly what I needed."</p>
+            <div class="person">
+              <div class="avatar">C</div>
+              <div>
+                <strong>Charlotte Evans</strong>
+                <p id="testimonial3Role">Health &amp; Wellness Coach</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <p class="badge centered" id="comingSoonBadge">Coming Soon</p>
+        <h2 class="section-title" id="comingSoonTitle">This Is Just the Beginning</h2>
+        <p class="section-subtitle" id="comingSoonSubtitle">We have new and exciting features on the way.</p>
+        <div class="chips">
+          <span class="chip" id="chip1">AI powered video editor</span>
+          <span class="chip" id="chip3">Carousel generator</span>
+          <span class="chip" id="chip4">Daily content scheduler</span>
+          <span class="chip" id="chip5">Content idea bank</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section final-cta">
+      <div class="container centered-block">
+        <h2 class="section-title" id="finalCtaTitle">You don't need another content tool.</h2>
+        <p class="section-subtitle" id="finalCtaSubtitle">You need a coach who helps you believe in your ideas.</p>
+        <p class="closing" id="finalCtaClosing">That's PostPilot.</p>
+        <button class="cta-btn big" id="openTrialBtn">Join waitlist</button>
+        <div class="support-contact support-contact-landing">
+          <p class="small muted" id="supportTitleLanding">Support</p>
+          <p class="small">
+            <a id="supportEmailLanding" href="mailto:nextcorpromania@gmail.com">nextcorpromania@gmail.com</a>
+          </p>
+          <p class="small">
+            <a id="supportPhoneRoLanding" href="tel:+40725176707">+4 0725 176 707</a>
+          </p>
+        </div>
+        <div class="legal-links legal-links-landing">
+          <a href="/privacy.html" id="legalPrivacyLinkLanding">Privacy Policy</a>
+          <a href="/terms.html" id="legalTermsLinkLanding">Terms of Service</a>
+          <a href="/cookies.html" id="legalCookiesLinkLanding">Cookie Policy</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="signinModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="signinTitle">
+    <div class="modal-card auth-modal-card">
+      <button class="modal-close" id="closeSignin" type="button" aria-label="Close sign in form">x</button>
+      <h2 id="signinTitle">Sign In to PostPilot</h2>
+      <button type="button" class="google-btn" id="googleSigninBtn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" class="google-btn-icon"
+          aria-hidden="true" />
+        <span>Continue with Google</span>
+      </button>
+      <div class="divider">or</div>
+      <form id="signinForm">
+        <label>
+          <span id="signinEmailLabelText">Email address</span>
+          <input id="signinEmail" type="email" placeholder="" required />
+        </label>
+        <label>
+          <span id="signinPasswordLabelText">Password</span>
+          <input id="signinPassword" type="password" placeholder="" required />
+        </label>
+        <button type="submit" class="cta-btn" id="signinSubmitBtn">Sign in</button>
+        <p class="small form-feedback" id="signinFeedback"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="authToast" class="toast hidden" aria-live="polite"></div>
+
+  <div class="app-shell hidden" id="chatApp">
+    <aside class="sidebar">
+      <div class="sidebar-top-nav">
+        <button id="agentViewBtn" class="secondary sidebar-view-btn active">
+          <span aria-hidden="true" class="btn-icon">✦</span>
+          <span id="agentViewBtnLabel">Coach</span>
+        </button>
+        <button id="analyticsViewBtn" class="secondary sidebar-view-btn">
+          <span aria-hidden="true" class="btn-icon">◫</span>
+          <span id="analyticsViewBtnLabel">Analytics</span>
+        </button>
+      </div>
+      <div class="sidebar-spacer"></div>
+      <button id="settingsBtn" class="secondary">
+        <span aria-hidden="true" class="btn-icon">⚙</span>
+        <span id="settingsBtnLabel">Settings</span>
+      </button>
+      <button id="disconnectBtn" class="secondary disconnect-btn">
+        <span aria-hidden="true" class="btn-icon">⏻</span>
+        <span id="disconnectBtnLabel">Disconnect</span>
+      </button>
+    </aside>
+
+    <main class="chat-layout">
+      <header class="chat-header">
+        <div>
+          <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span>Agent</span></h1>
+          <p id="chatHeaderSubtitle">Your creator growth assistant</p>
+        </div>
+      </header>
+      <section id="agentView" class="app-view agent-view">
+        <div class="agent-scores" id="agentScores">
+          <button type="button" class="score-chip" data-score="momentum" aria-label="Momentum score details">
+            <span class="score-ring" style="--pct: 0">
+              <span class="score-ring-value" data-score-value="momentum">0</span>
+            </span>
+            <span class="score-ring-icon" aria-hidden="true">⚡</span>
+          </button>
+          <button type="button" class="score-chip" data-score="consistency" aria-label="Consistency score details">
+            <span class="score-ring" style="--pct: 0">
+              <span class="score-ring-value" data-score-value="consistency">0</span>
+            </span>
+            <span class="score-ring-icon" aria-hidden="true">🗓</span>
+          </button>
+          <button type="button" class="score-chip" data-score="growth" aria-label="Growth score details">
+            <span class="score-ring" style="--pct: 0">
+              <span class="score-ring-value" data-score-value="growth">0</span>
+            </span>
+            <span class="score-ring-icon" aria-hidden="true">📈</span>
+          </button>
+        </div>
+
+        <div class="agent-toolbar">
+          <button id="resetChatBtn" class="secondary agent-reset-btn hidden">
+            <span aria-hidden="true" class="btn-icon">↺</span>
+            <span id="resetChatBtnLabel">Reset chat</span>
+          </button>
+        </div>
+
+        <div class="agent-empty" id="agentEmptyState">
+          <h2 class="agent-greeting" id="agentGreeting">Welcome back, let's slay the day 💪</h2>
+          <button type="button" class="suggest-hero-chip" id="viralIdeaChip">
+            <span class="suggest-hero-thumb" aria-hidden="true">
+              <span class="suggest-hero-emoji">🔥</span>
+            </span>
+            <span class="suggest-hero-label" id="viralIdeaChipLabel">Viral idea of the day</span>
+          </button>
+          <div class="suggest-chip-row">
+            <button type="button" class="suggest-chip suggest-chip-1" data-prompt="weekly-plan">
+              <span class="suggest-chip-thumb" aria-hidden="true"><span>Aa</span></span>
+              <span class="suggest-chip-label" id="homeChipWeeklyPlanLabel">Weekly content plan</span>
+            </button>
+            <button type="button" class="suggest-chip suggest-chip-2" data-prompt="motivate">
+              <span class="suggest-chip-thumb" aria-hidden="true"><span>💪</span></span>
+              <span class="suggest-chip-label" id="homeChipMotivateLabel">Motivate me</span>
+            </button>
+            <button type="button" class="suggest-chip suggest-chip-3" data-prompt="post-ideas">
+              <span class="suggest-chip-thumb" aria-hidden="true"><span>💡</span></span>
+              <span class="suggest-chip-label" id="homeChipPostIdeasLabel">Post ideas</span>
+            </button>
+            <button type="button" class="suggest-chip suggest-chip-4" data-prompt="find-voice">
+              <span class="suggest-chip-thumb" aria-hidden="true"><span>🎤</span></span>
+              <span class="suggest-chip-label" id="homeChipFindVoiceLabel">Find my voice</span>
+            </button>
+          </div>
+        </div>
+
+        <section id="messages" class="messages"></section>
+
+        <form id="composer" class="composer" autocomplete="off">
+          <div class="composer-suggestions-wrap">
+            <button type="button" id="suggestionsBtn" class="suggestions-toggle" title="Suggestions">
+              <span class="suggestions-icon">💡</span>
+            </button>
+            <div id="suggestionsPopup" class="suggestions-popup hidden"></div>
+          </div>
+          <input id="messageInput" type="text" name="postpilot-chat-message" enterkeyhint="send"
+            placeholder="Message PostPilot Agent" autocomplete="off" autocorrect="off" autocapitalize="none"
+            spellcheck="false" aria-autocomplete="none" />
+          <button type="submit" id="sendBtn">Send</button>
+        </form>
+      </section>
+
+      <section id="analyticsView" class="app-view analytics-view hidden">
+        <div id="analyticsRefreshing" class="analytics-refreshing" role="status" aria-live="polite">
+          <span class="analytics-refreshing__dot" aria-hidden="true"></span>
+          <span id="analyticsRefreshingLabel">Refreshing data…</span>
+        </div>
+        <div class="analytics-stat-grid">
+          <article class="analytics-stat-card">
+            <p class="analytics-label" id="labelTotalPosts">Total posts</p>
+            <p class="analytics-value" id="analyticsTotalPosts">0</p>
+          </article>
+          <article class="analytics-stat-card">
+            <p class="analytics-label" id="labelTotalLikes">Total likes</p>
+            <p class="analytics-value" id="analyticsTotalLikes">0</p>
+          </article>
+          <article class="analytics-stat-card">
+            <p class="analytics-label" id="labelTotalComments">Total comments</p>
+            <p class="analytics-value" id="analyticsTotalComments">0</p>
+          </article>
+          <article class="analytics-stat-card">
+            <p class="analytics-label" id="labelTotalImpressions">Total impressions</p>
+            <p class="analytics-value" id="analyticsTotalImpressions">0</p>
+          </article>
+          <article class="analytics-stat-card">
+            <p class="analytics-label" id="labelAvgEngagement">Avg engagement / post</p>
+            <p class="analytics-value" id="analyticsAvgEngagement">0</p>
+          </article>
+        </div>
+
+        <div class="analytics-chart-grid">
+          <article class="analytics-chart-card">
+            <h3 id="titleEngagementTrend">Engagement over time</h3>
+            <canvas id="chartEngagementTrend"></canvas>
+          </article>
+          <article class="analytics-chart-card">
+            <h3 id="titlePerformanceByType">Performance by content type</h3>
+            <canvas id="chartMediaType"></canvas>
+          </article>
+          <article class="analytics-chart-card">
+            <h3 id="titleBestDay">Best day to post</h3>
+            <canvas id="chartPostingCadence"></canvas>
+          </article>
+          <article class="analytics-chart-card">
+            <h3 id="titleCaptionLength">Caption length vs engagement</h3>
+            <canvas id="chartCaptionLength"></canvas>
+          </article>
+        </div>
+
+        <article class="analytics-chart-card analytics-chart-card-wide">
+          <h3 id="titleTopPosts">Top posts by engagement</h3>
+          <canvas id="chartTopPosts"></canvas>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div id="onboardFlow" class="onboard-flow hidden">
+    <div class="onboard-lang-bar">
+      <label id="languageLabelOnboard" for="languageSelectOnboard">Language</label>
+      <select id="languageSelectOnboard" aria-label="Select site language">
         <option value="en">English</option>
         <option value="ro">Romanian</option>
         <option value="it">Italian</option>
@@ -73,666 +463,310 @@
         <option value="fr">French</option>
       </select>
     </div>
-
-    <main id="authGate">
-      <section class="hero section">
-        <div class="container hero-layout">
-          <div class="hero-copy">
-            <img src="/logo.png" alt="PostPilot logo" class="hero-logo" />
-            <p class="badge" id="heroBadge">Early Access - Limited Time Offer</p>
-            <h1>
-              <span id="heroTitleMain">Grow Your Following.</span>
-              <span id="heroTitleAccent">With Your Own AI Coach.</span>
-            </h1>
-            <p class="muted" id="heroSubtitle">
-              Get personalized viral idea a day - and the confidence to post it.
-            </p>
-            <div class="hero-signals">
-              <span class="hero-signal" id="signal1">Daily custom prompts</span>
-              <span class="hero-signal" id="signal2">Voice-aware feedback</span>
-              <span class="hero-signal" id="signal3">No fluff. Just clarity.</span>
-            </div>
-          </div>
-
-          <form class="signup-card" id="signupForm">
-            <h2 id="signupTitle">Join the waitlist</h2>
-            <label>
-              <span id="signupEmailLabel">Email address</span>
-              <input id="signupEmail" type="email" placeholder="" required />
-            </label>
-            <button type="submit" class="cta-btn" id="signupSubmitBtn">Join waitlist</button>
-            <p class="small form-feedback" id="signupFeedback"></p>
-          </form>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container">
-          <h2 class="section-title" id="achieveTitle">What You'll Achieve</h2>
-          <p class="section-subtitle" id="achieveSubtitle">PostPilot doesn't just give you ideas. It transforms how you create.</p>
-          <div class="achieve-grid">
-            <article class="card feature-card">
-              <div class="feature-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><rect x="8" y="14" width="3" height="3"></rect></svg>
-              </div>
-              <h3 id="feature1Title">Build your audience faster</h3>
-              <p class="muted" id="feature1Text">Consistent, quality content that resonates with your ideal followers</p>
-            </article>
-            <article class="card feature-card">
-              <div class="feature-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M4 8h16"></path><path d="M8 4l-2 4"></path><path d="M12 4l-2 4"></path><path d="M16 4l-2 4"></path></svg>
-              </div>
-              <h3 id="feature2Title">Find your creative rhythm</h3>
-              <p class="muted" id="feature2Text">Discover what works for you and turn it into your signature style</p>
-            </article>
-            <article class="card feature-card">
-              <div class="feature-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 3-3 4-3 6a3 3 0 0 1-6 0c0-2-3-3-3-6Z"></path><path d="M12 21a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2Z"></path></svg>
-              </div>
-              <h3 id="feature3Title">Show up confidently, every day</h3>
-              <p class="muted" id="feature3Text">No more overthinking or second-guessing your content</p>
-            </article>
-            <article class="card feature-card highlight">
-              <div class="feature-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path><circle cx="19" cy="9" r="2"></circle></svg>
-              </div>
-              <h3 id="feature4Title">Turn posting from a chore to a habit</h3>
-              <p class="muted" id="feature4Text">Make content creation feel natural, not forced</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container">
-          <h2 class="section-title" id="socialProofTitle">Creators Love PostPilot</h2>
-          <p class="section-subtitle" id="socialProofSubtitle">Join thousands who've found their creative confidence</p>
-          <div class="testimonials">
-            <article class="card">
-              <p id="testimonial1Quote">"It's actually looked at my Instagram and told me what my audience was seeing."</p>
-              <div class="person">
-                <div class="avatar">E</div>
-                <div>
-                  <strong>Emma Thompson</strong>
-                  <p id="testimonial1Role">Freedom &amp; Purpose Coach</p>
-                </div>
-              </div>
-            </article>
-            <article class="card">
-              <p id="testimonial2Quote">"It gave me confidence in my voice again - like I finally knew what to say."</p>
-              <div class="person">
-                <div class="avatar">O</div>
-                <div>
-                  <strong>Oliver Bennett</strong>
-                  <p id="testimonial2Role">Life &amp; Fitness Glow-Up Coach</p>
-                </div>
-              </div>
-            </article>
-            <article class="card">
-              <p id="testimonial3Quote">"It told me the truth - no fluff, no fake praise. Exactly what I needed."</p>
-              <div class="person">
-                <div class="avatar">C</div>
-                <div>
-                  <strong>Charlotte Evans</strong>
-                  <p id="testimonial3Role">Health &amp; Wellness Coach</p>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container">
-          <p class="badge centered" id="comingSoonBadge">Coming Soon</p>
-          <h2 class="section-title" id="comingSoonTitle">This Is Just the Beginning</h2>
-          <p class="section-subtitle" id="comingSoonSubtitle">We have new and exciting features on the way.</p>
-          <div class="chips">
-            <span class="chip" id="chip1">AI powered video editor</span>
-            <span class="chip" id="chip2">Analytics dashboard</span>
-            <span class="chip" id="chip3">Carousel generator</span>
-            <span class="chip" id="chip4">Daily content scheduler</span>
-            <span class="chip" id="chip5">Content idea bank</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="section final-cta">
-        <div class="container centered-block">
-          <h2 class="section-title" id="finalCtaTitle">You don't need another content tool.</h2>
-          <p class="section-subtitle" id="finalCtaSubtitle">You need a coach who helps you believe in your ideas.</p>
-          <p class="closing" id="finalCtaClosing">That's PostPilot.</p>
-          <button class="cta-btn big" id="openTrialBtn">Join waitlist</button>
-          <p class="small muted legal-note" id="finalLegalNote">PostPilot Labs 2026 - Built for independent creators.</p>
-          <div class="support-contact support-contact-landing">
-            <p class="small muted" id="supportTitleLanding">Support</p>
-            <p class="small">
-              <a id="supportEmailLanding" href="mailto:nextcorpromania@gmail.com">nextcorpromania@gmail.com</a>
-            </p>
-            <p class="small">
-              <a id="supportPhoneRoLanding" href="tel:+40725176707">+4 0725 176 707</a>
-            </p>
-          </div>
-          <div class="legal-links legal-links-landing">
-            <a href="/privacy.html" id="legalPrivacyLinkLanding">Privacy Policy</a>
-            <a href="/terms.html" id="legalTermsLinkLanding">Terms of Service</a>
-            <a href="/cookies.html" id="legalCookiesLinkLanding">Cookie Policy</a>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <div id="signinModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="signinTitle">
-      <div class="modal-card auth-modal-card">
-        <button class="modal-close" id="closeSignin" type="button" aria-label="Close sign in form">x</button>
-        <h2 id="signinTitle">Sign In to PostPilot</h2>
-        <button type="button" class="google-btn" id="googleSigninBtn">
-          <img
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-            alt=""
-            class="google-btn-icon"
-            aria-hidden="true"
-          />
-          <span>Continue with Google</span>
-        </button>
-        <div class="divider">or</div>
-        <form id="signinForm">
-          <label>
-            <span id="signinEmailLabelText">Email address</span>
-            <input id="signinEmail" type="email" placeholder="" required />
-          </label>
-          <label>
-            <span id="signinPasswordLabelText">Password</span>
-            <input id="signinPassword" type="password" placeholder="" required />
-          </label>
-          <button type="submit" class="cta-btn" id="signinSubmitBtn">Sign in</button>
-          <p class="small form-feedback" id="signinFeedback"></p>
-        </form>
-      </div>
-    </div>
-
-    <div id="authToast" class="toast hidden" aria-live="polite"></div>
-
-    <div class="app-shell hidden" id="chatApp">
-      <aside class="sidebar">
-        <div class="sidebar-top-nav">
-          <button id="agentViewBtn" class="secondary sidebar-view-btn active">
-            <span aria-hidden="true" class="btn-icon">✦</span>
-            <span id="agentViewBtnLabel">Coach</span>
-          </button>
-          <button id="analyticsViewBtn" class="secondary sidebar-view-btn">
-            <span aria-hidden="true" class="btn-icon">◫</span>
-            <span id="analyticsViewBtnLabel">Analytics</span>
-          </button>
-        </div>
-        <div class="sidebar-spacer"></div>
-        <button id="settingsBtn" class="secondary">
-          <span aria-hidden="true" class="btn-icon">⚙</span>
-          <span id="settingsBtnLabel">Settings</span>
-        </button>
-        <button id="disconnectBtn" class="secondary disconnect-btn">
-          <span aria-hidden="true" class="btn-icon">⏻</span>
-          <span id="disconnectBtnLabel">Disconnect</span>
-        </button>
-      </aside>
-
-      <main class="chat-layout">
-        <header class="chat-header">
-          <div>
-          <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span>Agent</span></h1>
-          <p id="chatHeaderSubtitle">Your creator growth assistant</p>
-          </div>
-        </header>
-        <section id="agentView" class="app-view agent-view">
-          <div class="agent-scores" id="agentScores">
-            <button type="button" class="score-chip" data-score="momentum" aria-label="Momentum score details">
-              <span class="score-ring" style="--pct: 0">
-                <span class="score-ring-value" data-score-value="momentum">0</span>
-              </span>
-              <span class="score-ring-icon" aria-hidden="true">⚡</span>
-            </button>
-            <button type="button" class="score-chip" data-score="consistency" aria-label="Consistency score details">
-              <span class="score-ring" style="--pct: 0">
-                <span class="score-ring-value" data-score-value="consistency">0</span>
-              </span>
-              <span class="score-ring-icon" aria-hidden="true">🗓</span>
-            </button>
-            <button type="button" class="score-chip" data-score="growth" aria-label="Growth score details">
-              <span class="score-ring" style="--pct: 0">
-                <span class="score-ring-value" data-score-value="growth">0</span>
-              </span>
-              <span class="score-ring-icon" aria-hidden="true">📈</span>
-            </button>
-          </div>
-
-          <div class="agent-toolbar">
-            <button id="resetChatBtn" class="secondary agent-reset-btn hidden">
-              <span aria-hidden="true" class="btn-icon">↺</span>
-              <span id="resetChatBtnLabel">Reset chat</span>
-            </button>
-          </div>
-
-          <div class="agent-empty" id="agentEmptyState">
-            <h2 class="agent-greeting" id="agentGreeting">Welcome back, let's slay the day 💪</h2>
-            <button type="button" class="suggest-hero-chip" id="viralIdeaChip">
-              <span class="suggest-hero-thumb" aria-hidden="true">
-                <span class="suggest-hero-emoji">🔥</span>
-              </span>
-              <span class="suggest-hero-label" id="viralIdeaChipLabel">Viral idea of the day</span>
-            </button>
-            <div class="suggest-chip-row">
-              <button type="button" class="suggest-chip suggest-chip-1" data-prompt="weekly-plan">
-                <span class="suggest-chip-thumb" aria-hidden="true"><span>Aa</span></span>
-                <span class="suggest-chip-label" id="homeChipWeeklyPlanLabel">Weekly content plan</span>
-              </button>
-              <button type="button" class="suggest-chip suggest-chip-2" data-prompt="motivate">
-                <span class="suggest-chip-thumb" aria-hidden="true"><span>💪</span></span>
-                <span class="suggest-chip-label" id="homeChipMotivateLabel">Motivate me</span>
-              </button>
-              <button type="button" class="suggest-chip suggest-chip-3" data-prompt="post-ideas">
-                <span class="suggest-chip-thumb" aria-hidden="true"><span>💡</span></span>
-                <span class="suggest-chip-label" id="homeChipPostIdeasLabel">Post ideas</span>
-              </button>
-              <button type="button" class="suggest-chip suggest-chip-4" data-prompt="find-voice">
-                <span class="suggest-chip-thumb" aria-hidden="true"><span>🎤</span></span>
-                <span class="suggest-chip-label" id="homeChipFindVoiceLabel">Find my voice</span>
-              </button>
-            </div>
-          </div>
-
-        <section id="messages" class="messages"></section>
-
-          <form id="composer" class="composer" autocomplete="off">
-            <div class="composer-suggestions-wrap">
-              <button type="button" id="suggestionsBtn" class="suggestions-toggle" title="Suggestions">
-                <span class="suggestions-icon">💡</span>
-              </button>
-              <div id="suggestionsPopup" class="suggestions-popup hidden"></div>
-            </div>
-            <input
-              id="messageInput"
-              type="text"
-              name="postpilot-chat-message"
-              enterkeyhint="send"
-              placeholder="Message PostPilot Agent"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="none"
-              spellcheck="false"
-              aria-autocomplete="none"
-            />
-            <button type="submit" id="sendBtn">Send</button>
-          </form>
-        </section>
-
-        <section id="analyticsView" class="app-view analytics-view hidden">
-          <div id="analyticsRefreshing" class="analytics-refreshing" role="status" aria-live="polite">
-            <span class="analytics-refreshing__dot" aria-hidden="true"></span>
-            <span id="analyticsRefreshingLabel">Refreshing data…</span>
-          </div>
-          <div class="analytics-stat-grid">
-            <article class="analytics-stat-card">
-              <p class="analytics-label" id="labelTotalPosts">Total posts</p>
-              <p class="analytics-value" id="analyticsTotalPosts">0</p>
-            </article>
-            <article class="analytics-stat-card">
-              <p class="analytics-label" id="labelTotalLikes">Total likes</p>
-              <p class="analytics-value" id="analyticsTotalLikes">0</p>
-            </article>
-            <article class="analytics-stat-card">
-              <p class="analytics-label" id="labelTotalComments">Total comments</p>
-              <p class="analytics-value" id="analyticsTotalComments">0</p>
-            </article>
-            <article class="analytics-stat-card">
-              <p class="analytics-label" id="labelTotalImpressions">Total impressions</p>
-              <p class="analytics-value" id="analyticsTotalImpressions">0</p>
-            </article>
-            <article class="analytics-stat-card">
-              <p class="analytics-label" id="labelAvgEngagement">Avg engagement / post</p>
-              <p class="analytics-value" id="analyticsAvgEngagement">0</p>
-            </article>
-          </div>
-
-          <div class="analytics-chart-grid">
-            <article class="analytics-chart-card">
-              <h3 id="titleEngagementTrend">Engagement over time</h3>
-              <canvas id="chartEngagementTrend"></canvas>
-            </article>
-            <article class="analytics-chart-card">
-              <h3 id="titlePerformanceByType">Performance by content type</h3>
-              <canvas id="chartMediaType"></canvas>
-            </article>
-            <article class="analytics-chart-card">
-              <h3 id="titleBestDay">Best day to post</h3>
-              <canvas id="chartPostingCadence"></canvas>
-            </article>
-            <article class="analytics-chart-card">
-              <h3 id="titleCaptionLength">Caption length vs engagement</h3>
-              <canvas id="chartCaptionLength"></canvas>
-            </article>
-          </div>
-
-          <article class="analytics-chart-card analytics-chart-card-wide">
-            <h3 id="titleTopPosts">Top posts by engagement</h3>
-            <canvas id="chartTopPosts"></canvas>
-          </article>
-        </section>
-      </main>
-    </div>
-
-    <div id="onboardFlow" class="onboard-flow hidden">
-      <div class="onboard-lang-bar">
-        <label id="languageLabelOnboard" for="languageSelectOnboard">Language</label>
-        <select id="languageSelectOnboard" aria-label="Select site language">
-          <option value="en">English</option>
-          <option value="ro">Romanian</option>
-          <option value="it">Italian</option>
-          <option value="de">German</option>
-          <option value="fr">French</option>
-        </select>
-      </div>
-      <section id="obConnectView" class="onboard-view onboard-connect">
-        <div class="onboard-connect-inner">
-          <img src="/logo.png" alt="PostPilot" class="onboard-logo" />
-          <h1 class="onboard-connect-title" id="obConnectTitle">Connect your Instagram to get started</h1>
-          <p class="onboard-connect-sub" id="obConnectSub">
-            So I can analyze your content and coach you personally for your audience.
-          </p>
-          <button type="button" id="obConnectInstagramBtn" class="ig-gradient-btn">
-            <span class="ig-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2.5" y="2.5" width="19" height="19" rx="5" />
-                <circle cx="12" cy="12" r="4.2" />
-                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-              </svg>
-            </span>
-            <span id="obConnectInstagramLabel">Connect Instagram</span>
-          </button>
-          <button type="button" id="obConnectLogoutBtn" class="onboard-footer-logout" aria-label="Log out">
-            <span id="obConnectLogoutLabel">Log out</span>
-          </button>
-        </div>
-      </section>
-
-      <section id="obScanView" class="onboard-view onboard-scan hidden">
-        <div class="onboard-scan-inner">
-          <div class="scan-avatar-wrap">
-            <div class="scan-glow" aria-hidden="true"></div>
-            <img id="obScanAvatar" class="scan-avatar" alt="Your profile" src="" />
-          </div>
-          <p id="obScanHandle" class="scan-handle"></p>
-          <div class="scan-stat-row">
-            <div class="scan-stat">
-              <span class="scan-stat-value" id="obScanPosts">0</span>
-              <span class="scan-stat-label" id="obScanPostsLabel">posts</span>
-            </div>
-            <div class="scan-stat">
-              <span class="scan-stat-value" id="obScanLikes">0</span>
-              <span class="scan-stat-label" id="obScanLikesLabel">likes</span>
-            </div>
-            <div class="scan-stat">
-              <span class="scan-stat-value" id="obScanReach">0</span>
-              <span class="scan-stat-label" id="obScanReachLabel">reach</span>
-            </div>
-          </div>
-          <div class="scan-posts-preview" id="obScanPostsPreview"></div>
-          <h2 class="scan-title" id="obScanTitle">Scanning your profile...</h2>
-          <p class="scan-step-label" id="obScanStepLabel">Analyzing posts</p>
-          <div class="scan-progress" aria-hidden="true">
-            <span class="scan-progress-bar" id="obScanProgressBar"></span>
-          </div>
-        </div>
-      </section>
-
-      <section id="obEdgeView" class="onboard-view onboard-edge hidden">
-        <div class="edge-inner">
-          <img id="edgeAvatar" class="edge-avatar" alt="Your profile" src="" />
-          <h2 class="edge-title">
-            <span id="edgeFirstName">friend</span><span id="edgeTitleSuffix">, you've got an edge</span>
-          </h2>
-          <div class="edge-cards">
-            <article class="edge-card edge-card-super">
-              <span class="edge-card-kicker" id="edgeSuperKicker">🔥 Your Superpower</span>
-              <h3 class="edge-card-title">
-                <span id="edgeSuperTitle1">What you're</span> <em id="edgeSuperTitle2">crushing</em>
-              </h3>
-              <ul class="edge-card-list" id="edgeSuperList"></ul>
-            </article>
-            <article class="edge-card edge-card-unlock">
-              <span class="edge-card-kicker" id="edgeUnlockKicker">🚀 Your Unlock</span>
-              <h3 class="edge-card-title">
-                <span id="edgeUnlockTitle1">Your untapped</span> <em id="edgeUnlockTitle2">potential</em>
-              </h3>
-              <ul class="edge-card-list" id="edgeUnlockList"></ul>
-            </article>
-          </div>
-          <button type="button" class="edge-cta" id="edgeStartBtn">
-            <span id="edgeStartBtnLabel">Start Creating with PostPilot</span>
-          </button>
-        </div>
-      </section>
-
-      <section id="obPaymentView" class="onboard-view onboard-payment hidden">
-        <div class="onboard-payment-inner">
-          <img src="/logo.png" alt="PostPilot" class="onboard-payment-logo" />
-          <h1 class="onboard-payment-title" id="obPaymentTitle">Activate your plan</h1>
-          <p class="onboard-payment-sub" id="obPaymentSubtitle">Subscribe to unlock the AI coach and analytics.</p>
-          <div class="plan-card plan-card--no-badge">
-            <div class="plan-card-header">
-              <span class="plan-card-name" id="obPaymentPlanName">Monthly</span>
-              <span class="plan-card-price">€9<span class="plan-card-price-period" id="obPaymentPeriodLabel">/mo</span></span>
-            </div>
-            <ul class="plan-card-perks">
-              <li>
-                <span id="obPaymentPerkCancel">Cancel anytime</span>
-                <span class="plan-card-check" aria-hidden="true">✓</span>
-              </li>
-              <li>
-                <span id="obPaymentPerkMoney">7-day money-back guarantee</span>
-                <span class="plan-card-check" aria-hidden="true">✓</span>
-              </li>
-            </ul>
-          </div>
-          <button type="button" class="onboard-payment-cta" id="obPaymentStartBtn">
-            <span id="obPaymentStartLabel">Continue to checkout</span>
-          </button>
-          <p class="plan-login-info">
-            <span id="obPaymentLoggedInLabel">Logged in as:</span>
-            <span id="obPaymentLoggedInEmail"></span>
-          </p>
-          <button type="button" class="plan-logout-link" id="obPaymentLogoutBtn">
-            <span id="obPaymentLogoutLabel">Log out</span>
-          </button>
-          <p id="obPaymentError" class="form-error"></p>
-        </div>
-      </section>
-    </div>
-
-    <div class="legacy-forms hidden" aria-hidden="true">
-        <form id="accountForm">
-        <input id="accountName" />
-        <input id="accountEmail" />
-        <button type="submit" id="accountFormSubmitBtn"></button>
-      </form>
-      <form id="paymentForm">
-        <input id="paymentConfirm" type="checkbox" checked />
-        <button type="submit" id="paymentSubmitBtn"></button>
-        </form>
-        <p id="onboardingError" class="form-error"></p>
-      <button id="closeOnboarding" type="button"></button>
-    </div>
-
-    <div id="settingsModal" class="modal hidden">
-      <div class="modal-card settings-card">
-        <div class="modal-head">
-          <h2 id="settingsModalTitle">Settings</h2>
-          <button id="closeSettingsBtn" class="ghost-icon" aria-label="Close settings">×</button>
-        </div>
-        <div class="settings-layout">
-          <aside class="settings-nav">
-            <button class="settings-nav-btn active" data-tab="general" id="settingsNavGeneral">General</button>
-            <button class="settings-nav-btn" data-tab="account" id="settingsNavAccount">Account</button>
-            <button class="settings-nav-btn" data-tab="connections" id="settingsNavConnections">Connections</button>
-            <button class="settings-nav-btn" data-tab="support" id="settingsNavSupport">Support</button>
-          </aside>
-
-          <form id="settingsForm" class="settings-main">
-            <section class="settings-panel active" data-panel="general">
-              <h3 id="settingsPanelGeneralTitle">General</h3>
-            </section>
-
-            <section class="settings-panel" data-panel="account">
-              <h3 id="settingsPanelAccountTitle">Account</h3>
-              <div class="setting-row">
-                <div>
-                  <p class="setting-title" id="settingsNameTitle">Name</p>
-                </div>
-                <input id="settingsName" />
-              </div>
-              <div class="setting-row">
-                <div>
-                  <p class="setting-title" id="settingsEmailTitle">Email</p>
-                </div>
-                <input id="settingsEmail" />
-              </div>
-              <div class="setting-row billing-row">
-                <div>
-                  <p class="setting-title">Subscription</p>
-                  <p class="setting-hint" id="billingStatusText">Status: Not active</p>
-                </div>
-                <div class="billing-actions">
-                  <button type="button" id="manageBillingBtn" class="secondary">Manage billing</button>
-                  <button type="button" id="cancelSubscriptionBtn" class="secondary danger-btn">Cancel plan</button>
-                </div>
-              </div>
-            </section>
-
-            <section class="settings-panel" data-panel="connections">
-              <h3 id="settingsPanelConnectionsTitle">Connections</h3>
-              <div class="setting-row">
-                <div>
-                  <p class="setting-title" id="settingsLinkedinTitle">LinkedIn username</p>
-                  <p class="setting-hint connection-status" id="settingsLinkedinStatus">Not connected</p>
-                </div>
-                <div class="connection-row">
-                  <div class="connection-card">
-                    <img id="settingsLinkedinAvatar" class="connection-avatar hidden" alt="LinkedIn profile avatar" />
-                    <div class="connection-meta">
-                      <p id="settingsLinkedinProfile" class="connection-name">Not connected</p>
-                      <p id="settingsLinkedinHandle" class="connection-handle"></p>
-                    </div>
-                  </div>
-                  <div class="connection-actions">
-                    <button type="button" id="connectLinkedinBtn" class="secondary connection-btn">Connect account</button>
-                    <button type="button" id="disconnectLinkedinBtn" class="secondary danger-btn connection-btn hidden">Disconnect</button>
-                  </div>
-                </div>
-                <p id="settingsLinkedinLockNote" class="setting-hint connection-lock-note hidden"></p>
-              </div>
-              <div class="setting-row">
-                <div>
-                  <p class="setting-title" id="settingsInstagramTitle">Instagram username</p>
-                  <p class="setting-hint connection-status" id="settingsInstagramStatus">Not connected</p>
-                </div>
-                <div class="connection-row">
-                  <div class="connection-card">
-                    <img id="settingsInstagramAvatar" class="connection-avatar hidden" alt="Instagram profile avatar" />
-                    <div class="connection-meta">
-                      <p id="settingsInstagramProfile" class="connection-name">Not connected</p>
-                      <p id="settingsInstagramHandle" class="connection-handle"></p>
-                    </div>
-                  </div>
-                  <div class="connection-actions">
-                    <button type="button" id="connectInstagramBtn" class="secondary connection-btn">Connect account</button>
-                    <button type="button" id="disconnectInstagramBtn" class="secondary danger-btn connection-btn hidden">Disconnect</button>
-                  </div>
-                </div>
-                <p id="settingsInstagramLockNote" class="setting-hint connection-lock-note hidden"></p>
-              </div>
-            </section>
-
-            <section class="settings-panel" data-panel="support">
-              <h3 id="settingsPanelSupportTitle">Support</h3>
-              <div class="setting-row">
-                <div>
-                  <p class="setting-title" id="supportEmailLabel">Support email</p>
-                  <p class="setting-hint" id="supportEmailHint">Write us anytime for account or billing issues.</p>
-                </div>
-                <div class="support-contact-card">
-                  <a id="supportEmailSettings" href="mailto:nextcorpromania@gmail.com">nextcorpromania@gmail.com</a>
-                </div>
-              </div>
-              <div class="setting-row">
-                <div>
-                  <p class="setting-title" id="supportPhoneLabel">Support phone</p>
-                  <p class="setting-hint" id="supportPhoneHint">For urgent requests, call this number.</p>
-                </div>
-                <div class="support-contact-card">
-                  <a id="supportPhoneSettings" href="tel:+40725176707">+4 0725 176 707</a>
-                </div>
-              </div>
-              <div class="setting-row settings-legal-row">
-                <div>
-                  <p class="setting-title" id="settingsLegalTitle">Legal</p>
-                  <p class="setting-hint" id="settingsLegalHint">Privacy policy, terms of service, and cookie policy.</p>
-                </div>
-                <div class="legal-links legal-links-settings">
-                  <a href="/privacy.html" id="legalPrivacyLinkApp" target="_blank" rel="noopener noreferrer">Privacy</a>
-                  <a href="/terms.html" id="legalTermsLinkApp" target="_blank" rel="noopener noreferrer">Terms</a>
-                  <a href="/cookies.html" id="legalCookiesLinkApp" target="_blank" rel="noopener noreferrer">Cookies</a>
-                </div>
-              </div>
-            </section>
-
-            <div class="settings-actions">
-              <button type="submit" id="settingsSaveBtn">Save settings</button>
-              <p id="settingsStatus" class="settings-status-text"></p>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <div
-      id="disconnectConfirmModal"
-      class="modal hidden"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="disconnectConfirmTitle"
-    >
-      <div class="modal-card confirm-modal-card">
-        <h2 id="disconnectConfirmTitle">Disconnect account?</h2>
-        <p id="disconnectConfirmBody">You will be signed out and returned to the home screen.</p>
-        <div class="confirm-actions">
-          <button type="button" id="disconnectCancelBtn" class="secondary">Cancel</button>
-          <button type="button" id="disconnectConfirmBtn" class="danger-btn">Disconnect</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="scoreModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="scoreModalTitle">
-      <div class="modal-card score-modal-card">
-        <button class="modal-close" id="closeScoreModal" type="button" aria-label="Close score details">×</button>
-        <h2 id="scoreModalTitle" class="score-modal-title">
-          <span class="score-modal-icon" id="scoreModalIcon" aria-hidden="true"></span>
-          <span id="scoreModalName">Momentum</span>
-        </h2>
-        <div class="score-modal-bar" aria-hidden="true">
-          <span class="score-modal-bar-fill" id="scoreModalBarFill" style="width: 0%">
-            <span id="scoreModalValue">0</span>
+    <section id="obConnectView" class="onboard-view onboard-connect">
+      <div class="onboard-connect-inner">
+        <img src="/logo.png" alt="PostPilot" class="onboard-logo" />
+        <h1 class="onboard-connect-title" id="obConnectTitle">Connect your Instagram to get started</h1>
+        <p class="onboard-connect-sub" id="obConnectSub">
+          So I can analyze your content and coach you personally for your audience.
+        </p>
+        <button type="button" id="obConnectInstagramBtn" class="ig-gradient-btn">
+          <span class="ig-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2.5" y="2.5" width="19" height="19" rx="5" />
+              <circle cx="12" cy="12" r="4.2" />
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+            </svg>
           </span>
+          <span id="obConnectInstagramLabel">Connect Instagram</span>
+        </button>
+        <button type="button" id="obConnectLogoutBtn" class="onboard-footer-logout" aria-label="Log out">
+          <span id="obConnectLogoutLabel">Log out</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="obScanView" class="onboard-view onboard-scan hidden">
+      <div class="onboard-scan-inner">
+        <div class="scan-avatar-wrap">
+          <div class="scan-glow" aria-hidden="true"></div>
+          <img id="obScanAvatar" class="scan-avatar" alt="Your profile" src="" />
         </div>
-        <div class="score-modal-section">
-          <h3 id="scoreModalWhatTitle">What is it?</h3>
-          <p id="scoreModalWhatBody"></p>
+        <p id="obScanHandle" class="scan-handle"></p>
+        <div class="scan-stat-row">
+          <div class="scan-stat">
+            <span class="scan-stat-value" id="obScanPosts">0</span>
+            <span class="scan-stat-label" id="obScanPostsLabel">posts</span>
+          </div>
+          <div class="scan-stat">
+            <span class="scan-stat-value" id="obScanLikes">0</span>
+            <span class="scan-stat-label" id="obScanLikesLabel">likes</span>
+          </div>
+          <div class="scan-stat">
+            <span class="scan-stat-value" id="obScanReach">0</span>
+            <span class="scan-stat-label" id="obScanReachLabel">reach</span>
+          </div>
         </div>
-        <div class="score-modal-section">
-          <h3 id="scoreModalDriversTitle">What's driving your score?</h3>
-          <p id="scoreModalDriversBody"></p>
+        <div class="scan-posts-preview" id="obScanPostsPreview"></div>
+        <h2 class="scan-title" id="obScanTitle">Scanning your profile...</h2>
+        <p class="scan-step-label" id="obScanStepLabel">Analyzing posts</p>
+        <div class="scan-progress" aria-hidden="true">
+          <span class="scan-progress-bar" id="obScanProgressBar"></span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <script src="/app.js"></script>
-  </body>
+    <section id="obEdgeView" class="onboard-view onboard-edge hidden">
+      <div class="edge-inner">
+        <img id="edgeAvatar" class="edge-avatar" alt="Your profile" src="" />
+        <h2 class="edge-title">
+          <span id="edgeFirstName">friend</span><span id="edgeTitleSuffix">, you've got an edge</span>
+        </h2>
+        <div class="edge-cards">
+          <article class="edge-card edge-card-super">
+            <span class="edge-card-kicker" id="edgeSuperKicker">🔥 Your Superpower</span>
+            <h3 class="edge-card-title">
+              <span id="edgeSuperTitle1">What you're</span> <em id="edgeSuperTitle2">crushing</em>
+            </h3>
+            <ul class="edge-card-list" id="edgeSuperList"></ul>
+          </article>
+          <article class="edge-card edge-card-unlock">
+            <span class="edge-card-kicker" id="edgeUnlockKicker">🚀 Your Unlock</span>
+            <h3 class="edge-card-title">
+              <span id="edgeUnlockTitle1">Your untapped</span> <em id="edgeUnlockTitle2">potential</em>
+            </h3>
+            <ul class="edge-card-list" id="edgeUnlockList"></ul>
+          </article>
+        </div>
+        <button type="button" class="edge-cta" id="edgeStartBtn">
+          <span id="edgeStartBtnLabel">Start Creating with PostPilot</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="obPaymentView" class="onboard-view onboard-payment hidden">
+      <div class="onboard-payment-inner">
+        <img src="/logo.png" alt="PostPilot" class="onboard-payment-logo" />
+        <h1 class="onboard-payment-title" id="obPaymentTitle">Activate your plan</h1>
+        <p class="onboard-payment-sub" id="obPaymentSubtitle">Subscribe to unlock the AI coach and analytics.</p>
+        <div class="plan-card plan-card--no-badge">
+          <div class="plan-card-header">
+            <span class="plan-card-name" id="obPaymentPlanName">Monthly</span>
+            <span class="plan-card-price">€9<span class="plan-card-price-period"
+                id="obPaymentPeriodLabel">/mo</span></span>
+          </div>
+          <ul class="plan-card-perks">
+            <li>
+              <span id="obPaymentPerkCancel">Cancel anytime</span>
+              <span class="plan-card-check" aria-hidden="true">✓</span>
+            </li>
+            <li>
+              <span id="obPaymentPerkMoney">7-day money-back guarantee</span>
+              <span class="plan-card-check" aria-hidden="true">✓</span>
+            </li>
+          </ul>
+        </div>
+        <button type="button" class="onboard-payment-cta" id="obPaymentStartBtn">
+          <span id="obPaymentStartLabel">Continue to checkout</span>
+        </button>
+        <p class="plan-login-info">
+          <span id="obPaymentLoggedInLabel">Logged in as:</span>
+          <span id="obPaymentLoggedInEmail"></span>
+        </p>
+        <button type="button" class="plan-logout-link" id="obPaymentLogoutBtn">
+          <span id="obPaymentLogoutLabel">Log out</span>
+        </button>
+        <p id="obPaymentError" class="form-error"></p>
+      </div>
+    </section>
+  </div>
+
+  <div class="legacy-forms hidden" aria-hidden="true">
+    <form id="accountForm">
+      <input id="accountName" />
+      <input id="accountEmail" />
+      <button type="submit" id="accountFormSubmitBtn"></button>
+    </form>
+    <form id="paymentForm">
+      <input id="paymentConfirm" type="checkbox" checked />
+      <button type="submit" id="paymentSubmitBtn"></button>
+    </form>
+    <p id="onboardingError" class="form-error"></p>
+    <button id="closeOnboarding" type="button"></button>
+  </div>
+
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-card settings-card">
+      <div class="modal-head">
+        <h2 id="settingsModalTitle">Settings</h2>
+        <button id="closeSettingsBtn" class="ghost-icon" aria-label="Close settings">×</button>
+      </div>
+      <div class="settings-layout">
+        <aside class="settings-nav">
+          <button class="settings-nav-btn active" data-tab="general" id="settingsNavGeneral">General</button>
+          <button class="settings-nav-btn" data-tab="account" id="settingsNavAccount">Account</button>
+          <button class="settings-nav-btn" data-tab="connections" id="settingsNavConnections">Connections</button>
+          <button class="settings-nav-btn" data-tab="support" id="settingsNavSupport">Support</button>
+        </aside>
+
+        <form id="settingsForm" class="settings-main">
+          <section class="settings-panel active" data-panel="general">
+            <h3 id="settingsPanelGeneralTitle">General</h3>
+          </section>
+
+          <section class="settings-panel" data-panel="account">
+            <h3 id="settingsPanelAccountTitle">Account</h3>
+            <div class="setting-row">
+              <div>
+                <p class="setting-title" id="settingsNameTitle">Name</p>
+              </div>
+              <input id="settingsName" />
+            </div>
+            <div class="setting-row">
+              <div>
+                <p class="setting-title" id="settingsEmailTitle">Email</p>
+              </div>
+              <input id="settingsEmail" />
+            </div>
+            <div class="setting-row billing-row">
+              <div>
+                <p class="setting-title">Subscription</p>
+                <p class="setting-hint" id="billingStatusText">Status: Not active</p>
+              </div>
+              <div class="billing-actions">
+                <button type="button" id="manageBillingBtn" class="secondary">Manage billing</button>
+                <button type="button" id="cancelSubscriptionBtn" class="secondary danger-btn">Cancel plan</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="settings-panel" data-panel="connections">
+            <h3 id="settingsPanelConnectionsTitle">Connections</h3>
+            <div class="setting-row">
+              <div>
+                <p class="setting-title" id="settingsLinkedinTitle">LinkedIn username</p>
+                <p class="setting-hint connection-status" id="settingsLinkedinStatus">Not connected</p>
+              </div>
+              <div class="connection-row">
+                <div class="connection-card">
+                  <img id="settingsLinkedinAvatar" class="connection-avatar hidden" alt="LinkedIn profile avatar" />
+                  <div class="connection-meta">
+                    <p id="settingsLinkedinProfile" class="connection-name">Not connected</p>
+                    <p id="settingsLinkedinHandle" class="connection-handle"></p>
+                  </div>
+                </div>
+                <div class="connection-actions">
+                  <button type="button" id="connectLinkedinBtn" class="secondary connection-btn">Connect
+                    account</button>
+                  <button type="button" id="disconnectLinkedinBtn"
+                    class="secondary danger-btn connection-btn hidden">Disconnect</button>
+                </div>
+              </div>
+              <p id="settingsLinkedinLockNote" class="setting-hint connection-lock-note hidden"></p>
+            </div>
+            <div class="setting-row">
+              <div>
+                <p class="setting-title" id="settingsInstagramTitle">Instagram username</p>
+                <p class="setting-hint connection-status" id="settingsInstagramStatus">Not connected</p>
+              </div>
+              <div class="connection-row">
+                <div class="connection-card">
+                  <img id="settingsInstagramAvatar" class="connection-avatar hidden" alt="Instagram profile avatar" />
+                  <div class="connection-meta">
+                    <p id="settingsInstagramProfile" class="connection-name">Not connected</p>
+                    <p id="settingsInstagramHandle" class="connection-handle"></p>
+                  </div>
+                </div>
+                <div class="connection-actions">
+                  <button type="button" id="connectInstagramBtn" class="secondary connection-btn">Connect
+                    account</button>
+                  <button type="button" id="disconnectInstagramBtn"
+                    class="secondary danger-btn connection-btn hidden">Disconnect</button>
+                </div>
+              </div>
+              <p id="settingsInstagramLockNote" class="setting-hint connection-lock-note hidden"></p>
+            </div>
+          </section>
+
+          <section class="settings-panel" data-panel="support">
+            <h3 id="settingsPanelSupportTitle">Support</h3>
+            <div class="setting-row">
+              <div>
+                <p class="setting-title" id="supportEmailLabel">Support email</p>
+                <p class="setting-hint" id="supportEmailHint">Write us anytime for account or billing issues.</p>
+              </div>
+              <div class="support-contact-card">
+                <a id="supportEmailSettings" href="mailto:nextcorpromania@gmail.com">nextcorpromania@gmail.com</a>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <p class="setting-title" id="supportPhoneLabel">Support phone</p>
+                <p class="setting-hint" id="supportPhoneHint">For urgent requests, call this number.</p>
+              </div>
+              <div class="support-contact-card">
+                <a id="supportPhoneSettings" href="tel:+40725176707">+4 0725 176 707</a>
+              </div>
+            </div>
+            <div class="setting-row settings-legal-row">
+              <div>
+                <p class="setting-title" id="settingsLegalTitle">Legal</p>
+                <p class="setting-hint" id="settingsLegalHint">Privacy policy, terms of service, and cookie policy.</p>
+              </div>
+              <div class="legal-links legal-links-settings">
+                <a href="/privacy.html" id="legalPrivacyLinkApp" target="_blank" rel="noopener noreferrer">Privacy</a>
+                <a href="/terms.html" id="legalTermsLinkApp" target="_blank" rel="noopener noreferrer">Terms</a>
+                <a href="/cookies.html" id="legalCookiesLinkApp" target="_blank" rel="noopener noreferrer">Cookies</a>
+              </div>
+            </div>
+          </section>
+
+          <div class="settings-actions">
+            <button type="submit" id="settingsSaveBtn">Save settings</button>
+            <p id="settingsStatus" class="settings-status-text"></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="disconnectConfirmModal" class="modal hidden" role="dialog" aria-modal="true"
+    aria-labelledby="disconnectConfirmTitle">
+    <div class="modal-card confirm-modal-card">
+      <h2 id="disconnectConfirmTitle">Disconnect account?</h2>
+      <p id="disconnectConfirmBody">You will be signed out and returned to the home screen.</p>
+      <div class="confirm-actions">
+        <button type="button" id="disconnectCancelBtn" class="secondary">Cancel</button>
+        <button type="button" id="disconnectConfirmBtn" class="danger-btn">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="scoreModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="scoreModalTitle">
+    <div class="modal-card score-modal-card">
+      <button class="modal-close" id="closeScoreModal" type="button" aria-label="Close score details">×</button>
+      <h2 id="scoreModalTitle" class="score-modal-title">
+        <span class="score-modal-icon" id="scoreModalIcon" aria-hidden="true"></span>
+        <span id="scoreModalName">Momentum</span>
+      </h2>
+      <div class="score-modal-bar" aria-hidden="true">
+        <span class="score-modal-bar-fill" id="scoreModalBarFill" style="width: 0%">
+          <span id="scoreModalValue">0</span>
+        </span>
+      </div>
+      <div class="score-modal-section">
+        <h3 id="scoreModalWhatTitle">What is it?</h3>
+        <p id="scoreModalWhatBody"></p>
+      </div>
+      <div class="score-modal-section">
+        <h3 id="scoreModalDriversTitle">What's driving your score?</h3>
+        <p id="scoreModalDriversBody"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+
 </html>

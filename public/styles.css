@@ -161,6 +161,14 @@ body {
   font-size: 0.78rem;
   font-weight: 600;
   color: #7a4e58;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-signal:hover {
+  transform: translateY(-2px);
+  background: var(--surface-strong);
+  color: #fff;
+  border-color: var(--primary-soft);
 }
 
 .signup-card {
@@ -203,6 +211,18 @@ body {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cta-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 24px rgba(213, 0, 50, 0.2);
+}
+
+.google-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
 .google-btn {
@@ -365,6 +385,13 @@ body {
   border: 1px solid var(--border);
   background: #fff;
   font-weight: 600;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.chip:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(213, 0, 50, 0.08);
+  border-color: #f7c6c7;
 }
 
 .centered {

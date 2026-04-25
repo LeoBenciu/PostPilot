@@ -71,11 +71,14 @@ const I18N = {
     feature3Text: "Never run out of ideas. Let your AI coach pitch you proven concepts with selectable custom hooks.",
     feature4Title: "Instant Performance Feedback",
     feature4Text: "Get a 1-10 grade on your post's clarity and visual appeal before publishing it to the world.",
+    feature5Title: "Deep Profile Analysis",
+    feature5Text: "We scan your past content to figure out your true superpower.",
+    feature6Title: "Captions & Hashtags",
+    feature6Text: "No more wasting time thinking of descriptions. You get ready-to-copy text.",
     comingSoonBadge: "Up Next",
     comingSoonTitle: "More Powerful Features Are Coming",
     comingSoonSubtitle: "We are actively building the next layer of creator tools.",
     chip1: "Smart AI video assistant",
-    chip2: "Performance insight hub",
     chip3: "Carousel draft builder",
     chip4: "Daily publishing planner",
     chip5: "Evergreen idea library",
@@ -304,11 +307,14 @@ const I18N = {
     feature3Text: "Alege dintre variantele clare de titlu și primești idei de conținut personalizate fix pe audiența ta.",
     feature4Title: "Scor și Evaluare Instantă",
     feature4Text: "Primești note de la 1 la 10 pe claritatea mesajului și forța vizuală înainte să postezi ceva online.",
+    feature5Title: "Analiză Profundă a Profilului",
+    feature5Text: "Îți scanăm postările anterioare și îți spunem exact de ce anumite clipuri au funcționat.",
+    feature6Title: "Descrieri și Hashtag-uri",
+    feature6Text: "Gata cu timpul pierdut. Primești textul postării complet formulat.",
     comingSoonBadge: "In curand",
     comingSoonTitle: "Acesta este doar inceputul",
     comingSoonSubtitle: "Pregatim functii noi si interesante.",
     chip1: "Editor video cu AI",
-    chip2: "Panou cu analize si indicatori",
     chip3: "Generator de carusele",
     chip4: "Programator zilnic de continut",
     chip5: "Banca de idei de continut",
@@ -543,11 +549,14 @@ const I18N = {
     feature3Text: "Scegli tra varianti di titoli e ricevi idee di contenuto basate su ciò che la tua audience ama.",
     feature4Title: "Punteggio di Performance Istantaneo",
     feature4Text: "Ottieni un voto da 1 a 10 sulla chiarezza e l'impatto visivo prima di pubblicare online.",
+    feature5Title: "Analisi Profonda del Profilo",
+    feature5Text: "Analizziamo i tuoi post scorsi e ti diciamo esattamente perché alcune clip hanno funzionato.",
+    feature6Title: "Descrizioni e Hashtag",
+    feature6Text: "Basta tempo perso. Ricevi il testo del post completamente formulato.",
     comingSoonBadge: "In arrivo",
     comingSoonTitle: "Questo e solo l'inizio",
     comingSoonSubtitle: "Abbiamo nuove funzionalita entusiasmanti in arrivo.",
     chip1: "Editor video con AI",
-    chip2: "Pannello analisi e metriche",
     chip3: "Generatore di caroselli",
     chip4: "Scheduler giornaliero contenuti",
     chip5: "Archivio idee contenuti",
@@ -770,11 +779,14 @@ const I18N = {
     feature3Text: "Wähle aus klar formulierten Titeln und erhalte bewiesene Content-Ideen, die genau auf deine Nische zugeschnitten sind.",
     feature4Title: "Sofortiges Performance-Feedback",
     feature4Text: "Erhalte Noten von 1-10 für Klarheit und visuelle Anziehungskraft deines Beitrags, bevor du ihn veröffentlichst.",
+    feature5Title: "Tiefe Profilanalyse",
+    feature5Text: "Wir analysieren deine vergangenen Beiträge und sagen dir genau, warum bestimmte Clips funktioniert haben.",
+    feature6Title: "Bildunterschriften & Hashtags",
+    feature6Text: "Schluss mit der Zeitverschwendung. Du erhältst den Post-Text komplett formuliert.",
     comingSoonBadge: "Demnaechst",
     comingSoonTitle: "Das ist erst der Anfang",
     comingSoonSubtitle: "Neue spannende Funktionen sind bereits auf dem Weg.",
     chip1: "KI-Videoeditor",
-    chip2: "Uebersicht zu Reichweite und Kennzahlen",
     chip3: "Karussell-Generator",
     chip4: "Taeglicher Content-Planer",
     chip5: "Content-Ideenbank",
@@ -997,11 +1009,14 @@ const I18N = {
     feature3Text: "Choisissez parmi plusieurs options de titres et recevez des idées sur mesure pour votre audience.",
     feature4Title: "Évaluation de Performance Instantanée",
     feature4Text: "Obtenez une note de 1 à 10 sur la clarté et l'impact visuel avant de publier en ligne.",
+    feature5Title: "Analyse Profonde du Profil",
+    feature5Text: "Nous analysons vos anciennes publications et vous disons exactement pourquoi certains clips ont fonctionné.",
+    feature6Title: "Légendes et Hashtags",
+    feature6Text: "Fini le temps perdu. Vous recevez le texte de la publication entièrement rédigé.",
     comingSoonBadge: "Bientot",
     comingSoonTitle: "Ce n'est que le debut",
     comingSoonSubtitle: "De nouvelles fonctionnalites passionnantes arrivent.",
     chip1: "Editeur video IA",
-    chip2: "Tableau des performances et indicateurs",
     chip3: "Generateur de carrousels",
     chip4: "Planificateur quotidien de contenu",
     chip5: "Bibliotheque d'idees de contenu",
@@ -1270,11 +1285,14 @@ function applyLanguage() {
   setTextIfExists("feature3Text", t("feature3Text"));
   setTextIfExists("feature4Title", t("feature4Title"));
   setTextIfExists("feature4Text", t("feature4Text"));
+  setTextIfExists("feature5Title", t("feature5Title"));
+  setTextIfExists("feature5Text", t("feature5Text"));
+  setTextIfExists("feature6Title", t("feature6Title"));
+  setTextIfExists("feature6Text", t("feature6Text"));
   setTextIfExists("comingSoonBadge", t("comingSoonBadge"));
   setTextIfExists("comingSoonTitle", t("comingSoonTitle"));
   setTextIfExists("comingSoonSubtitle", t("comingSoonSubtitle"));
   setTextIfExists("chip1", t("chip1"));
-  setTextIfExists("chip2", t("chip2"));
   setTextIfExists("chip3", t("chip3"));
   setTextIfExists("chip4", t("chip4"));
   setTextIfExists("chip5", t("chip5"));
