@@ -38,6 +38,7 @@ const disconnectCancelBtn = document.getElementById("disconnectCancelBtn");
 const disconnectConfirmBtn = document.getElementById("disconnectConfirmBtn");
 const authToast = document.getElementById("authToast");
 const onboardingModal = document.getElementById("onboardFlow");
+const waitlistCountEl = document.getElementById("waitlistCountEl");
 let onboardingHideTimer = null;
 let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || "ro";
 let logoTapCount = 0;
@@ -1610,6 +1611,13 @@ function clearFeedback() {
   showFeedback(signinFeedback, "");
 }
 
+function setWaitlistCount(value) {
+  if (!waitlistCountEl) return;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return;
+  waitlistCountEl.textContent = Math.floor(n).toLocaleString(currentLanguage === "ro" ? "ro-RO" : undefined);
+}
+
 function toggleDevAuthOverride() {
   if (!BASE_WAITLIST_MODE) return;
   const enabled = localStorage.getItem(DEV_AUTH_OVERRIDE_KEY) === "1";
@@ -2812,7 +2820,8 @@ signupForm?.addEventListener("submit", async (event) => {
 
   try {
     if (WAITLIST_MODE) {
-      await api("/api/waitlist", "POST", { email });
+      const data = await api("/api/waitlist", "POST", { email });
+      setWaitlistCount(data.waitlistCount);
       signupForm.reset();
       showFeedback(signupFeedback, "You're on the list. We will keep you posted.");
       return;
@@ -3515,6 +3524,12 @@ if (!WAITLIST_MODE && !handledFreshGoogleAuth) {
         });
       }
     })
+    .catch(() => {});
+}
+
+if (WAITLIST_MODE) {
+  api("/api/waitlist/count")
+    .then((data) => setWaitlistCount(data.waitlistCount))
     .catch(() => {});
 }
 

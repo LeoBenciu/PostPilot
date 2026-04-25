@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 const APP_STATE_ID = 1;
 const DEFAULT_SESSION_TTL_DAYS = 14;
 const OAUTH_STATE_TTL_MINUTES = 10;
+const DEFAULT_WAITLIST_COUNT = 57;
 
 const defaultState = Object.freeze({
   user: {
@@ -67,6 +68,36 @@ async function ensureAppState() {
     update: {},
     create: { id: APP_STATE_ID, data: cloneDefaultState() },
   });
+}
+
+async function getWaitlistCount() {
+  const row = await prisma.appState.findUnique({
+    where: { id: APP_STATE_ID },
+    select: { data: true },
+  });
+  if (!row || !row.data || typeof row.data !== "object") return DEFAULT_WAITLIST_COUNT;
+  const raw = Number(row.data.waitlistCount);
+  if (!Number.isFinite(raw)) return DEFAULT_WAITLIST_COUNT;
+  return Math.max(DEFAULT_WAITLIST_COUNT, Math.floor(raw));
+}
+
+async function incrementWaitlistCount() {
+  const result = await prisma.$queryRaw`
+    UPDATE "AppState"
+    SET
+      data = jsonb_set(
+        COALESCE(data::jsonb, '{}'::jsonb),
+        '{waitlistCount}',
+        to_jsonb(COALESCE((data->>'waitlistCount')::int, ${DEFAULT_WAITLIST_COUNT}) + 1),
+        true
+      ),
+      "updatedAt" = NOW()
+    WHERE id = ${APP_STATE_ID}
+    RETURNING COALESCE((data->>'waitlistCount')::int, ${DEFAULT_WAITLIST_COUNT}) AS "waitlistCount"
+  `;
+  const next = Number(result?.[0]?.waitlistCount);
+  if (!Number.isFinite(next)) return DEFAULT_WAITLIST_COUNT + 1;
+  return Math.max(DEFAULT_WAITLIST_COUNT + 1, Math.floor(next));
 }
 
 async function createUserWithPassword({ fullName, email, passwordHash }) {
@@ -265,5 +296,7 @@ module.exports = {
   revokeSession,
   createOAuthState,
   consumeOAuthState,
+  getWaitlistCount,
+  incrementWaitlistCount,
   closeDb,
 };

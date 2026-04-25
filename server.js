@@ -21,6 +21,8 @@ const {
   revokeSession,
   createOAuthState,
   consumeOAuthState,
+  getWaitlistCount,
+  incrementWaitlistCount,
   closeDb,
 } = require("./dbState");
 const { generateAgentReply, streamAgentReply } = require("./aiClient");
@@ -1508,9 +1510,20 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       await sendWaitlistEmail({ email, req });
-      sendJson(res, 200, { ok: true });
+      const waitlistCount = await incrementWaitlistCount();
+      sendJson(res, 200, { ok: true, waitlistCount });
     } catch (err) {
       sendJson(res, 500, { error: err.message || "Failed to submit waitlist request." });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/waitlist/count") {
+    try {
+      const waitlistCount = await getWaitlistCount();
+      sendJson(res, 200, { waitlistCount });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message || "Failed to load waitlist count." });
     }
     return;
   }
