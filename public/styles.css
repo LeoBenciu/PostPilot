@@ -110,7 +110,7 @@ body {
   position: absolute;
   top: -10%;
   right: -15%;
-  width: 800px;
+  width: 740px;
   height: auto;
   z-index: 0;
   opacity: 0.85;
@@ -121,10 +121,10 @@ body {
 .hero-graphic {
   width: 100%;
   height: auto;
-  transform: rotateY(-15deg) rotateX(10deg) scale(1.1);
+  transform: rotateY(-15deg) rotateX(10deg) scale(1.03);
   mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
   -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
-  filter: drop-shadow(0 30px 60px rgba(213, 0, 50, 0.2));
+  filter: drop-shadow(0 30px 60px rgba(213, 0, 50, 0.14));
 }
 
 .hero-copy, .hero-auth-container {
