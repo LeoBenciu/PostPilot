@@ -2,7 +2,9 @@ const LANGUAGE_KEY = "postpilot_language";
 const sessionId = "session-main";
 let accountState = null;
 let isSendingMessage = false;
-const WAITLIST_MODE = document.body?.dataset?.mode === "waitlist";
+const DEV_AUTH_OVERRIDE_KEY = "postpilot_dev_auth_override";
+const BASE_WAITLIST_MODE = document.body?.dataset?.mode === "waitlist";
+const WAITLIST_MODE = BASE_WAITLIST_MODE && localStorage.getItem(DEV_AUTH_OVERRIDE_KEY) !== "1";
 
 const authGate = document.getElementById("authGate");
 const chatApp = document.getElementById("chatApp");
@@ -38,6 +40,8 @@ const authToast = document.getElementById("authToast");
 const onboardingModal = document.getElementById("onboardFlow");
 let onboardingHideTimer = null;
 let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || "ro";
+let logoTapCount = 0;
+let logoTapResetTimer = null;
 
 const I18N = {
   en: {
@@ -57,16 +61,16 @@ const I18N = {
     testimonial2Role: "Life & Fitness Glow-Up Coach",
     testimonial3Quote: "\"It was honest and specific - no fake hype. Exactly what I needed.\"",
     testimonial3Role: "Health & Wellness Coach",
-    achieveTitle: "What Changes for You",
-    achieveSubtitle: "PostPilot does more than suggest ideas - it upgrades your full creation process.",
-    feature1Title: "Grow your audience with momentum",
-    feature1Text: "Consistent, high-impact content that speaks to the right people",
-    feature2Title: "Create in a rhythm that fits you",
-    feature2Text: "Turn repeatable wins into your recognizable creator style",
-    feature3Title: "Post with confidence every day",
-    feature3Text: "Stop second-guessing and start shipping with clarity",
-    feature4Title: "Make publishing automatic",
-    feature4Text: "Move from forced posting to a sustainable content habit",
+    achieveTitle: "How PostPilot Works",
+    achieveSubtitle: "It doesn't just give you ideas. It's an all-in-one content strategist, copywriter, and data analyst.",
+    feature1Title: "Data-Driven Content Planning",
+    feature1Text: "Connect Instagram and receive tailored weekly schedules that turn random ideas into a clear strategy.",
+    feature2Title: "Ready-to-Shoot Video Scripts",
+    feature2Text: "From scroll-stopping hooks to call-to-actions, we generate beat-by-beat video scripts.",
+    feature3Title: "Viral Hook Options",
+    feature3Text: "Never run out of ideas. Let your AI coach pitch you proven concepts with selectable custom hooks.",
+    feature4Title: "Instant Performance Feedback",
+    feature4Text: "Get a 1-10 grade on your post's clarity and visual appeal before publishing it to the world.",
     comingSoonBadge: "Up Next",
     comingSoonTitle: "More Powerful Features Are Coming",
     comingSoonSubtitle: "We are actively building the next layer of creator tools.",
@@ -290,16 +294,16 @@ const I18N = {
     testimonial2Role: "Coach de viata si fitness",
     testimonial3Quote: "\"Mi-a spus adevarul - fara vorbe goale, fara laude false. Exact ce aveam nevoie.\"",
     testimonial3Role: "Coach de sanatate si wellness",
-    achieveTitle: "Ce vei obtine",
-    achieveSubtitle: "PostPilot nu iti ofera doar idei. Iti transforma modul de a crea.",
-    feature1Title: "Creste-ti audienta mai rapid",
-    feature1Text: "Continut constant si de calitate, care rezoneaza cu urmaritorii tai ideali",
-    feature2Title: "Gaseste-ti ritmul creativ",
-    feature2Text: "Descopera ce functioneaza pentru tine si transforma in stilul tau semnatura",
-    feature3Title: "Apari cu incredere, zi de zi",
-    feature3Text: "Fara sa mai supraanalizezi sau sa te indoiesti de continutul tau",
-    feature4Title: "Transforma postarea din corvoada in obicei",
-    feature4Text: "Fa crearea continutului sa para naturala, nu fortata",
+    achieveTitle: "Cum Funcționează",
+    achieveSubtitle: "PostPilot nu îți oferă doar idei vagi. Funcționează ca un strateg, copywriter și analist de date complet.",
+    feature1Title: "Planificare Sub Măsură",
+    feature1Text: "Conectezi Instagramul și primești instant calendarul săptămânal pentru a ști clar ce trebuie să publici.",
+    feature2Title: "Scenarii Video Gata de Filmat",
+    feature2Text: "De la cârligul video până la mesajul de final, îți scriem scripturi video detaliate, pas cu pas.",
+    feature3Title: "Idei și Opțiuni de Hook",
+    feature3Text: "Alege dintre variantele clare de titlu și primești idei de conținut personalizate fix pe audiența ta.",
+    feature4Title: "Scor și Evaluare Instantă",
+    feature4Text: "Primești note de la 1 la 10 pe claritatea mesajului și forța vizuală înainte să postezi ceva online.",
     comingSoonBadge: "In curand",
     comingSoonTitle: "Acesta este doar inceputul",
     comingSoonSubtitle: "Pregatim functii noi si interesante.",
@@ -529,16 +533,16 @@ const I18N = {
     testimonial2Role: "Coach di vita e fitness",
     testimonial3Quote: "\"Mi ha detto la verita - niente fronzoli, niente lodi finte. Esattamente cio che mi serviva.\"",
     testimonial3Role: "Coach salute e benessere",
-    achieveTitle: "Cosa otterrai",
-    achieveSubtitle: "PostPilot non ti da solo idee. Trasforma il tuo modo di creare.",
-    feature1Title: "Fai crescere il pubblico piu velocemente",
-    feature1Text: "Contenuti costanti e di qualita che risuonano con i follower ideali",
-    feature2Title: "Trova il tuo ritmo creativo",
-    feature2Text: "Scopri cosa funziona per te e trasformalo nel tuo stile distintivo",
-    feature3Title: "Presentati con fiducia ogni giorno",
-    feature3Text: "Niente piu overthinking o dubbi continui sui contenuti",
-    feature4Title: "Trasforma il postare da fatica ad abitudine",
-    feature4Text: "Rendi la creazione di contenuti naturale, non forzata",
+    achieveTitle: "Come Funziona",
+    achieveSubtitle: "Non ti dà solo idee. Agisce come stratega completo, copywriter e analista dei dati.",
+    feature1Title: "Pianificazione Basata sui Dati",
+    feature1Text: "Collega Instagram e ricevi un calendario settimanale per sapere esattamente cosa pubblicare.",
+    feature2Title: "Script Video Pronti all'Uso",
+    feature2Text: "Dall'hook iniziale alla call to action finale, generiamo script video dettagliati passo dopo passo.",
+    feature3Title: "Idee e Opzioni Hook",
+    feature3Text: "Scegli tra varianti di titoli e ricevi idee di contenuto basate su ciò che la tua audience ama.",
+    feature4Title: "Punteggio di Performance Istantaneo",
+    feature4Text: "Ottieni un voto da 1 a 10 sulla chiarezza e l'impatto visivo prima di pubblicare online.",
     comingSoonBadge: "In arrivo",
     comingSoonTitle: "Questo e solo l'inizio",
     comingSoonSubtitle: "Abbiamo nuove funzionalita entusiasmanti in arrivo.",
@@ -756,16 +760,16 @@ const I18N = {
     testimonial2Role: "Life- und Fitness-Coach",
     testimonial3Quote: "\"Es hat mir die Wahrheit gesagt - ohne Floskeln, ohne falsches Lob. Genau das, was ich brauchte.\"",
     testimonial3Role: "Gesundheits- und Wellness-Coach",
-    achieveTitle: "Was du erreichen wirst",
-    achieveSubtitle: "PostPilot gibt dir nicht nur Ideen. Es veraendert, wie du Content erstellst.",
-    feature1Title: "Baue dein Publikum schneller auf",
-    feature1Text: "Konstanter, hochwertiger Content, der bei deinen idealen Followern ankommt",
-    feature2Title: "Finde deinen kreativen Rhythmus",
-    feature2Text: "Entdecke, was fuer dich funktioniert, und mache es zu deinem Signature-Style",
-    feature3Title: "Zeig dich taeglich selbstbewusst",
-    feature3Text: "Kein Overthinking und kein ständiges Zweifeln mehr",
-    feature4Title: "Mach Posten von einer Pflicht zur Gewohnheit",
-    feature4Text: "Lass Content-Erstellung natuerlich statt erzwungen wirken",
+    achieveTitle: "Wie PostPilot Funktioniert",
+    achieveSubtitle: "Es gibt dir nicht nur Ideen. Es fungiert als Content-Stratege, Texter und Datenanalyst.",
+    feature1Title: "Datenbasierte Inhaltsplanung",
+    feature1Text: "Verbinde Instagram und erhalte wöchentliche Pläne, um genau zu wissen, was du posten musst.",
+    feature2Title: "Drehfertige Video-Skripte",
+    feature2Text: "Vom spannenden Hook bis zum Call-to-Action erstellen wir detaillierte Skripte Schritt für Schritt.",
+    feature3Title: "Virale Hook-Optionen",
+    feature3Text: "Wähle aus klar formulierten Titeln und erhalte bewiesene Content-Ideen, die genau auf deine Nische zugeschnitten sind.",
+    feature4Title: "Sofortiges Performance-Feedback",
+    feature4Text: "Erhalte Noten von 1-10 für Klarheit und visuelle Anziehungskraft deines Beitrags, bevor du ihn veröffentlichst.",
     comingSoonBadge: "Demnaechst",
     comingSoonTitle: "Das ist erst der Anfang",
     comingSoonSubtitle: "Neue spannende Funktionen sind bereits auf dem Weg.",
@@ -983,16 +987,16 @@ const I18N = {
     testimonial2Role: "Coach vie et fitness",
     testimonial3Quote: "\"Il m'a dit la verite - sans blabla, sans faux compliments. Exactement ce qu'il me fallait.\"",
     testimonial3Role: "Coach sante et bien-etre",
-    achieveTitle: "Ce que vous allez accomplir",
-    achieveSubtitle: "PostPilot ne vous donne pas seulement des idees. Il transforme votre facon de creer.",
-    feature1Title: "Developpez votre audience plus vite",
-    feature1Text: "Un contenu regulier et de qualite qui parle a vos abonnes ideaux",
-    feature2Title: "Trouvez votre rythme creatif",
-    feature2Text: "Decouvrez ce qui fonctionne pour vous et transformez-le en style signature",
-    feature3Title: "Soyez present avec confiance chaque jour",
-    feature3Text: "Fini le surmenage mental et les doutes constants sur votre contenu",
-    feature4Title: "Transformez la publication en habitude",
-    feature4Text: "Rendez la creation de contenu naturelle, pas forcee",
+    achieveTitle: "Comment Fonctionne PostPilot",
+    achieveSubtitle: "Il ne vous donne pas seulement des idées. Il agit comme stratège, rédacteur et analyste de données.",
+    feature1Title: "Planification Basée sur les Données",
+    feature1Text: "Connectez Instagram et recevez un calendrier de contenu hebdomadaire pour savoir exactement quoi publier.",
+    feature2Title: "Scripts Vidéo Prêts à Tourner",
+    feature2Text: "De l'accroche (hook) jusqu'à la fin, nous concevons des scripts vidéo détaillés étape par étape.",
+    feature3Title: "Idées et Options d'Accroches",
+    feature3Text: "Choisissez parmi plusieurs options de titres et recevez des idées sur mesure pour votre audience.",
+    feature4Title: "Évaluation de Performance Instantanée",
+    feature4Text: "Obtenez une note de 1 à 10 sur la clarté et l'impact visuel avant de publier en ligne.",
     comingSoonBadge: "Bientot",
     comingSoonTitle: "Ce n'est que le debut",
     comingSoonSubtitle: "De nouvelles fonctionnalites passionnantes arrivent.",
@@ -1580,6 +1584,39 @@ function showFeedback(target, message) {
 function clearFeedback() {
   showFeedback(signupFeedback, "");
   showFeedback(signinFeedback, "");
+}
+
+function toggleDevAuthOverride() {
+  if (!BASE_WAITLIST_MODE) return;
+  const enabled = localStorage.getItem(DEV_AUTH_OVERRIDE_KEY) === "1";
+  if (enabled) {
+    localStorage.removeItem(DEV_AUTH_OVERRIDE_KEY);
+    showToast("Developer auth mode disabled.");
+  } else {
+    localStorage.setItem(DEV_AUTH_OVERRIDE_KEY, "1");
+    showToast("Developer auth mode enabled.");
+  }
+  window.setTimeout(() => window.location.reload(), 450);
+}
+
+function registerLogoDevToggle() {
+  const logoEl = document.querySelector(".hero-logo");
+  if (!logoEl) return;
+  logoEl.addEventListener("click", () => {
+    logoTapCount += 1;
+    if (logoTapResetTimer) window.clearTimeout(logoTapResetTimer);
+    logoTapResetTimer = window.setTimeout(() => {
+      logoTapCount = 0;
+    }, 2200);
+    if (logoTapCount >= 5) {
+      logoTapCount = 0;
+      if (logoTapResetTimer) {
+        window.clearTimeout(logoTapResetTimer);
+        logoTapResetTimer = null;
+      }
+      toggleDevAuthOverride();
+    }
+  });
 }
 
 function escapeHtml(raw) {
@@ -3379,6 +3416,7 @@ document.getElementById("edgeStartBtn")?.addEventListener("click", () => {
 renderConversation([]);
 applyLanguage();
 setActiveView("agent");
+registerLogoDevToggle();
 
 const authQueryState = getAuthQueryState();
 let handledFreshGoogleAuth = false;
