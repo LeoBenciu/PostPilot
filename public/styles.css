@@ -4356,7 +4356,7 @@ pre {
 }
 
 .msg-row.assistant .msg-bubble:has(.pp-card) {
-  max-width: 520px;
+  max-width: 800px;
   padding: 8px;
   background: transparent;
   border: none;
