@@ -2552,6 +2552,12 @@ pre {
     display: none;
   }
 
+  #authGate .hero-graphic-background {
+    opacity: 0.1;
+    right: -40%;
+    top: 0;
+  }
+
   #authGate .signup-card {
     position: static;
   }
