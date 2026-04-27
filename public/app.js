@@ -6,6 +6,7 @@ const DEV_AUTH_OVERRIDE_KEY = "postpilot_dev_auth_override";
 const BASE_WAITLIST_MODE = document.body?.dataset?.mode === "waitlist";
 const WAITLIST_MODE = BASE_WAITLIST_MODE && localStorage.getItem(DEV_AUTH_OVERRIDE_KEY) !== "1";
 const REFERRAL_CODE_FROM_URL = new URLSearchParams(window.location.search).get("ref") || "";
+const REFERRAL_LINK_BASE = "https://postpilotcoach.com";
 
 const authGate = document.getElementById("authGate");
 const chatApp = document.getElementById("chatApp");
@@ -30,7 +31,6 @@ const connectLinkedinBtn = document.getElementById("connectLinkedinBtn");
 const connectInstagramBtn = document.getElementById("connectInstagramBtn");
 const disconnectLinkedinBtn = document.getElementById("disconnectLinkedinBtn");
 const disconnectInstagramBtn = document.getElementById("disconnectInstagramBtn");
-const copyReferralCodeBtn = document.getElementById("copyReferralCodeBtn");
 const copyReferralLinkBtn = document.getElementById("copyReferralLinkBtn");
 const languageSelect = document.getElementById("languageSelect");
 const languageSelectOnboard = document.getElementById("languageSelectOnboard");
@@ -1496,23 +1496,18 @@ function applyLanguage() {
   setTextIfExists("paymentAgreeText", t("paymentAgree"));
   setTextIfExists("paymentSubmitBtn", t("paymentSubmit"));
   setTextIfExists("settingsModalTitle", t("settingsModalHeading"));
-  setTextIfExists("settingsNavGeneral", t("tabGeneral"));
-  setTextIfExists("settingsNavAccount", t("tabAccount"));
-  setTextIfExists("settingsNavReferral", t("tabReferral"));
-  setTextIfExists("settingsNavConnections", t("tabConnections"));
-  setTextIfExists("settingsNavSupport", t("tabSupport"));
-  setTextIfExists("settingsPanelGeneralTitle", t("panelGeneral"));
+  setTextIfExists("settingsNavAccountLabel", t("tabAccount"));
+  setTextIfExists("settingsNavReferralLabel", t("tabReferral"));
+  setTextIfExists("settingsNavConnectionsLabel", t("tabConnections"));
+  setTextIfExists("settingsNavSupportLabel", t("tabSupport"));
   setTextIfExists("settingsPanelAccountTitle", t("panelAccount"));
   setTextIfExists("settingsPanelReferralTitle", t("panelReferral"));
   setTextIfExists("settingsNameTitle", t("shortName"));
   setTextIfExists("settingsEmailTitle", t("shortEmail"));
   setTextIfExists("settingsPanelConnectionsTitle", t("panelConnections"));
   setTextIfExists("settingsPanelSupportTitle", t("panelSupport"));
-  setTextIfExists("referralCodeTitle", t("referralCodeTitle"));
-  setTextIfExists("referralCodeHint", t("referralCodeHint"));
   setTextIfExists("referralLinkTitle", t("referralLinkTitle"));
   setTextIfExists("referralLinkHint", t("referralLinkHint"));
-  setTextIfExists("copyReferralCodeBtn", t("copyCode"));
   setTextIfExists("copyReferralLinkBtn", t("copyLink"));
   setTextIfExists("supportEmailLabel", t("supportEmailTitle"));
   setTextIfExists("supportEmailHint", t("supportEmailHint"));
@@ -2737,10 +2732,8 @@ function applySettingsForm(data) {
   if (manageBillingBtn) manageBillingBtn.disabled = !billing.stripeCustomerId;
   if (cancelSubscriptionBtn) cancelSubscriptionBtn.disabled = !billing.stripeSubscriptionId;
   const referralCode = String(user.referralCode || "").trim();
-  const referralCodeInput = document.getElementById("referralCodeInput");
   const referralLinkInput = document.getElementById("referralLinkInput");
-  const referralLink = referralCode ? `${window.location.origin}/?ref=${encodeURIComponent(referralCode)}` : "";
-  if (referralCodeInput) referralCodeInput.value = referralCode;
+  const referralLink = referralCode ? `${REFERRAL_LINK_BASE}/?ref=${encodeURIComponent(referralCode)}` : "";
   if (referralLinkInput) referralLinkInput.value = referralLink;
 }
 
@@ -3213,17 +3206,6 @@ cancelSubscriptionBtn?.addEventListener("click", async () => {
     await loadAccountState();
   } catch (err) {
     setText("settingsStatus", `Error: ${err.message}`);
-  }
-});
-
-copyReferralCodeBtn?.addEventListener("click", async () => {
-  const value = document.getElementById("referralCodeInput")?.value || "";
-  if (!value) return;
-  try {
-    await navigator.clipboard.writeText(value);
-    setText("settingsStatus", t("copied"));
-  } catch (_err) {
-    setText("settingsStatus", value);
   }
 });
 

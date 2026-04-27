@@ -1459,6 +1459,7 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 200, { authenticated: false });
         return;
       }
+      const referralCode = await ensureUserReferralCode(user.id);
       sendJson(res, 200, {
         authenticated: true,
         user: {
@@ -1466,7 +1467,7 @@ const server = http.createServer(async (req, res) => {
           email: user.email,
           fullName: user.fullName,
           authProvider: user.authProvider,
-          referralCode: user.referralCode || null,
+          referralCode: referralCode || null,
           createdAt: user.createdAt,
         },
       });
@@ -1851,7 +1852,9 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && pathname === "/api/account") {
     const user = await requireAuth(req, res);
     if (!user) return;
-    const state = bindStateToUser(await getStateForUser(user.id), user);
+    await ensureUserReferralCode(user.id);
+    const freshUser = (await findUserById(user.id)) || user;
+    const state = bindStateToUser(await getStateForUser(user.id), freshUser);
     updateOnboardingCompletion(state);
     await saveStateForUser(user.id, state);
     sendJson(res, 200, accountSummary(state));

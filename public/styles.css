@@ -1639,6 +1639,14 @@ pre {
   border-radius: 10px;
   background: #fff;
   color: #6c3f4b;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-nav-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .settings-nav-btn:hover {

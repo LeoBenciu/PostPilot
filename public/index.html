@@ -629,19 +629,26 @@
       </div>
       <div class="settings-layout">
         <aside class="settings-nav">
-          <button class="settings-nav-btn active" data-tab="general" id="settingsNavGeneral">General</button>
-          <button class="settings-nav-btn" data-tab="account" id="settingsNavAccount">Account</button>
-          <button class="settings-nav-btn" data-tab="referral" id="settingsNavReferral">Referral</button>
-          <button class="settings-nav-btn" data-tab="connections" id="settingsNavConnections">Connections</button>
-          <button class="settings-nav-btn" data-tab="support" id="settingsNavSupport">Support</button>
+          <button class="settings-nav-btn active" data-tab="account" id="settingsNavAccount">
+            <span class="settings-nav-icon" aria-hidden="true">👤</span>
+            <span id="settingsNavAccountLabel">Account</span>
+          </button>
+          <button class="settings-nav-btn" data-tab="referral" id="settingsNavReferral">
+            <span class="settings-nav-icon" aria-hidden="true">🎁</span>
+            <span id="settingsNavReferralLabel">Referral</span>
+          </button>
+          <button class="settings-nav-btn" data-tab="connections" id="settingsNavConnections">
+            <span class="settings-nav-icon" aria-hidden="true">🔗</span>
+            <span id="settingsNavConnectionsLabel">Connections</span>
+          </button>
+          <button class="settings-nav-btn" data-tab="support" id="settingsNavSupport">
+            <span class="settings-nav-icon" aria-hidden="true">💬</span>
+            <span id="settingsNavSupportLabel">Support</span>
+          </button>
         </aside>
 
         <form id="settingsForm" class="settings-main">
-          <section class="settings-panel active" data-panel="general">
-            <h3 id="settingsPanelGeneralTitle">General</h3>
-          </section>
-
-          <section class="settings-panel" data-panel="account">
+          <section class="settings-panel active" data-panel="account">
             <h3 id="settingsPanelAccountTitle">Account</h3>
             <div class="setting-row">
               <div>
@@ -669,16 +676,6 @@
 
           <section class="settings-panel" data-panel="referral">
             <h3 id="settingsPanelReferralTitle">Referral</h3>
-            <div class="setting-row">
-              <div>
-                <p class="setting-title" id="referralCodeTitle">Your referral code</p>
-                <p class="setting-hint" id="referralCodeHint">Share this code and both of you get one free month after their first paid month.</p>
-              </div>
-              <div class="referral-actions">
-                <input id="referralCodeInput" readonly />
-                <button type="button" id="copyReferralCodeBtn" class="secondary">Copy code</button>
-              </div>
-            </div>
             <div class="setting-row">
               <div>
                 <p class="setting-title" id="referralLinkTitle">Referral link</p>
