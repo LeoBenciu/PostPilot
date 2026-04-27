@@ -1671,6 +1671,13 @@ pre {
   display: block;
 }
 
+.settings-nav-icon-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: block;
+}
+
 .settings-nav-btn:hover {
   background: #ffe9ed;
   transform: none;
