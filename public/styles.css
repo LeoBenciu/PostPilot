@@ -1040,6 +1040,18 @@ button:active {
   color: #54313d;
 }
 
+.referral-cta-btn {
+  border-color: #e2aab8;
+  background: linear-gradient(120deg, #fff8fb 0%, #ffeff4 100%);
+  color: #6f1530;
+}
+
+.referral-cta-icon {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+}
+
 #disconnectBtn {
   border-color: #e7b7c3;
   background: linear-gradient(180deg, #fff7f9 0%, #fff0f4 100%);

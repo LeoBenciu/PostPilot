@@ -23,6 +23,7 @@ const disconnectBtn = document.getElementById("disconnectBtn");
 const resetChatBtn = document.getElementById("resetChatBtn");
 const agentViewBtn = document.getElementById("agentViewBtn");
 const analyticsViewBtn = document.getElementById("analyticsViewBtn");
+const referralOpenBtn = document.getElementById("referralOpenBtn");
 const agentView = document.getElementById("agentView");
 const analyticsView = document.getElementById("analyticsView");
 const manageBillingBtn = document.getElementById("manageBillingBtn");
@@ -241,6 +242,7 @@ const I18N = {
     tabReferral: "Referral",
     tabConnections: "Connections",
     tabSupport: "Support",
+    referralCtaLabel: "Earn a free month",
     panelGeneral: "General",
     panelAccount: "Account",
     panelReferral: "Referral",
@@ -499,6 +501,7 @@ const I18N = {
     tabReferral: "Referral",
     tabConnections: "Conexiuni",
     tabSupport: "Suport",
+    referralCtaLabel: "Castiga o luna gratuita",
     panelGeneral: "General",
     panelAccount: "Cont",
     panelReferral: "Referral",
@@ -754,6 +757,7 @@ const I18N = {
     tabReferral: "Referral",
     tabConnections: "Connessioni",
     tabSupport: "Supporto",
+    referralCtaLabel: "Ottieni un mese gratis",
     panelGeneral: "Generale",
     panelAccount: "Account",
     panelReferral: "Referral",
@@ -1000,6 +1004,7 @@ const I18N = {
     tabReferral: "Referral",
     tabConnections: "Verbindungen",
     tabSupport: "Support",
+    referralCtaLabel: "Einen Gratis-Monat verdienen",
     panelGeneral: "Allgemein",
     panelAccount: "Konto",
     panelReferral: "Referral",
@@ -1246,6 +1251,7 @@ const I18N = {
     tabReferral: "Referral",
     tabConnections: "Connexions",
     tabSupport: "Support",
+    referralCtaLabel: "Gagner un mois gratuit",
     panelGeneral: "General",
     panelAccount: "Compte",
     panelReferral: "Referral",
@@ -1520,6 +1526,7 @@ function applyLanguage() {
   setTextIfExists("settingsNavReferralLabel", t("tabReferral"));
   setTextIfExists("settingsNavConnectionsLabel", t("tabConnections"));
   setTextIfExists("settingsNavSupportLabel", t("tabSupport"));
+  setTextIfExists("referralOpenBtnLabel", t("referralCtaLabel"));
   setTextIfExists("settingsPanelAccountTitle", t("panelAccount"));
   setTextIfExists("settingsPanelReferralTitle", t("panelReferral"));
   setTextIfExists("settingsNameTitle", t("shortName"));
@@ -3146,13 +3153,31 @@ document.getElementById("obPaymentStartBtn")?.addEventListener("click", () => {
   document.getElementById("paymentForm")?.requestSubmit();
 });
 
-document.getElementById("settingsBtn").addEventListener("click", async () => {
+function setActiveSettingsTab(tab) {
+  for (const btn of document.querySelectorAll(".settings-nav-btn")) {
+    btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
+  }
+  for (const panel of document.querySelectorAll(".settings-panel")) {
+    panel.classList.toggle("active", panel.getAttribute("data-panel") === tab);
+  }
+}
+
+async function openSettingsTab(tab = "account") {
   setHidden("settingsModal", false);
+  setActiveSettingsTab(tab);
   try {
     await loadAccountState();
   } catch (err) {
     setText("settingsStatus", `Could not load settings: ${err.message}`);
   }
+}
+
+document.getElementById("settingsBtn").addEventListener("click", async () => {
+  await openSettingsTab("account");
+});
+
+referralOpenBtn?.addEventListener("click", async () => {
+  await openSettingsTab("referral");
 });
 
 document.getElementById("closeSettingsBtn").addEventListener("click", () => {
@@ -3257,12 +3282,7 @@ copyReferralLinkBtn?.addEventListener("click", async () => {
 for (const tabButton of document.querySelectorAll(".settings-nav-btn")) {
   tabButton.addEventListener("click", () => {
     const tab = tabButton.getAttribute("data-tab");
-    for (const btn of document.querySelectorAll(".settings-nav-btn")) {
-      btn.classList.toggle("active", btn === tabButton);
-    }
-    for (const panel of document.querySelectorAll(".settings-panel")) {
-      panel.classList.toggle("active", panel.getAttribute("data-panel") === tab);
-    }
+    setActiveSettingsTab(tab);
   });
 }
 
