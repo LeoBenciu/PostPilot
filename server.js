@@ -880,6 +880,18 @@ function authRedirectUrl(source, authError, authDetail) {
   return `/?${q.toString()}`;
 }
 
+function parseGoogleAuthStateSource(rawSource) {
+  const value = String(rawSource || "");
+  if (value === "signin") return { source: "signin", referralCode: "" };
+  if (value.startsWith("signup:ref:")) {
+    return {
+      source: "signup",
+      referralCode: value.slice("signup:ref:".length).trim().toUpperCase(),
+    };
+  }
+  return { source: "signup", referralCode: "" };
+}
+
 function integrationRedirectUrl(platform, ok, error, detail) {
   const q = new URLSearchParams({ integration: platform || "unknown" });
   if (ok) q.set("integrationAuth", "success");
@@ -978,6 +990,21 @@ async function queueReferralRewardMonth(userId, reason) {
   if (!user) return { queued: false, applied: false };
   const state = bindStateToUser(await getStateForUser(user.id), user);
   return queueReferralRewardMonthOnState(user, state, reason);
+}
+
+async function processReferralRewardForInvitee(user, state) {
+  const qualification = await markReferralQualifiedForInvitee(user.id);
+  if (!qualification) return false;
+  await queueReferralRewardMonthOnState(
+    user,
+    state,
+    "Referral reward: your second month is free"
+  );
+  await queueReferralRewardMonth(
+    qualification.inviterUserId,
+    "Referral reward: someone joined using your code"
+  );
+  return true;
 }
 
 async function queueReferralRewardMonthOnState(user, state, reason) {
@@ -1640,8 +1667,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     const source = parsed.searchParams.get("source") === "signin" ? "signin" : "signup";
+    const referralCode =
+      source === "signup" ? String(parsed.searchParams.get("referralCode") || "").trim().toUpperCase() : "";
+    const oauthSource = source === "signin" ? "signin" : referralCode ? `signup:ref:${referralCode}` : "signup";
     const redirectTo = "/";
-    const stateParam = await createOAuthState({ source, redirectTo });
+    const stateParam = await createOAuthState({ source: oauthSource, redirectTo });
     const proto = isSecureRequest(req) ? "https" : "http";
     const redirectUri = `${proto}://${req.headers.host}/auth/google/callback`;
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -1665,7 +1695,9 @@ const server = http.createServer(async (req, res) => {
     const code = parsed.searchParams.get("code");
     const oauthError = parsed.searchParams.get("error");
     const consumed = await consumeOAuthState(parsed.searchParams.get("state"));
-    const source = consumed.ok && consumed.value.source === "signin" ? "signin" : "signup";
+    const parsedSource = parseGoogleAuthStateSource(consumed.ok ? consumed.value.source : "");
+    const source = parsedSource.source;
+    const referralCodeFromState = parsedSource.referralCode;
     if (!consumed.ok) {
       sendRedirect(res, authRedirectUrl(source, "invalid_oauth_state", consumed.reason));
       return;
@@ -1728,6 +1760,13 @@ const server = http.createServer(async (req, res) => {
       }
 
       const user = await createOrLinkGoogleUser({ googleSub, email, fullName });
+      if (source === "signup" && referralCodeFromState) {
+        const referral = await attachReferralToUser(user.id, referralCodeFromState);
+        if (!referral.ok && referral.reason !== "already_referred") {
+          sendRedirect(res, authRedirectUrl(source, "invalid_referral_code", referral.reason));
+          return;
+        }
+      }
       const state = bindStateToUser(await getStateForUser(user.id), user);
       updateOnboardingCompletion(state);
       await saveStateForUser(user.id, state);
@@ -2146,6 +2185,9 @@ const server = http.createServer(async (req, res) => {
           subscriptionId: typeof obj.subscription === "string" ? obj.subscription : null,
           checkoutSessionId: obj.id,
         });
+        if (String(obj.payment_status || "").toLowerCase() === "paid") {
+          await processReferralRewardForInvitee(user, state);
+        }
       }
 
       if (event.type === "invoice.paid") {
@@ -2160,18 +2202,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Reward referrals only after the invitee's first successful paid invoice.
-        const qualification = await markReferralQualifiedForInvitee(user.id);
-        if (qualification) {
-          await queueReferralRewardMonthOnState(
-            user,
-            state,
-            "Referral reward: your second month is free"
-          );
-          await queueReferralRewardMonth(
-            qualification.inviterUserId,
-            "Referral reward: someone joined using your code"
-          );
-        }
+        await processReferralRewardForInvitee(user, state);
       }
 
       if (event.type === "customer.subscription.deleted") {

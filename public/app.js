@@ -5,7 +5,12 @@ let isSendingMessage = false;
 const DEV_AUTH_OVERRIDE_KEY = "postpilot_dev_auth_override";
 const BASE_WAITLIST_MODE = document.body?.dataset?.mode === "waitlist";
 const WAITLIST_MODE = BASE_WAITLIST_MODE && localStorage.getItem(DEV_AUTH_OVERRIDE_KEY) !== "1";
-const REFERRAL_CODE_FROM_URL = new URLSearchParams(window.location.search).get("ref") || "";
+const REFERRAL_CAPTURE_KEY = "postpilot_referral_code";
+const referralParamFromUrl = new URLSearchParams(window.location.search).get("ref") || "";
+if (referralParamFromUrl) {
+  localStorage.setItem(REFERRAL_CAPTURE_KEY, String(referralParamFromUrl).trim().toUpperCase());
+}
+const REFERRAL_CODE_FROM_URL = localStorage.getItem(REFERRAL_CAPTURE_KEY) || "";
 const REFERRAL_LINK_BASE = "https://postpilotcoach.com";
 
 const authGate = document.getElementById("authGate");
@@ -2896,7 +2901,11 @@ async function unlockChat(toastMessage) {
 
 async function handleGoogleAuth(source) {
   clearFeedback();
-  window.location.assign(`/auth/google?source=${encodeURIComponent(source)}`);
+  const query = new URLSearchParams({ source: String(source || "signup") });
+  if (String(source || "signup") !== "signin" && REFERRAL_CODE_FROM_URL) {
+    query.set("referralCode", REFERRAL_CODE_FROM_URL);
+  }
+  window.location.assign(`/auth/google?${query.toString()}`);
 }
 
 function displayPlatform(platform) {
