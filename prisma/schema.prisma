@@ -15,16 +15,24 @@ model AppState {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  fullName     String
-  passwordHash String?
-  googleSub    String?   @unique
-  authProvider String    @default("email")
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  sessions     Session[]
-  state        UserState?
+  id                    Int       @id @default(autoincrement())
+  email                 String    @unique
+  fullName              String
+  passwordHash          String?
+  googleSub             String?   @unique
+  authProvider          String    @default("email")
+  referralCode          String?   @unique
+  referredByUserId      Int?
+  referredByQualifiedAt DateTime?
+  referredByRewardedAt  DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  sessions              Session[]
+  state                 UserState?
+  referredBy            User?     @relation("UserReferrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  referrals             User[]    @relation("UserReferrals")
+
+  @@index([referredByUserId])
 }
 
 model UserState {

@@ -6,6 +6,8 @@ const APP_STATE_ID = 1;
 const DEFAULT_SESSION_TTL_DAYS = 14;
 const OAUTH_STATE_TTL_MINUTES = 10;
 const DEFAULT_WAITLIST_COUNT = 57;
+const REFERRAL_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const REFERRAL_CODE_LENGTH = 8;
 
 const defaultState = Object.freeze({
   user: {
@@ -62,6 +64,27 @@ function hashToken(raw) {
   return crypto.createHash("sha256").update(raw).digest("hex");
 }
 
+function generateReferralCodeCandidate() {
+  const bytes = crypto.randomBytes(REFERRAL_CODE_LENGTH);
+  let out = "";
+  for (let i = 0; i < REFERRAL_CODE_LENGTH; i += 1) {
+    out += REFERRAL_CODE_CHARS[bytes[i] % REFERRAL_CODE_CHARS.length];
+  }
+  return out;
+}
+
+async function generateUniqueReferralCode() {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const candidate = generateReferralCodeCandidate();
+    const exists = await prisma.user.findUnique({
+      where: { referralCode: candidate },
+      select: { id: true },
+    });
+    if (!exists) return candidate;
+  }
+  throw new Error("Could not generate a unique referral code");
+}
+
 async function ensureAppState() {
   await prisma.appState.upsert({
     where: { id: APP_STATE_ID },
@@ -103,12 +126,14 @@ async function incrementWaitlistCount() {
 async function createUserWithPassword({ fullName, email, passwordHash }) {
   const normalizedEmail = String(email).trim().toLowerCase();
   const normalizedName = String(fullName).trim();
+  const referralCode = await generateUniqueReferralCode();
   return prisma.user.create({
     data: {
       email: normalizedEmail,
       fullName: normalizedName,
       passwordHash,
       authProvider: "email",
+      referralCode,
       state: {
         create: {
           data: normalizeState({
@@ -145,22 +170,28 @@ async function createOrLinkGoogleUser({ googleSub, email, fullName }) {
 
   const existingByEmail = await findUserByEmail(normalizedEmail);
   if (existingByEmail) {
+    const updateData = {
+      googleSub: String(googleSub),
+      authProvider: existingByEmail.authProvider === "email" ? "hybrid" : "google",
+      fullName: existingByEmail.fullName || normalizedName,
+    };
+    if (!existingByEmail.referralCode) {
+      updateData.referralCode = await generateUniqueReferralCode();
+    }
     return prisma.user.update({
       where: { id: existingByEmail.id },
-      data: {
-        googleSub: String(googleSub),
-        authProvider: existingByEmail.authProvider === "email" ? "hybrid" : "google",
-        fullName: existingByEmail.fullName || normalizedName,
-      },
+      data: updateData,
     });
   }
 
+  const referralCode = await generateUniqueReferralCode();
   return prisma.user.create({
     data: {
       email: normalizedEmail,
       fullName: normalizedName,
       googleSub: String(googleSub),
       authProvider: "google",
+      referralCode,
       passwordHash: null,
       state: {
         create: {
@@ -279,6 +310,77 @@ async function closeDb() {
   await prisma.$disconnect();
 }
 
+async function ensureUserReferralCode(userId) {
+  const numericUserId = Number(userId);
+  const user = await prisma.user.findUnique({
+    where: { id: numericUserId },
+    select: { id: true, referralCode: true },
+  });
+  if (!user) return null;
+  if (user.referralCode) return user.referralCode;
+  const referralCode = await generateUniqueReferralCode();
+  const updated = await prisma.user.update({
+    where: { id: numericUserId },
+    data: { referralCode },
+    select: { referralCode: true },
+  });
+  return updated.referralCode;
+}
+
+async function findUserByReferralCode(referralCode) {
+  const normalized = String(referralCode || "").trim().toUpperCase();
+  if (!normalized) return null;
+  return prisma.user.findUnique({ where: { referralCode: normalized } });
+}
+
+async function attachReferralToUser(userId, referralCode) {
+  const inviteeId = Number(userId);
+  const normalizedCode = String(referralCode || "").trim().toUpperCase();
+  if (!normalizedCode) return { ok: true, applied: false, reason: "empty_code" };
+  const invitee = await prisma.user.findUnique({
+    where: { id: inviteeId },
+    select: { id: true, referredByUserId: true },
+  });
+  if (!invitee) return { ok: false, reason: "invitee_not_found" };
+  if (invitee.referredByUserId) return { ok: false, reason: "already_referred" };
+  const inviter = await findUserByReferralCode(normalizedCode);
+  if (!inviter) return { ok: false, reason: "invalid_referral_code" };
+  if (inviter.id === inviteeId) return { ok: false, reason: "self_referral_not_allowed" };
+  await prisma.user.update({
+    where: { id: inviteeId },
+    data: { referredByUserId: inviter.id },
+  });
+  return { ok: true, applied: true, inviterUserId: inviter.id };
+}
+
+async function markReferralQualifiedForInvitee(inviteeUserId) {
+  const numericInviteeId = Number(inviteeUserId);
+  return prisma.$transaction(async (tx) => {
+    const invitee = await tx.user.findUnique({
+      where: { id: numericInviteeId },
+      select: {
+        id: true,
+        referredByUserId: true,
+        referredByQualifiedAt: true,
+        referredByRewardedAt: true,
+      },
+    });
+    if (!invitee || !invitee.referredByUserId || invitee.referredByRewardedAt) return null;
+    const now = new Date();
+    await tx.user.update({
+      where: { id: numericInviteeId },
+      data: {
+        referredByQualifiedAt: invitee.referredByQualifiedAt || now,
+        referredByRewardedAt: now,
+      },
+    });
+    return {
+      inviteeUserId: numericInviteeId,
+      inviterUserId: invitee.referredByUserId,
+    };
+  });
+}
+
 module.exports = {
   ensureAppState,
   cloneDefaultState,
@@ -298,5 +400,9 @@ module.exports = {
   consumeOAuthState,
   getWaitlistCount,
   incrementWaitlistCount,
+  ensureUserReferralCode,
+  findUserByReferralCode,
+  attachReferralToUser,
+  markReferralQualifiedForInvitee,
   closeDb,
 };

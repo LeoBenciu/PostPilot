@@ -23,6 +23,10 @@ const {
   consumeOAuthState,
   getWaitlistCount,
   incrementWaitlistCount,
+  ensureUserReferralCode,
+  findUserByReferralCode,
+  attachReferralToUser,
+  markReferralQualifiedForInvitee,
   closeDb,
 } = require("./dbState");
 const { generateAgentReply, streamAgentReply } = require("./aiClient");
@@ -928,6 +932,69 @@ function markBillingPaid(state, payload = {}) {
   if (payload.checkoutSessionId) state.user.billing.stripeCheckoutSessionId = payload.checkoutSessionId;
 }
 
+function ensureReferralBillingFields(state) {
+  if (!state.user.billing || typeof state.user.billing !== "object") state.user.billing = {};
+  if (!Number.isFinite(Number(state.user.billing.referralCreditsPendingMonths))) {
+    state.user.billing.referralCreditsPendingMonths = 0;
+  }
+  if (!Number.isFinite(Number(state.user.billing.referralCreditsAppliedMonths))) {
+    state.user.billing.referralCreditsAppliedMonths = 0;
+  }
+}
+
+async function applyPendingReferralCredits(user, state, reason = "referral reward month") {
+  ensureReferralBillingFields(state);
+  const pendingMonths = Number(state.user.billing.referralCreditsPendingMonths || 0);
+  if (!pendingMonths) return 0;
+  const customerId = String(state.user.billing.stripeCustomerId || "").trim();
+  if (!stripe || !customerId) return 0;
+  let applied = 0;
+  for (let i = 0; i < pendingMonths; i += 1) {
+    await stripe.customers.createBalanceTransaction(customerId, {
+      amount: -Math.abs(STRIPE_MONTHLY_EUR_CENTS),
+      currency: "eur",
+      description: reason,
+      metadata: {
+        userId: String(user.id),
+      },
+    });
+    applied += 1;
+  }
+  if (applied > 0) {
+    state.user.billing.referralCreditsPendingMonths = Math.max(
+      0,
+      Number(state.user.billing.referralCreditsPendingMonths || 0) - applied
+    );
+    state.user.billing.referralCreditsAppliedMonths =
+      Number(state.user.billing.referralCreditsAppliedMonths || 0) + applied;
+    state.user.billing.referralCreditsLastAppliedAt = nowIso();
+  }
+  return applied;
+}
+
+async function queueReferralRewardMonth(userId, reason) {
+  const user = await findUserById(userId);
+  if (!user) return { queued: false, applied: false };
+  const state = bindStateToUser(await getStateForUser(user.id), user);
+  return queueReferralRewardMonthOnState(user, state, reason);
+}
+
+async function queueReferralRewardMonthOnState(user, state, reason) {
+  ensureReferralBillingFields(state);
+  state.user.billing.referralCreditsPendingMonths =
+    Number(state.user.billing.referralCreditsPendingMonths || 0) + 1;
+  state.user.billing.referralCreditsEarnedMonths =
+    Number(state.user.billing.referralCreditsEarnedMonths || 0) + 1;
+  let applied = 0;
+  try {
+    applied = await applyPendingReferralCredits(user, state, reason);
+  } catch (err) {
+    state.user.billing.referralCreditsLastError = String(err?.message || err);
+  }
+  await saveStateForUser(user.id, state);
+  return { queued: true, applied: applied > 0 };
+}
+
 function markBillingUnpaid(state, payload = {}) {
   state.user.billing.status = "unpaid";
   if (payload.reason) state.user.billing.lastFailureReason = payload.reason;
@@ -959,6 +1026,7 @@ function bindStateToUser(state, user) {
   state.user.createdAt = state.user.createdAt || user.createdAt.toISOString();
   state.user.name = user.fullName || state.user.name || "";
   state.user.email = user.email || state.user.email || "";
+  state.user.referralCode = user.referralCode || state.user.referralCode || "";
   if (!state.syncJobs || !Array.isArray(state.syncJobs)) state.syncJobs = [];
   if (!state.integrations?.linkedin) state.integrations.linkedin = { connected: false, username: null, token: null, lastSyncAt: null };
   if (!state.integrations?.instagram) state.integrations.instagram = { connected: false, username: null, token: null, lastSyncAt: null };
@@ -1398,6 +1466,7 @@ const server = http.createServer(async (req, res) => {
           email: user.email,
           fullName: user.fullName,
           authProvider: user.authProvider,
+          referralCode: user.referralCode || null,
           createdAt: user.createdAt,
         },
       });
@@ -1413,6 +1482,7 @@ const server = http.createServer(async (req, res) => {
       const fullName = String(body.fullName || "").trim();
       const email = String(body.email || "").trim().toLowerCase();
       const password = String(body.password || "");
+      const referralCode = String(body.referralCode || "").trim();
       if (!fullName || !email || !password) {
         sendJson(res, 400, { error: "Full name, email, and password are required" });
         return;
@@ -1427,18 +1497,37 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 409, { error: "Account already exists. Please sign in." });
         return;
       }
+      if (referralCode) {
+        const inviter = await findUserByReferralCode(referralCode);
+        if (!inviter) {
+          sendJson(res, 400, { error: "Referral code invalid." });
+          return;
+        }
+      }
 
       const passwordHash = await bcrypt.hash(password, 12);
       const user = await createUserWithPassword({ fullName, email, passwordHash });
+      const userReferralCode = await ensureUserReferralCode(user.id);
+      let referralApplied = false;
+      if (referralCode) {
+        const referral = await attachReferralToUser(user.id, referralCode);
+        if (!referral.ok && referral.reason !== "empty_code") {
+          sendJson(res, 400, { error: `Referral code invalid: ${referral.reason}` });
+          return;
+        }
+        referralApplied = Boolean(referral.applied);
+      }
       const session = await createSession(user.id, SESSION_TTL_DAYS);
       setSessionCookie(req, res, session.token, session.expiresAt);
       sendJson(res, 201, {
         ok: true,
+        referralApplied,
         user: {
           id: user.id,
           email: user.email,
           fullName: user.fullName,
           authProvider: user.authProvider,
+          referralCode: userReferralCode,
         },
       });
     } catch (err) {
@@ -2046,6 +2135,25 @@ const server = http.createServer(async (req, res) => {
           customerId: typeof obj.customer === "string" ? obj.customer : null,
           subscriptionId: typeof obj.subscription === "string" ? obj.subscription : null,
         });
+        try {
+          await applyPendingReferralCredits(user, state, "Applied referral free month credit");
+        } catch (creditErr) {
+          state.user.billing.referralCreditsLastError = String(creditErr?.message || creditErr);
+        }
+
+        // Reward referrals only after the invitee's first successful paid invoice.
+        const qualification = await markReferralQualifiedForInvitee(user.id);
+        if (qualification) {
+          await queueReferralRewardMonthOnState(
+            user,
+            state,
+            "Referral reward: your second month is free"
+          );
+          await queueReferralRewardMonth(
+            qualification.inviterUserId,
+            "Referral reward: someone joined using your code"
+          );
+        }
       }
 
       if (event.type === "customer.subscription.deleted") {

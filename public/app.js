@@ -5,6 +5,7 @@ let isSendingMessage = false;
 const DEV_AUTH_OVERRIDE_KEY = "postpilot_dev_auth_override";
 const BASE_WAITLIST_MODE = document.body?.dataset?.mode === "waitlist";
 const WAITLIST_MODE = BASE_WAITLIST_MODE && localStorage.getItem(DEV_AUTH_OVERRIDE_KEY) !== "1";
+const REFERRAL_CODE_FROM_URL = new URLSearchParams(window.location.search).get("ref") || "";
 
 const authGate = document.getElementById("authGate");
 const chatApp = document.getElementById("chatApp");
@@ -29,6 +30,8 @@ const connectLinkedinBtn = document.getElementById("connectLinkedinBtn");
 const connectInstagramBtn = document.getElementById("connectInstagramBtn");
 const disconnectLinkedinBtn = document.getElementById("disconnectLinkedinBtn");
 const disconnectInstagramBtn = document.getElementById("disconnectInstagramBtn");
+const copyReferralCodeBtn = document.getElementById("copyReferralCodeBtn");
+const copyReferralLinkBtn = document.getElementById("copyReferralLinkBtn");
 const languageSelect = document.getElementById("languageSelect");
 const languageSelectOnboard = document.getElementById("languageSelectOnboard");
 const googleSignupBtn = document.getElementById("googleSignupBtn");
@@ -235,12 +238,21 @@ const I18N = {
     settingsModalHeading: "Settings",
     tabGeneral: "General",
     tabAccount: "Account",
+    tabReferral: "Referral",
     tabConnections: "Connections",
     tabSupport: "Support",
     panelGeneral: "General",
     panelAccount: "Account",
+    panelReferral: "Referral",
     panelConnections: "Connections",
     panelSupport: "Support",
+    referralCodeTitle: "Your referral code",
+    referralCodeHint: "Share this code and both of you get one free month after their first paid month.",
+    referralLinkTitle: "Referral link",
+    referralLinkHint: "Send this link to invite friends directly.",
+    copyCode: "Copy code",
+    copyLink: "Copy link",
+    copied: "Copied",
     settingsLegalTitle: "Legal",
     settingsLegalHint: "Privacy policy, terms of service, and cookie policy.",
     supportEmailTitle: "Support email",
@@ -480,12 +492,21 @@ const I18N = {
     settingsModalHeading: "Setari",
     tabGeneral: "General",
     tabAccount: "Cont",
+    tabReferral: "Referral",
     tabConnections: "Conexiuni",
     tabSupport: "Suport",
     panelGeneral: "General",
     panelAccount: "Cont",
+    panelReferral: "Referral",
     panelConnections: "Conexiuni",
     panelSupport: "Suport",
+    referralCodeTitle: "Codul tau de referral",
+    referralCodeHint: "Distribuie acest cod si amandoi primiti o luna gratuita dupa prima luna platita a invitatului.",
+    referralLinkTitle: "Link de referral",
+    referralLinkHint: "Trimite acest link ca sa inviti direct.",
+    copyCode: "Copiaza codul",
+    copyLink: "Copiaza linkul",
+    copied: "Copiat",
     settingsLegalTitle: "Legal",
     settingsLegalHint: "Politica de confidentialitate, termeni si politica de cookie-uri.",
     supportEmailTitle: "Email suport",
@@ -722,12 +743,21 @@ const I18N = {
     settingsModalHeading: "Impostazioni",
     tabGeneral: "Generale",
     tabAccount: "Account",
+    tabReferral: "Referral",
     tabConnections: "Connessioni",
     tabSupport: "Supporto",
     panelGeneral: "Generale",
     panelAccount: "Account",
+    panelReferral: "Referral",
     panelConnections: "Connessioni",
     panelSupport: "Supporto",
+    referralCodeTitle: "Il tuo codice referral",
+    referralCodeHint: "Condividi questo codice: entrambi ricevete un mese gratis dopo il primo mese pagato dell'invitato.",
+    referralLinkTitle: "Link referral",
+    referralLinkHint: "Invia questo link per invitare direttamente.",
+    copyCode: "Copia codice",
+    copyLink: "Copia link",
+    copied: "Copiato",
     settingsLegalTitle: "Legale",
     settingsLegalHint: "Privacy, termini di servizio e cookie policy.",
     supportEmailTitle: "Email supporto",
@@ -955,12 +985,21 @@ const I18N = {
     settingsModalHeading: "Einstellungen",
     tabGeneral: "Allgemein",
     tabAccount: "Konto",
+    tabReferral: "Referral",
     tabConnections: "Verbindungen",
     tabSupport: "Support",
     panelGeneral: "Allgemein",
     panelAccount: "Konto",
+    panelReferral: "Referral",
     panelConnections: "Verbindungen",
     panelSupport: "Support",
+    referralCodeTitle: "Dein Referral-Code",
+    referralCodeHint: "Teile diesen Code: Ihr erhaltet beide einen Gratis-Monat nach dem ersten bezahlten Monat des eingeladenen Nutzers.",
+    referralLinkTitle: "Referral-Link",
+    referralLinkHint: "Sende diesen Link, um direkt einzuladen.",
+    copyCode: "Code kopieren",
+    copyLink: "Link kopieren",
+    copied: "Kopiert",
     settingsLegalTitle: "Rechtliches",
     settingsLegalHint: "Datenschutz, Nutzungsbedingungen und Cookie-Richtlinie.",
     supportEmailTitle: "Support E-Mail",
@@ -1188,12 +1227,21 @@ const I18N = {
     settingsModalHeading: "Parametres",
     tabGeneral: "General",
     tabAccount: "Compte",
+    tabReferral: "Referral",
     tabConnections: "Connexions",
     tabSupport: "Support",
     panelGeneral: "General",
     panelAccount: "Compte",
+    panelReferral: "Referral",
     panelConnections: "Connexions",
     panelSupport: "Support",
+    referralCodeTitle: "Votre code de referral",
+    referralCodeHint: "Partagez ce code : vous recevez tous les deux un mois gratuit apres le premier mois paye de l'invite.",
+    referralLinkTitle: "Lien de referral",
+    referralLinkHint: "Envoyez ce lien pour inviter directement.",
+    copyCode: "Copier le code",
+    copyLink: "Copier le lien",
+    copied: "Copie",
     settingsLegalTitle: "Mentions legales",
     settingsLegalHint: "Confidentialite, conditions et politique des cookies.",
     supportEmailTitle: "Email support",
@@ -1450,14 +1498,22 @@ function applyLanguage() {
   setTextIfExists("settingsModalTitle", t("settingsModalHeading"));
   setTextIfExists("settingsNavGeneral", t("tabGeneral"));
   setTextIfExists("settingsNavAccount", t("tabAccount"));
+  setTextIfExists("settingsNavReferral", t("tabReferral"));
   setTextIfExists("settingsNavConnections", t("tabConnections"));
   setTextIfExists("settingsNavSupport", t("tabSupport"));
   setTextIfExists("settingsPanelGeneralTitle", t("panelGeneral"));
   setTextIfExists("settingsPanelAccountTitle", t("panelAccount"));
+  setTextIfExists("settingsPanelReferralTitle", t("panelReferral"));
   setTextIfExists("settingsNameTitle", t("shortName"));
   setTextIfExists("settingsEmailTitle", t("shortEmail"));
   setTextIfExists("settingsPanelConnectionsTitle", t("panelConnections"));
   setTextIfExists("settingsPanelSupportTitle", t("panelSupport"));
+  setTextIfExists("referralCodeTitle", t("referralCodeTitle"));
+  setTextIfExists("referralCodeHint", t("referralCodeHint"));
+  setTextIfExists("referralLinkTitle", t("referralLinkTitle"));
+  setTextIfExists("referralLinkHint", t("referralLinkHint"));
+  setTextIfExists("copyReferralCodeBtn", t("copyCode"));
+  setTextIfExists("copyReferralLinkBtn", t("copyLink"));
   setTextIfExists("supportEmailLabel", t("supportEmailTitle"));
   setTextIfExists("supportEmailHint", t("supportEmailHint"));
   setTextIfExists("supportPhoneLabel", t("supportPhoneTitle"));
@@ -2680,6 +2736,12 @@ function applySettingsForm(data) {
   setText("billingStatusText", `Status: ${status}${paidAt}`);
   if (manageBillingBtn) manageBillingBtn.disabled = !billing.stripeCustomerId;
   if (cancelSubscriptionBtn) cancelSubscriptionBtn.disabled = !billing.stripeSubscriptionId;
+  const referralCode = String(user.referralCode || "").trim();
+  const referralCodeInput = document.getElementById("referralCodeInput");
+  const referralLinkInput = document.getElementById("referralLinkInput");
+  const referralLink = referralCode ? `${window.location.origin}/?ref=${encodeURIComponent(referralCode)}` : "";
+  if (referralCodeInput) referralCodeInput.value = referralCode;
+  if (referralLinkInput) referralLinkInput.value = referralLink;
 }
 
 function setOnboardingMode(mode) {
@@ -2852,7 +2914,12 @@ signupForm?.addEventListener("submit", async (event) => {
       showFeedback(signupFeedback, "Please complete all required fields.");
       return;
     }
-    await api("/api/auth/signup", "POST", { fullName, email, password });
+    await api("/api/auth/signup", "POST", {
+      fullName,
+      email,
+      password,
+      referralCode: REFERRAL_CODE_FROM_URL,
+    });
     signupForm.reset();
     await unlockChat(`Welcome to PostPilot, ${fullName}!`);
   } catch (err) {
@@ -3146,6 +3213,28 @@ cancelSubscriptionBtn?.addEventListener("click", async () => {
     await loadAccountState();
   } catch (err) {
     setText("settingsStatus", `Error: ${err.message}`);
+  }
+});
+
+copyReferralCodeBtn?.addEventListener("click", async () => {
+  const value = document.getElementById("referralCodeInput")?.value || "";
+  if (!value) return;
+  try {
+    await navigator.clipboard.writeText(value);
+    setText("settingsStatus", t("copied"));
+  } catch (_err) {
+    setText("settingsStatus", value);
+  }
+});
+
+copyReferralLinkBtn?.addEventListener("click", async () => {
+  const value = document.getElementById("referralLinkInput")?.value || "";
+  if (!value) return;
+  try {
+    await navigator.clipboard.writeText(value);
+    setText("settingsStatus", t("copied"));
+  } catch (_err) {
+    setText("settingsStatus", value);
   }
 });
 

@@ -631,6 +631,7 @@
         <aside class="settings-nav">
           <button class="settings-nav-btn active" data-tab="general" id="settingsNavGeneral">General</button>
           <button class="settings-nav-btn" data-tab="account" id="settingsNavAccount">Account</button>
+          <button class="settings-nav-btn" data-tab="referral" id="settingsNavReferral">Referral</button>
           <button class="settings-nav-btn" data-tab="connections" id="settingsNavConnections">Connections</button>
           <button class="settings-nav-btn" data-tab="support" id="settingsNavSupport">Support</button>
         </aside>
@@ -662,6 +663,30 @@
               <div class="billing-actions">
                 <button type="button" id="manageBillingBtn" class="secondary">Manage billing</button>
                 <button type="button" id="cancelSubscriptionBtn" class="secondary danger-btn">Cancel plan</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="settings-panel" data-panel="referral">
+            <h3 id="settingsPanelReferralTitle">Referral</h3>
+            <div class="setting-row">
+              <div>
+                <p class="setting-title" id="referralCodeTitle">Your referral code</p>
+                <p class="setting-hint" id="referralCodeHint">Share this code and both of you get one free month after their first paid month.</p>
+              </div>
+              <div class="referral-actions">
+                <input id="referralCodeInput" readonly />
+                <button type="button" id="copyReferralCodeBtn" class="secondary">Copy code</button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <p class="setting-title" id="referralLinkTitle">Referral link</p>
+                <p class="setting-hint" id="referralLinkHint">Send this link to invite friends directly.</p>
+              </div>
+              <div class="referral-actions">
+                <input id="referralLinkInput" readonly />
+                <button type="button" id="copyReferralLinkBtn" class="secondary">Copy link</button>
               </div>
             </div>
           </section>
