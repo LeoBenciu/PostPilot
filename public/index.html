@@ -102,19 +102,46 @@
 
         <div class="hero-auth-container">
           <form class="signup-card" id="signupForm">
-          <h2 id="signupTitle">Join the waitlist</h2>
-          <p class="waitlist-counter-text">
-            <strong id="waitlistCountEl">57</strong> <span id="waitlistCounterText">creators already on the waitlist</span>
-          </p>
-          <label>
-            <span id="signupEmailLabel">Email address</span>
-            <input id="signupEmail" type="email" placeholder="" required />
-          </label>
-          <button type="submit" class="cta-btn" id="signupSubmitBtn">Join waitlist</button>
-          <div class="waitlist-social-proof">
-          </div>
-          <p class="small form-feedback" id="signupFeedback"></p>
-        </form>
+            <h2 id="signupTitle">Join the waitlist</h2>
+            <div data-landing-mode="waitlist">
+              <p class="waitlist-counter-text">
+                <strong id="waitlistCountEl">57</strong> <span id="waitlistCounterText">creators already on the waitlist</span>
+              </p>
+            </div>
+            <div data-landing-mode="auth">
+              <button type="button" class="google-btn" id="googleSignupBtn">
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt=""
+                  class="google-btn-icon"
+                  aria-hidden="true"
+                />
+                <span>Continue with Google</span>
+              </button>
+              <div class="divider">or</div>
+              <label>
+                <span id="signupFullNameLabel">Full name</span>
+                <input id="signupFullName" type="text" placeholder="" />
+              </label>
+            </div>
+            <label>
+              <span id="signupEmailLabel">Email address</span>
+              <input id="signupEmail" type="email" placeholder="" required />
+            </label>
+            <div data-landing-mode="auth">
+              <label>
+                <span id="signupPasswordLabel">Password</span>
+                <input id="signupPassword" type="password" placeholder="" minlength="6" />
+              </label>
+              <label class="checkbox-row">
+                <input id="tipsOptIn" type="checkbox" />
+                <span id="tipsOptInLabel">Send me Creator tips and other opportunities</span>
+              </label>
+            </div>
+            <button type="submit" class="cta-btn" id="signupSubmitBtn">Join waitlist</button>
+            <p class="small form-feedback" id="signupFeedback"></p>
+            <p class="small" data-landing-mode="auth"><span id="alreadyAccountText">Already have an account?</span> <a href="#" id="openSignin">Sign in</a></p>
+          </form>
         </div>
       </div>
     </section>

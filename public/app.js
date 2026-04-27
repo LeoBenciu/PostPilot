@@ -88,15 +88,17 @@ const I18N = {
     finalCtaClosing: "That is PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Studio 2026 - Designed for independent creators.",
-    signupTitle: "Join the waitlist",
+    signupTitle: "Try PostPilot",
     continueGoogle: "Continue with Google",
     or: "or",
     fullName: "Full name",
     emailAddress: "Email address",
     password: "Password",
     tipsOptIn: "Send me Creator tips and other opportunities",
-    createAccount: "Join waitlist",
+    createAccount: "Create account",
     waitlistCounterText: "creators already on the waitlist",
+    waitlistSignupTitle: "Join the waitlist",
+    waitlistJoinButton: "Join waitlist",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Already have an account?",
@@ -325,15 +327,17 @@ const I18N = {
     finalCtaClosing: "Acesta este PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Construit pentru creatorii independenti.",
-    signupTitle: "Intra pe lista de asteptare",
+    signupTitle: "Incearca PostPilot",
     continueGoogle: "Continua cu Google",
     or: "sau",
     fullName: "Nume complet",
     emailAddress: "Adresa de email",
     password: "Parola",
     tipsOptIn: "Trimite-mi sfaturi pentru creatori si alte oportunitati",
-    createAccount: "Intra pe lista",
+    createAccount: "Creeaza cont",
     waitlistCounterText: "creatori sunt deja pe lista de asteptare",
+    waitlistSignupTitle: "Intra pe lista de asteptare",
+    waitlistJoinButton: "Intra pe lista",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Ai deja cont?",
@@ -568,15 +572,17 @@ const I18N = {
     finalCtaClosing: "Questo e PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Creato per creator indipendenti.",
-    signupTitle: "Unisciti alla waitlist",
+    signupTitle: "Prova PostPilot",
     continueGoogle: "Continua con Google",
     or: "oppure",
     fullName: "Nome completo",
     emailAddress: "Indirizzo email",
     password: "Password",
     tipsOptIn: "Inviami consigli per creator e altre opportunita",
-    createAccount: "Entra in waitlist",
+    createAccount: "Crea account",
     waitlistCounterText: "creator sono gia in waitlist",
+    waitlistSignupTitle: "Unisciti alla waitlist",
+    waitlistJoinButton: "Entra in waitlist",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Hai gia un account?",
@@ -799,15 +805,17 @@ const I18N = {
     finalCtaClosing: "Das ist PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Entwickelt fuer unabhaengige Creator.",
-    signupTitle: "Zur Warteliste anmelden",
+    signupTitle: "Probiere PostPilot",
     continueGoogle: "Mit Google fortfahren",
     or: "oder",
     fullName: "Vollstaendiger Name",
     emailAddress: "E-Mail-Adresse",
     password: "Passwort",
     tipsOptIn: "Sende mir Creator-Tipps und weitere Moeglichkeiten",
-    createAccount: "Zur Warteliste",
+    createAccount: "Konto erstellen",
     waitlistCounterText: "Creator sind bereits auf der Warteliste",
+    waitlistSignupTitle: "Zur Warteliste anmelden",
+    waitlistJoinButton: "Zur Warteliste",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Du hast bereits ein Konto?",
@@ -1030,15 +1038,17 @@ const I18N = {
     finalCtaClosing: "C'est PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Concu pour les createurs independants.",
-    signupTitle: "Rejoindre la liste d'attente",
+    signupTitle: "Essayez PostPilot",
     continueGoogle: "Continuer avec Google",
     or: "ou",
     fullName: "Nom complet",
     emailAddress: "Adresse e-mail",
     password: "Mot de passe",
     tipsOptIn: "Envoyez-moi des conseils createur et d'autres opportunites",
-    createAccount: "Rejoindre la liste",
+    createAccount: "Creer un compte",
     waitlistCounterText: "createurs sont deja sur la liste d'attente",
+    waitlistSignupTitle: "Rejoindre la liste d'attente",
+    waitlistJoinButton: "Rejoindre la liste",
     guarantee1: "",
     guarantee2: "",
     alreadyAccount: "Vous avez deja un compte ?",
@@ -1312,13 +1322,15 @@ function applyLanguage() {
     finalGuaranteeEl.classList.toggle("hidden", !String(finalGuaranteeText || "").trim());
   }
   setTextIfExists("finalLegalNote", t("finalLegalNote"));
-  if (openTrialBtn) openTrialBtn.textContent = t("signupTitle");
-  setTextIfExists("signupTitle", t("signupTitle"));
+  const landingTitle = WAITLIST_MODE ? t("waitlistSignupTitle") : t("signupTitle");
+  const landingSubmitText = WAITLIST_MODE ? t("waitlistJoinButton") : t("createAccount");
+  if (openTrialBtn) openTrialBtn.textContent = landingTitle;
+  setTextIfExists("signupTitle", landingTitle);
   setTextIfExists("signupFullNameLabel", t("fullName"));
   setTextIfExists("signupEmailLabel", t("emailAddress"));
   setTextIfExists("signupPasswordLabel", t("password"));
   setTextIfExists("tipsOptInLabel", t("tipsOptIn"));
-  setTextIfExists("signupSubmitBtn", t("createAccount"));
+  setTextIfExists("signupSubmitBtn", landingSubmitText);
   setTextIfExists("waitlistCounterText", t("waitlistCounterText"));
   const signupGuarantee1Text = t("guarantee1");
   setTextIfExists("signupGuarantee1", signupGuarantee1Text);
@@ -1616,6 +1628,14 @@ function setWaitlistCount(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return;
   waitlistCountEl.textContent = Math.floor(n).toLocaleString(currentLanguage === "ro" ? "ro-RO" : undefined);
+}
+
+function applyLandingModeVisibility() {
+  const mode = WAITLIST_MODE ? "waitlist" : "auth";
+  document.querySelectorAll("[data-landing-mode]").forEach((el) => {
+    const targetMode = el.getAttribute("data-landing-mode");
+    el.classList.toggle("hidden", targetMode !== mode);
+  });
 }
 
 function toggleDevAuthOverride() {
@@ -2863,7 +2883,11 @@ openSignin?.addEventListener("click", (event) => {
 
 openTrialBtn?.addEventListener("click", () => {
   clearFeedback();
-  document.getElementById("signupEmail")?.focus();
+  if (WAITLIST_MODE) {
+    document.getElementById("signupEmail")?.focus();
+  } else {
+    document.getElementById("signupFullName")?.focus();
+  }
 });
 
 closeSignin?.addEventListener("click", () => {
@@ -3447,6 +3471,7 @@ document.getElementById("edgeStartBtn")?.addEventListener("click", () => {
 });
 
 renderConversation([]);
+applyLandingModeVisibility();
 applyLanguage();
 setActiveView("agent");
 registerLogoDevToggle();
