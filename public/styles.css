@@ -1645,8 +1645,18 @@ pre {
 }
 
 .settings-nav-icon {
-  font-size: 16px;
-  line-height: 1;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 18px;
+}
+
+.settings-nav-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 .settings-nav-btn:hover {
@@ -1724,6 +1734,37 @@ pre {
 
 .referral-actions button {
   align-self: flex-start;
+}
+
+.referral-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 4px 0 12px;
+}
+
+.referral-stat-card {
+  border: 1px solid #efc6ce;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.referral-stat-label {
+  margin: 0;
+  font-size: 12px;
+  color: #7a4a56;
+}
+
+.referral-stat-value {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.referral-breakdown {
+  margin: 0 0 10px;
 }
 
 .support-contact-card {
@@ -2173,6 +2214,10 @@ pre {
 
   .connection-btn {
     width: 100%;
+  }
+
+  .referral-stats-grid {
+    grid-template-columns: 1fr;
   }
 
   #onboardingModal .modal-card {

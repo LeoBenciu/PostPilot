@@ -27,6 +27,7 @@ const {
   findUserByReferralCode,
   attachReferralToUser,
   markReferralQualifiedForInvitee,
+  getReferralSummaryForUser,
   closeDb,
 } = require("./dbState");
 const { generateAgentReply, streamAgentReply } = require("./aiClient");
@@ -1022,6 +1023,20 @@ function accountSummary(state) {
   };
 }
 
+async function accountSummaryWithReferral(userId, state) {
+  const referral = await getReferralSummaryForUser(userId);
+  const billing = state.user?.billing || {};
+  return {
+    ...accountSummary(state),
+    referral: {
+      ...referral,
+      freeMonthsEarned: Number(billing.referralCreditsEarnedMonths || 0),
+      freeMonthsApplied: Number(billing.referralCreditsAppliedMonths || 0),
+      freeMonthsPending: Number(billing.referralCreditsPendingMonths || 0),
+    },
+  };
+}
+
 function bindStateToUser(state, user) {
   state.user.createdAt = state.user.createdAt || user.createdAt.toISOString();
   state.user.name = user.fullName || state.user.name || "";
@@ -1857,7 +1872,7 @@ const server = http.createServer(async (req, res) => {
     const state = bindStateToUser(await getStateForUser(user.id), freshUser);
     updateOnboardingCompletion(state);
     await saveStateForUser(user.id, state);
-    sendJson(res, 200, accountSummary(state));
+    sendJson(res, 200, await accountSummaryWithReferral(user.id, state));
     return;
   }
 
@@ -1880,7 +1895,7 @@ const server = http.createServer(async (req, res) => {
       state.user.email = updatedUser.email;
       updateOnboardingCompletion(state);
       await saveStateForUser(user.id, state);
-      sendJson(res, 200, accountSummary(state));
+      sendJson(res, 200, await accountSummaryWithReferral(user.id, state));
     } catch (err) {
       sendJson(res, 400, { error: err.message });
     }
@@ -1899,7 +1914,7 @@ const server = http.createServer(async (req, res) => {
 
       updateOnboardingCompletion(state);
       await saveStateForUser(user.id, state);
-      sendJson(res, 200, accountSummary(state));
+      sendJson(res, 200, await accountSummaryWithReferral(user.id, state));
     } catch (err) {
       sendJson(res, 400, { error: err.message });
     }
@@ -1942,7 +1957,7 @@ const server = http.createServer(async (req, res) => {
 
       updateOnboardingCompletion(state);
       await saveStateForUser(user.id, state);
-      sendJson(res, 200, accountSummary(state));
+      sendJson(res, 200, await accountSummaryWithReferral(user.id, state));
     } catch (err) {
       sendJson(res, 400, { error: err.message });
     }
@@ -2261,7 +2276,7 @@ const server = http.createServer(async (req, res) => {
         : [];
       state.voiceProfile = buildVoiceProfile(state.posts);
       await saveStateForUser(user.id, state);
-      sendJson(res, 200, accountSummary(state));
+      sendJson(res, 200, await accountSummaryWithReferral(user.id, state));
     } catch (err) {
       sendJson(res, 400, { error: err.message });
     }

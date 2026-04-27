@@ -381,6 +381,27 @@ async function markReferralQualifiedForInvitee(inviteeUserId) {
   });
 }
 
+async function getReferralSummaryForUser(userId) {
+  const numericUserId = Number(userId);
+  const [totalInvites, successfulReferrals] = await Promise.all([
+    prisma.user.count({
+      where: { referredByUserId: numericUserId },
+    }),
+    prisma.user.count({
+      where: {
+        referredByUserId: numericUserId,
+        referredByRewardedAt: { not: null },
+      },
+    }),
+  ]);
+  const pendingReferrals = Math.max(0, totalInvites - successfulReferrals);
+  return {
+    totalInvites,
+    successfulReferrals,
+    pendingReferrals,
+  };
+}
+
 module.exports = {
   ensureAppState,
   cloneDefaultState,
@@ -404,5 +425,6 @@ module.exports = {
   findUserByReferralCode,
   attachReferralToUser,
   markReferralQualifiedForInvitee,
+  getReferralSummaryForUser,
   closeDb,
 };

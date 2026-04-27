@@ -250,6 +250,10 @@ const I18N = {
     referralCodeHint: "Share this code and both of you get one free month after their first paid month.",
     referralLinkTitle: "Referral link",
     referralLinkHint: "Send this link to invite friends directly.",
+    referralStatSuccessful: "Successful referrals",
+    referralStatPending: "Pending referrals",
+    referralStatFreeMonths: "Free months total",
+    referralBreakdown: "Applied: {applied} • Pending: {pending}",
     copyCode: "Copy code",
     copyLink: "Copy link",
     copied: "Copied",
@@ -504,6 +508,10 @@ const I18N = {
     referralCodeHint: "Distribuie acest cod si amandoi primiti o luna gratuita dupa prima luna platita a invitatului.",
     referralLinkTitle: "Link de referral",
     referralLinkHint: "Trimite acest link ca sa inviti direct.",
+    referralStatSuccessful: "Referral-uri reusite",
+    referralStatPending: "Referral-uri in asteptare",
+    referralStatFreeMonths: "Luni gratuite total",
+    referralBreakdown: "Aplicate: {applied} • In asteptare: {pending}",
     copyCode: "Copiaza codul",
     copyLink: "Copiaza linkul",
     copied: "Copiat",
@@ -755,6 +763,10 @@ const I18N = {
     referralCodeHint: "Condividi questo codice: entrambi ricevete un mese gratis dopo il primo mese pagato dell'invitato.",
     referralLinkTitle: "Link referral",
     referralLinkHint: "Invia questo link per invitare direttamente.",
+    referralStatSuccessful: "Referral riusciti",
+    referralStatPending: "Referral in attesa",
+    referralStatFreeMonths: "Mesi gratis totali",
+    referralBreakdown: "Applicati: {applied} • In attesa: {pending}",
     copyCode: "Copia codice",
     copyLink: "Copia link",
     copied: "Copiato",
@@ -997,6 +1009,10 @@ const I18N = {
     referralCodeHint: "Teile diesen Code: Ihr erhaltet beide einen Gratis-Monat nach dem ersten bezahlten Monat des eingeladenen Nutzers.",
     referralLinkTitle: "Referral-Link",
     referralLinkHint: "Sende diesen Link, um direkt einzuladen.",
+    referralStatSuccessful: "Erfolgreiche Referrals",
+    referralStatPending: "Ausstehende Referrals",
+    referralStatFreeMonths: "Gratis-Monate gesamt",
+    referralBreakdown: "Verrechnet: {applied} • Ausstehend: {pending}",
     copyCode: "Code kopieren",
     copyLink: "Link kopieren",
     copied: "Kopiert",
@@ -1239,6 +1255,10 @@ const I18N = {
     referralCodeHint: "Partagez ce code : vous recevez tous les deux un mois gratuit apres le premier mois paye de l'invite.",
     referralLinkTitle: "Lien de referral",
     referralLinkHint: "Envoyez ce lien pour inviter directement.",
+    referralStatSuccessful: "Referrals reussis",
+    referralStatPending: "Referrals en attente",
+    referralStatFreeMonths: "Mois gratuits total",
+    referralBreakdown: "Appliques: {applied} • En attente: {pending}",
     copyCode: "Copier le code",
     copyLink: "Copier le lien",
     copied: "Copie",
@@ -1508,6 +1528,9 @@ function applyLanguage() {
   setTextIfExists("settingsPanelSupportTitle", t("panelSupport"));
   setTextIfExists("referralLinkTitle", t("referralLinkTitle"));
   setTextIfExists("referralLinkHint", t("referralLinkHint"));
+  setTextIfExists("referralStatSuccessfulLabel", t("referralStatSuccessful"));
+  setTextIfExists("referralStatPendingLabel", t("referralStatPending"));
+  setTextIfExists("referralStatFreeMonthsLabel", t("referralStatFreeMonths"));
   setTextIfExists("copyReferralLinkBtn", t("copyLink"));
   setTextIfExists("supportEmailLabel", t("supportEmailTitle"));
   setTextIfExists("supportEmailHint", t("supportEmailHint"));
@@ -2721,6 +2744,7 @@ function applySettingsForm(data) {
   const user = data.user || {};
   const integrations = data.integrations || {};
   const billing = data.payment?.details || {};
+  const referral = data.referral || {};
   document.getElementById("settingsName").value = user.name || "";
   document.getElementById("settingsEmail").value = user.email || "";
   applyIntegrationUi("linkedin", integrations.linkedin || {});
@@ -2735,6 +2759,16 @@ function applySettingsForm(data) {
   const referralLinkInput = document.getElementById("referralLinkInput");
   const referralLink = referralCode ? `${REFERRAL_LINK_BASE}/?ref=${encodeURIComponent(referralCode)}` : "";
   if (referralLinkInput) referralLinkInput.value = referralLink;
+  setText("referralStatSuccessfulValue", String(Number(referral.successfulReferrals || 0)));
+  setText("referralStatPendingValue", String(Number(referral.pendingReferrals || 0)));
+  setText("referralStatFreeMonthsValue", String(Number(referral.freeMonthsEarned || 0)));
+  setText(
+    "referralBreakdownHint",
+    tf("referralBreakdown", {
+      applied: Number(referral.freeMonthsApplied || 0),
+      pending: Number(referral.freeMonthsPending || 0),
+    }),
+  );
 }
 
 function setOnboardingMode(mode) {
