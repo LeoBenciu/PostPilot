@@ -200,6 +200,9 @@ const I18N = {
     calendarChecklistHashtags: "Hashtags added",
     calendarChecklistCoverFrame: "Cover frame set",
     calendarChecklistBestTime: "Best time selected",
+    calendarDeleteClipBtn: "Delete clip",
+    calendarDeleteClipConfirm: "Delete this clip from calendar?",
+    calendarDeleteClipSuccess: "Clip deleted from calendar.",
     newChat: "Reset chat",
     settings: "Settings",
     disconnect: "Disconnect",
@@ -534,6 +537,9 @@ const I18N = {
     calendarChecklistHashtags: "Hashtaguri adaugate",
     calendarChecklistCoverFrame: "Cover frame setat",
     calendarChecklistBestTime: "Ora optima selectata",
+    calendarDeleteClipBtn: "Sterge clipul",
+    calendarDeleteClipConfirm: "Stergi acest clip din calendar?",
+    calendarDeleteClipSuccess: "Clipul a fost sters din calendar.",
     newChat: "Reset chat",
     settings: "Setari",
     disconnect: "Deconectare",
@@ -1628,6 +1634,7 @@ function applyLanguage() {
   setTextIfExists("calendarDetailsCaptionHeading", t("calendarDetailsCaption"));
   setTextIfExists("calendarDetailsScriptHeading", t("calendarDetailsScript"));
   setTextIfExists("calendarChecklistHeading", t("calendarChecklistTitle"));
+  setTextIfExists("calendarClipDeleteBtn", t("calendarDeleteClipBtn"));
   setTextIfExists("dashboardFollowersLabel", t("dashboardFollowersLabel"));
   setTextIfExists("dashboardEngagementLabel", t("dashboardEngagementLabel"));
   setTextIfExists("dashboardViewsLabel", t("dashboardViewsLabel"));
@@ -3152,6 +3159,24 @@ function closeCalendarClipDetailsModal() {
   setHidden("calendarClipDetailsModal", true);
 }
 
+function deleteCalendarClipById(clipId) {
+  const id = String(clipId || "").trim();
+  if (!id) return false;
+  let removed = false;
+  for (const [weekKey, clips] of calendarCustomClipsByWeek.entries()) {
+    if (!Array.isArray(clips) || clips.length === 0) continue;
+    const nextClips = clips.filter((clip) => String(clip?.id || "") !== id);
+    if (nextClips.length !== clips.length) {
+      removed = true;
+      if (nextClips.length) calendarCustomClipsByWeek.set(weekKey, nextClips);
+      else calendarCustomClipsByWeek.delete(weekKey);
+      break;
+    }
+  }
+  if (removed) calendarClipIndex.delete(id);
+  return removed;
+}
+
 function saveCalendarClipFromForm() {
   if (!pendingCalendarDate) return;
   const title = (document.getElementById("calendarClipTitleInput")?.value || "").trim();
@@ -3188,6 +3213,43 @@ function normalizeClipType(rawType) {
   return "REEL";
 }
 
+function cleanAgentGeneratedTitle(rawTitle) {
+  const source = String(rawTitle || "").trim();
+  if (!source) return "";
+  const quoteMatch = source.match(/[„"']([^"'\n”]+)[”"']/);
+  if (quoteMatch?.[1]) return quoteMatch[1].trim();
+  const withoutDayPrefix = source.replace(/^ziua\s*\d+\s*[—\-:]\s*/i, "").trim();
+  const beforePipe = withoutDayPrefix.split("|")[0] || withoutDayPrefix;
+  return beforePipe.replace(/^["'„]+|["'”]+$/g, "").trim();
+}
+
+function buildAgentAutofillContent(row = {}, rawTopic, cleanTitle) {
+  const topic = String(rawTopic || "").trim();
+  const notesFromTopic = topic.includes("|")
+    ? topic
+        .split("|")
+        .slice(1)
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join(" | ")
+    : "";
+  const explicitCaption = String(row.caption || "").trim();
+  const explicitScript = String(row.script || "").trim();
+  const caption =
+    explicitCaption ||
+    (notesFromTopic ? `${cleanTitle}. ${notesFromTopic}` : cleanTitle);
+  const script =
+    explicitScript ||
+    [
+      `Hook: ${cleanTitle}`,
+      notesFromTopic ? `Directie executie: ${notesFromTopic}` : "",
+      "CTA: Pune o intrebare binara la final pentru comentarii.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  return { caption, script };
+}
+
 function addClipToCalendarState({ title, type, dateKey, time, caption = "", script = "" }) {
   const weekStart = startOfWeek(new Date(`${dateKey}T12:00:00`));
   const weekKey = toLocalDateKey(weekStart);
@@ -3208,15 +3270,16 @@ function addClipToCalendarState({ title, type, dateKey, time, caption = "", scri
 
 function scheduleDraftInCalendar(draft, { dayOffset = 1, time = "19:30" } = {}) {
   if (!draft || !draft.title) return null;
+  const cleanedTitle = cleanAgentGeneratedTitle(draft.title) || String(draft.title || "").trim() || "New clip";
   const targetDate = addDays(toStartOfDayLocal(new Date()), dayOffset);
   const dateKey = toLocalDateKey(targetDate);
   const result = addClipToCalendarState({
-    title: draft.title,
+    title: cleanedTitle,
     type: draft.type || "REEL",
     dateKey,
     time,
-    caption: draft.caption || "",
-    script: draft.script || "",
+    caption: String(draft.caption || "").trim() || cleanedTitle,
+    script: String(draft.script || "").trim() || `Hook: ${cleanedTitle}`,
   });
   renderCalendarView();
   return result;
@@ -3238,13 +3301,16 @@ function scheduleWeekPlanInCalendar(days = []) {
     const time = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     const targetDate = addDays(toStartOfDayLocal(new Date()), offset);
     const dateKey = toLocalDateKey(targetDate);
+    const rawTopic = String(row.topic || row.title || "").trim();
+    const cleanTitle = cleanAgentGeneratedTitle(rawTopic) || rawTopic || "New clip";
+    const { caption, script } = buildAgentAutofillContent(row, rawTopic, cleanTitle);
     const result = addClipToCalendarState({
-      title: String(row.topic || row.title || "").trim(),
+      title: cleanTitle,
       type: row.format || "REEL",
       dateKey,
       time,
-      caption: "",
-      script: "",
+      caption,
+      script,
     });
     if (result?.clip) addedCount += 1;
   });
@@ -4245,6 +4311,17 @@ document.getElementById("calendarClipChecklist")?.addEventListener("change", (ev
     activeCalendarClipDetails.checklist = {};
   }
   activeCalendarClipDetails.checklist[key] = Boolean(target.checked);
+});
+
+document.getElementById("calendarClipDeleteBtn")?.addEventListener("click", () => {
+  if (!activeCalendarClipDetails?.id) return;
+  const shouldDelete = window.confirm(t("calendarDeleteClipConfirm"));
+  if (!shouldDelete) return;
+  const deleted = deleteCalendarClipById(activeCalendarClipDetails.id);
+  if (!deleted) return;
+  closeCalendarClipDetailsModal();
+  renderCalendarView();
+  showToast(t("calendarDeleteClipSuccess"));
 });
 
 document.addEventListener("click", (event) => {
