@@ -330,6 +330,10 @@
           <span aria-hidden="true" class="btn-icon">◫</span>
           <span id="analyticsViewBtnLabel">Analytics</span>
         </button>
+        <button id="calendarViewBtn" class="secondary sidebar-view-btn">
+          <span aria-hidden="true" class="btn-icon">🗓</span>
+          <span id="calendarViewBtnLabel">Calendar</span>
+        </button>
       </div>
       <div class="sidebar-spacer"></div>
       <button id="referralOpenBtn" class="secondary referral-cta-btn">
@@ -351,7 +355,7 @@
     <main class="chat-layout">
       <header class="chat-header">
         <div>
-          <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span>Agent</span></h1>
+          <h1><img src="/logo.png" alt="PostPilot logo" class="chat-logo" />PostPilot <span id="activeViewLabel">Agent</span></h1>
           <p id="chatHeaderSubtitle">Your creator growth assistant</p>
         </div>
       </header>
@@ -479,6 +483,33 @@
           <h3 id="titleTopPosts">Top posts by engagement</h3>
           <canvas id="chartTopPosts"></canvas>
         </article>
+      </section>
+      <section id="calendarView" class="app-view calendar-view hidden">
+        <div class="calendar-header">
+          <button id="calendarPrevWeekBtn" class="secondary calendar-nav-btn" type="button">←</button>
+          <p id="calendarRangeLabel" class="calendar-range-label">-</p>
+          <button id="calendarNextWeekBtn" class="secondary calendar-nav-btn" type="button">→</button>
+          <button id="calendarTodayBtn" class="secondary calendar-today-btn" type="button">Azi</button>
+        </div>
+        <div class="calendar-stats-grid">
+          <article class="calendar-stat-card">
+            <p class="calendar-stat-label">Total</p>
+            <p id="calendarTotalValue" class="calendar-stat-value">0</p>
+          </article>
+          <article class="calendar-stat-card">
+            <p class="calendar-stat-label">Postate</p>
+            <p id="calendarPostedValue" class="calendar-stat-value">0</p>
+          </article>
+          <article class="calendar-stat-card">
+            <p class="calendar-stat-label">In progres</p>
+            <p id="calendarInProgressValue" class="calendar-stat-value">0</p>
+          </article>
+          <article class="calendar-stat-card">
+            <p class="calendar-stat-label">Rata completare</p>
+            <p id="calendarCompletionValue" class="calendar-stat-value">0%</p>
+          </article>
+        </div>
+        <div id="calendarGrid" class="calendar-grid"></div>
       </section>
     </main>
   </div>

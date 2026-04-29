@@ -28,9 +28,11 @@ const disconnectBtn = document.getElementById("disconnectBtn");
 const resetChatBtn = document.getElementById("resetChatBtn");
 const agentViewBtn = document.getElementById("agentViewBtn");
 const analyticsViewBtn = document.getElementById("analyticsViewBtn");
+const calendarViewBtn = document.getElementById("calendarViewBtn");
 const referralOpenBtn = document.getElementById("referralOpenBtn");
 const agentView = document.getElementById("agentView");
 const analyticsView = document.getElementById("analyticsView");
+const calendarView = document.getElementById("calendarView");
 const manageBillingBtn = document.getElementById("manageBillingBtn");
 const cancelSubscriptionBtn = document.getElementById("cancelSubscriptionBtn");
 const connectLinkedinBtn = document.getElementById("connectLinkedinBtn");
@@ -114,6 +116,7 @@ const I18N = {
     signIn: "Sign in",
     agentView: "Agent",
     analyticsView: "Analytics",
+    calendarView: "Calendar",
     newChat: "Reset chat",
     settings: "Settings",
     disconnect: "Disconnect",
@@ -367,6 +370,7 @@ const I18N = {
     signIn: "Autentificare",
     agentView: "Agent",
     analyticsView: "Analize",
+    calendarView: "Calendar",
     newChat: "Reset chat",
     settings: "Setari",
     disconnect: "Deconectare",
@@ -1427,6 +1431,7 @@ function applyLanguage() {
   setTextIfExists("openSignin", t("signIn"));
   setTextIfExists("agentViewBtnLabel", t("agentView"));
   setTextIfExists("analyticsViewBtnLabel", t("analyticsView"));
+  setTextIfExists("calendarViewBtnLabel", t("calendarView"));
   setTextIfExists("resetChatBtnLabel", t("newChat"));
   setTextIfExists("settingsBtnLabel", t("settings"));
   setTextIfExists("disconnectBtnLabel", t("disconnect"));
@@ -1571,6 +1576,7 @@ function applyLanguage() {
   }
 
   syncOnboardingLanguage();
+  if (!calendarView?.classList.contains("hidden")) renderCalendarView();
   if (accountState) applySettingsForm(accountState);
 }
 
@@ -2371,10 +2377,116 @@ function sendPrompt(text) {
   document.getElementById("composer").requestSubmit();
 }
 
+let calendarWeekOffset = 0;
+const calendarSeed = [
+  { title: "Morning routine hook", type: "REEL", dayOffset: 0, time: "09:30", status: "Scriptat" },
+  { title: "Behind the scenes", type: "STORY", dayOffset: 1, time: "13:00", status: "Filmare" },
+  { title: "3 growth mistakes", type: "CARUSEL", dayOffset: 2, time: "18:30", status: "Editare" },
+  { title: "Weekly recap", type: "STATIC", dayOffset: 4, time: "20:00", status: "Gata" },
+  { title: "Client transformation", type: "REEL", dayOffset: 6, time: "11:00", status: "Idee" },
+];
+
+function startOfWeek(baseDate) {
+  const d = new Date(baseDate);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  const diffToMonday = (day + 6) % 7;
+  d.setDate(d.getDate() - diffToMonday);
+  return d;
+}
+
+function addDays(date, days) {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + days);
+  return copy;
+}
+
+function buildCalendarWeekData(weekStart) {
+  return calendarSeed.map((item, idx) => ({
+    id: `seed-${idx}`,
+    title: item.title,
+    type: item.type,
+    status: item.status,
+    scheduledAt: `${addDays(weekStart, item.dayOffset).toISOString().slice(0, 10)}T${item.time}:00`,
+  }));
+}
+
+function getCalendarWeekStart() {
+  const nowWeekStart = startOfWeek(new Date());
+  return addDays(nowWeekStart, calendarWeekOffset * 7);
+}
+
+function formatCalendarRange(weekStart) {
+  const weekEnd = addDays(weekStart, 6);
+  const fmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  return `${fmt.format(weekStart)} - ${fmt.format(weekEnd)}`;
+}
+
+function updateCalendarStats(clips) {
+  const total = clips.length;
+  const posted = clips.filter((clip) => clip.status === "Postat").length;
+  const inProgress = clips.filter((clip) => ["Scriptat", "Filmare", "Editare", "Gata"].includes(clip.status)).length;
+  const completion = total > 0 ? Math.round((posted / total) * 100) : 0;
+  setTextIfExists("calendarTotalValue", String(total));
+  setTextIfExists("calendarPostedValue", String(posted));
+  setTextIfExists("calendarInProgressValue", String(inProgress));
+  setTextIfExists("calendarCompletionValue", `${completion}%`);
+}
+
+function renderCalendarView() {
+  const weekStart = getCalendarWeekStart();
+  const clips = buildCalendarWeekData(weekStart);
+  setTextIfExists("calendarRangeLabel", formatCalendarRange(weekStart));
+  updateCalendarStats(clips);
+  const grid = document.getElementById("calendarGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  const dayNameFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", { weekday: "short" });
+  const timeFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", { hour: "2-digit", minute: "2-digit" });
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  for (let i = 0; i < 7; i += 1) {
+    const dayDate = addDays(weekStart, i);
+    const dayIso = dayDate.toISOString().slice(0, 10);
+    const dayClips = clips.filter((clip) => clip.scheduledAt.startsWith(dayIso));
+    const dayColumn = document.createElement("article");
+    dayColumn.className = "calendar-day-column";
+    if (dayIso === todayIso) dayColumn.classList.add("is-today");
+
+    const cardsHtml = dayClips
+      .map((clip) => {
+        const clipDate = new Date(clip.scheduledAt);
+        return `
+          <div class="calendar-clip-card">
+            <p class="calendar-clip-title">${clip.title}</p>
+            <p class="calendar-clip-meta">${clip.type} - ${timeFmt.format(clipDate)}</p>
+            <span class="calendar-clip-status">${clip.status}</span>
+          </div>
+        `;
+      })
+      .join("");
+
+    dayColumn.innerHTML = `
+      <header class="calendar-day-header">
+        <span class="calendar-day-name">${dayNameFmt.format(dayDate)}</span>
+        <span class="calendar-day-date">${dayDate.getDate()}</span>
+      </header>
+      <div class="calendar-day-clips">${cardsHtml || ""}</div>
+    `;
+    grid.appendChild(dayColumn);
+  }
+}
+
 function setActiveView(view) {
   const views = {
     agent: document.getElementById("agentView"),
     analytics: document.getElementById("analyticsView"),
+    calendar: document.getElementById("calendarView"),
   };
   Object.entries(views).forEach(([name, el]) => {
     if (!el) return;
@@ -2382,6 +2494,9 @@ function setActiveView(view) {
   });
   agentViewBtn?.classList.toggle("active", view === "agent");
   analyticsViewBtn?.classList.toggle("active", view === "analytics");
+  calendarViewBtn?.classList.toggle("active", view === "calendar");
+  const activeViewLabel = view === "analytics" ? t("analyticsView") : view === "calendar" ? t("calendarView") : t("agentView");
+  setTextIfExists("activeViewLabel", activeViewLabel);
   refreshAgentEmptyState();
 }
 
@@ -3147,6 +3262,26 @@ agentViewBtn?.addEventListener("click", () => {
 analyticsViewBtn?.addEventListener("click", async () => {
   setActiveView("analytics");
   await loadAnalyticsView();
+});
+
+calendarViewBtn?.addEventListener("click", () => {
+  setActiveView("calendar");
+  renderCalendarView();
+});
+
+document.getElementById("calendarPrevWeekBtn")?.addEventListener("click", () => {
+  calendarWeekOffset -= 1;
+  renderCalendarView();
+});
+
+document.getElementById("calendarNextWeekBtn")?.addEventListener("click", () => {
+  calendarWeekOffset += 1;
+  renderCalendarView();
+});
+
+document.getElementById("calendarTodayBtn")?.addEventListener("click", () => {
+  calendarWeekOffset = 0;
+  renderCalendarView();
 });
 
 document.getElementById("obConnectInstagramBtn")?.addEventListener("click", () => {
