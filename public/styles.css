@@ -3160,20 +3160,15 @@ pre {
 }
 
 #authGate .hero-video-card {
-  background: linear-gradient(180deg, #ffffff 0%, #fff6f8 100%);
-  border: 1px solid #f1cfd7;
-  border-radius: 20px;
-  padding: clamp(1rem, 2.5vw, 1.5rem);
-  box-shadow: 0 18px 38px rgba(213, 0, 50, 0.1);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
 #authGate .hero-video-card .section-title {
-  margin-bottom: 0.35rem;
-}
-
-#authGate .hero-video-card .section-subtitle {
-  margin-top: 0;
-  margin-bottom: 0.9rem;
+  margin: 0 0 0.9rem;
 }
 
 #authGate .hero-video-frame-wrap {

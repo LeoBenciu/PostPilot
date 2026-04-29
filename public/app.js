@@ -65,6 +65,7 @@ const I18N = {
     heroTitleMain: "Build Your Audience Faster.",
     heroTitleAccent: "With an AI Coach in Your Corner.",
     heroSubtitle: "Connect Instagram and get exactly what to post, when to post, and why - based on your real data.",
+    heroVideoTitle: "Watch PostPilot in action",
     signal1: "Tailored prompts every day",
     signal2: "Feedback matched to your tone",
     signal3: "Straight advice. No filler.",
@@ -402,6 +403,7 @@ const I18N = {
     heroTitleMain: "De ce nu crești pe Instagram?",
     heroTitleAccent: "PostPilot îți răspunde.",
     heroSubtitle: "Conectezi Instagram-ul și primești exact ce să postezi, când și de ce — bazat pe datele tale reale.",
+    heroVideoTitle: "Vezi PostPilot in actiune",
     signal1: "Prompturi personalizate zilnic",
     signal2: "Feedback adaptat vocii tale",
     signal3: "Fara fluff. Doar claritate.",
@@ -745,6 +747,7 @@ const I18N = {
     heroTitleMain: "Fai crescere il tuo pubblico.",
     heroTitleAccent: "Con il tuo coach AI personale.",
     heroSubtitle: "Colleghi Instagram e ricevi esattamente cosa pubblicare, quando e perche - basato sui tuoi dati reali.",
+    heroVideoTitle: "Guarda PostPilot in azione",
     signal1: "Prompt personalizzati ogni giorno",
     signal2: "Feedback adatto alla tua voce",
     signal3: "Niente fuffa. Solo chiarezza.",
@@ -992,6 +995,7 @@ const I18N = {
     heroTitleMain: "Baue deine Reichweite aus.",
     heroTitleAccent: "Mit deinem eigenen KI-Coach.",
     heroSubtitle: "Verbinde Instagram und erhalte genau, was du posten solltest, wann und warum - basierend auf deinen echten Daten.",
+    heroVideoTitle: "Sieh PostPilot in Aktion",
     signal1: "Taegliche individuelle Prompts",
     signal2: "Feedback passend zu deiner Stimme",
     signal3: "Kein BlaBla. Nur Klarheit.",
@@ -1239,6 +1243,7 @@ const I18N = {
     heroTitleMain: "Developpez votre audience.",
     heroTitleAccent: "Avec votre coach IA personnel.",
     heroSubtitle: "Connectez Instagram et recevez exactement quoi publier, quand et pourquoi - base sur vos donnees reelles.",
+    heroVideoTitle: "Regardez PostPilot en action",
     signal1: "Prompts personnalises chaque jour",
     signal2: "Feedback adapte a votre voix",
     signal3: "Sans blabla. Juste de la clarte.",
@@ -1532,6 +1537,7 @@ function applyLanguage() {
   setTextIfExists("heroTitleMain", t("heroTitleMain"));
   setTextIfExists("heroTitleAccent", t("heroTitleAccent"));
   setTextIfExists("heroSubtitle", t("heroSubtitle"));
+  setTextIfExists("heroVideoTitle", t("heroVideoTitle"));
   setTextIfExists("signal1", t("signal1"));
   setTextIfExists("signal2", t("signal2"));
   setTextIfExists("signal3", t("signal3"));
