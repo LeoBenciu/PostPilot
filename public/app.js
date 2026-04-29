@@ -1635,7 +1635,6 @@ function applyLanguage() {
   setTextIfExists("dashboardTodayPostLabel", t("dashboardTodayPostLabel"));
   setTextIfExists("dashboardTopPostsHeading", t("dashboardTopPostsHeading"));
   setTextIfExists("dashboardFunnelHeading", t("dashboardFunnelHeading"));
-  setTextIfExists("dashboardAiInsightsHeading", t("dashboardAiInsightsHeading"));
   setTextIfExists("dashboardHealthHeading", t("dashboardHealthHeading"));
   setTextIfExists("resetChatBtnLabel", t("newChat"));
   setTextIfExists("settingsBtnLabel", t("settings"));
@@ -2870,27 +2869,6 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
           </article>
         `,
       )
-      .join("");
-  }
-
-  const insightWrap = document.getElementById("dashboardInsights");
-  if (insightWrap) {
-    const critical = (creator?.unlock || []).slice(0, 2).map((item) => ({ icon: "⚠", title: item.title, body: item.body }));
-    const opportunities = (creator?.superpower || []).slice(0, 2).map((item) => ({ icon: "✅", title: item.title, body: item.body }));
-    const insights = [...critical, ...opportunities];
-    insightWrap.innerHTML = insights
-      .map((item) => {
-        const isCritical = item.icon === "⚠";
-        return `
-          <article class="dashboard-insight ${isCritical ? "is-critical" : "is-opportunity"}">
-            <div class="dashboard-insight-head">
-              <span class="dashboard-insight-icon" aria-hidden="true">${item.icon}</span>
-              <h4>${item.title}</h4>
-            </div>
-            <p>${item.body}</p>
-          </article>
-        `;
-      })
       .join("");
   }
 
