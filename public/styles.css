@@ -773,23 +773,124 @@ body {
 
 .dashboard-funnel-row {
   border: 1px solid #f1d9de;
-  border-radius: 12px;
-  padding: 8px;
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
 }
-.dashboard-funnel-row strong { display: block; margin-bottom: 2px; }
-.dashboard-funnel-row[data-state="critical"] { border-color: #f3b0b8; background: #fff5f6; }
-.dashboard-funnel-row[data-state="moderate"] { border-color: #f5d39c; background: #fffaf1; }
-.dashboard-funnel-row[data-state="good"] { border-color: #b7e4c0; background: #f6fff7; }
+
+.dashboard-funnel-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.dashboard-funnel-row-head h4 {
+  margin: 0;
+  font-size: 18px;
+  color: #2d1218;
+  line-height: 1.2;
+}
+
+.dashboard-funnel-state {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dashboard-funnel-row p {
+  margin: 0;
+  font-size: 15px;
+  color: #5f3b45;
+  line-height: 1.4;
+}
+
+.dashboard-funnel-row[data-state="critical"] {
+  border-color: #f3b0b8;
+  background: linear-gradient(180deg, #fff8f9 0%, #fff 100%);
+}
+.dashboard-funnel-row[data-state="critical"] .dashboard-funnel-state {
+  background: #ffe2e7;
+  color: #b42318;
+}
+
+.dashboard-funnel-row[data-state="moderate"] {
+  border-color: #f5d39c;
+  background: linear-gradient(180deg, #fffdf7 0%, #fff 100%);
+}
+.dashboard-funnel-row[data-state="moderate"] .dashboard-funnel-state {
+  background: #fff1d7;
+  color: #9a6700;
+}
+
+.dashboard-funnel-row[data-state="good"] {
+  border-color: #b7e4c0;
+  background: linear-gradient(180deg, #f9fffb 0%, #fff 100%);
+}
+.dashboard-funnel-row[data-state="good"] .dashboard-funnel-state {
+  background: #ddfbe5;
+  color: #1f8a47;
+}
 
 .dashboard-insights-grid { grid-template-columns: repeat(2, 1fr); }
 .dashboard-insight {
   border: 1px solid #f1d9de;
-  border-radius: 12px;
-  padding: 8px;
+  border-radius: 14px;
+  padding: 12px;
   background: #fff;
   font-size: 12px;
 }
-.dashboard-insight strong { display: block; color: #3d1b25; margin-bottom: 2px; }
+
+.dashboard-insight-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.dashboard-insight-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dashboard-insight h4 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.3;
+  color: #2d1218;
+}
+
+.dashboard-insight p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #5f3b45;
+}
+
+.dashboard-insight.is-critical {
+  border-color: #f3b0b8;
+  background: linear-gradient(180deg, #fff8f9 0%, #fff 100%);
+}
+.dashboard-insight.is-critical .dashboard-insight-icon {
+  background: #ffe2e7;
+}
+
+.dashboard-insight.is-opportunity {
+  border-color: #b7e4c0;
+  background: linear-gradient(180deg, #f9fffb 0%, #fff 100%);
+}
+.dashboard-insight.is-opportunity .dashboard-insight-icon {
+  background: #ddfbe5;
+}
 
 .dashboard-health-wrap {
   display: grid;
@@ -1654,13 +1755,35 @@ button:active {
   gap: 8px;
 }
 
-.calendar-clip-checklist label {
+.calendar-check-item {
   margin: 0;
-  font-size: 13px;
-  color: #4a2230;
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  column-gap: 10px;
   align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #efd0d7;
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.calendar-check-item:hover {
+  border-color: #dfb3be;
+  background: #fff9fb;
+}
+
+.calendar-check-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #d50032;
+}
+
+.calendar-check-item span {
+  font-size: 14px;
+  line-height: 1.35;
+  color: #4a2230;
 }
 
 /* ---------- Loading / skeleton states for the analytics view ---------- */

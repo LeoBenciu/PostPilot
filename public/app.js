@@ -120,6 +120,41 @@ const I18N = {
     analyticsView: "Analytics",
     calendarView: "Calendar",
     dashboardView: "Dashboard",
+    dashboardGreetingPrefix: "Hi",
+    dashboardFollowersLabel: "Followers",
+    dashboardEngagementLabel: "Average engagement rate",
+    dashboardViewsLabel: "Total views",
+    dashboardCommentsLabel: "Comments",
+    dashboardTodayPostLabel: "Today's post",
+    dashboardTopPostsHeading: "Top posts (last 30 days)",
+    dashboardFunnelHeading: "Funnel insights",
+    dashboardAiInsightsHeading: "AI insights",
+    dashboardHealthHeading: "Content health score",
+    dashboardFollowerDeltaUnavailable: "Follower delta unavailable from current history",
+    dashboardVsLastWeek: "vs last week",
+    dashboardCriticalZeroCommentsWeek: "Critical: zero comments this week",
+    dashboardCommentsThisWeek: "comments this week",
+    dashboardNoIdeasToday: "No post ideas scheduled today in Calendar",
+    dashboardRecommendedTime: "Recommended time",
+    dashboardPostedToday: "Already posted today",
+    dashboardNotPostedYet: "Not posted yet",
+    dashboardViewsUnit: "views",
+    dashboardLikesUnit: "likes",
+    dashboardErUnit: "ER",
+    dashboardFunnelDiscovery: "Discovery",
+    dashboardFunnelProfileVisit: "Profile Visit",
+    dashboardFunnelFollow: "Follow",
+    dashboardFixDiscoveryCritical: "Post more short-form hooks with stronger first 2 seconds.",
+    dashboardFixDiscoveryModerate: "Double down on your best media type this week.",
+    dashboardFixDiscoveryGood: "Keep posting in your top-performing format and time slot.",
+    dashboardFixVisitCritical: "Use caption prompts to trigger comments and profile taps.",
+    dashboardFixVisitModerate: "Add clearer CTA in captions to move people to profile.",
+    dashboardFixVisitGood: "Your interaction depth is healthy. Maintain CTA consistency.",
+    dashboardFixFollowCritical: "Increase posting consistency to improve follow conversion.",
+    dashboardFixFollowModerate: "Keep weekly cadence stable and reinforce niche clarity.",
+    dashboardFixFollowGood: "Cadence is strong. Optimize hooks to compound follower growth.",
+    dashboardBiggestLeverNow: "Biggest lever now",
+    dashboardImprovePrefix: "improve",
     calendarModalTitle: "Add clip",
     calendarModalTitleLabel: "Title",
     calendarModalTypeLabel: "Type",
@@ -412,6 +447,41 @@ const I18N = {
     analyticsView: "Analize",
     calendarView: "Calendar",
     dashboardView: "Dashboard",
+    dashboardGreetingPrefix: "Salut",
+    dashboardFollowersLabel: "Followers",
+    dashboardEngagementLabel: "Rata medie de engagement",
+    dashboardViewsLabel: "Vizualizari totale",
+    dashboardCommentsLabel: "Comentarii",
+    dashboardTodayPostLabel: "Postarea de azi",
+    dashboardTopPostsHeading: "Top postari (ultimele 30 zile)",
+    dashboardFunnelHeading: "Insight-uri funnel",
+    dashboardAiInsightsHeading: "Insight-uri AI",
+    dashboardHealthHeading: "Scor sanatate continut",
+    dashboardFollowerDeltaUnavailable: "Delta followers indisponibil din istoricul curent",
+    dashboardVsLastWeek: "vs saptamana trecuta",
+    dashboardCriticalZeroCommentsWeek: "Critic: zero comentarii saptamana asta",
+    dashboardCommentsThisWeek: "comentarii saptamana asta",
+    dashboardNoIdeasToday: "Nu exista idei programate azi in Calendar",
+    dashboardRecommendedTime: "Ora recomandata",
+    dashboardPostedToday: "Postat deja azi",
+    dashboardNotPostedYet: "Nu este postat inca",
+    dashboardViewsUnit: "vizualizari",
+    dashboardLikesUnit: "like-uri",
+    dashboardErUnit: "ER",
+    dashboardFunnelDiscovery: "Descoperire",
+    dashboardFunnelProfileVisit: "Vizita profil",
+    dashboardFunnelFollow: "Follow",
+    dashboardFixDiscoveryCritical: "Posteaza mai multe hook-uri scurte cu primele 2 secunde mai puternice.",
+    dashboardFixDiscoveryModerate: "Concentreaza-te pe formatul tau cu performanta cea mai buna saptamana asta.",
+    dashboardFixDiscoveryGood: "Continua sa postezi in formatul si intervalul orar care performeaza cel mai bine.",
+    dashboardFixVisitCritical: "Foloseste prompturi in caption pentru comentarii si vizite de profil.",
+    dashboardFixVisitModerate: "Adauga CTA mai clar in caption ca sa trimiti oamenii spre profil.",
+    dashboardFixVisitGood: "Nivelul de interactiune este bun. Pastreaza consistenta CTA-urilor.",
+    dashboardFixFollowCritical: "Creste consistenta postarilor ca sa imbunatatesti conversia in follow.",
+    dashboardFixFollowModerate: "Pastreaza ritmul saptamanal si claritatea nisei.",
+    dashboardFixFollowGood: "Cadenta este puternica. Optimizeaza hook-urile pentru crestere accelerata.",
+    dashboardBiggestLeverNow: "Cel mai mare levier acum",
+    dashboardImprovePrefix: "imbunatateste",
     calendarModalTitle: "Adauga clip",
     calendarModalTitleLabel: "Titlu",
     calendarModalTypeLabel: "Tip",
@@ -2695,7 +2765,15 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
   if (funnelWrap) {
     funnelWrap.innerHTML = funnel
       .map(
-        (row) => `<div class="dashboard-funnel-row" data-state="${row.state}"><strong>${row.name}</strong><span>${row.fix}</span></div>`,
+        (row) => `
+          <article class="dashboard-funnel-row" data-state="${row.state}">
+            <div class="dashboard-funnel-row-head">
+              <h4>${row.name}</h4>
+              <span class="dashboard-funnel-state">${row.state}</span>
+            </div>
+            <p>${row.fix}</p>
+          </article>
+        `,
       )
       .join("");
   }
@@ -2706,7 +2784,18 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
     const opportunities = (creator?.superpower || []).slice(0, 2).map((item) => ({ icon: "✅", title: item.title, body: item.body }));
     const insights = [...critical, ...opportunities];
     insightWrap.innerHTML = insights
-      .map((item) => `<article class="dashboard-insight"><strong>${item.icon} ${item.title}</strong><span>${item.body}</span></article>`)
+      .map((item) => {
+        const isCritical = item.icon === "⚠";
+        return `
+          <article class="dashboard-insight ${isCritical ? "is-critical" : "is-opportunity"}">
+            <div class="dashboard-insight-head">
+              <span class="dashboard-insight-icon" aria-hidden="true">${item.icon}</span>
+              <h4>${item.title}</h4>
+            </div>
+            <p>${item.body}</p>
+          </article>
+        `;
+      })
       .join("");
   }
 
@@ -2854,11 +2943,13 @@ function renderCalendarView() {
   const dayNameFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", { weekday: "short" });
   const timeFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", { hour: "2-digit", minute: "2-digit" });
   const todayIso = toLocalDateKey(new Date());
+  const todayStart = toStartOfDayLocal(new Date());
 
   for (let i = 0; i < 7; i += 1) {
     const dayDate = addDays(weekStart, i);
     const dayIso = toLocalDateKey(dayDate);
     const dayClips = clips.filter((clip) => clip.scheduledAt.startsWith(dayIso));
+    const isPastDay = toStartOfDayLocal(dayDate).getTime() < todayStart.getTime();
     const dayColumn = document.createElement("article");
     dayColumn.className = "calendar-day-column";
     if (dayIso === todayIso) dayColumn.classList.add("is-today");
@@ -2882,7 +2973,7 @@ function renderCalendarView() {
         <span class="calendar-day-date">${dayDate.getDate()}</span>
       </header>
       <div class="calendar-day-clips">${cardsHtml || ""}</div>
-      <button class="secondary calendar-day-add-btn" data-calendar-add-day="${dayIso}" type="button">${t("calendarAddClipBtn")}</button>
+      ${isPastDay ? "" : `<button class="secondary calendar-day-add-btn" data-calendar-add-day="${dayIso}" type="button">${t("calendarAddClipBtn")}</button>`}
     `;
     grid.appendChild(dayColumn);
   }
@@ -2916,7 +3007,7 @@ function renderCalendarClipChecklist(clip) {
   if (!checklistEl || !clip) return;
   if (!clip.checklist || typeof clip.checklist !== "object") clip.checklist = {};
   checklistEl.innerHTML = CALENDAR_CHECKLIST_ITEMS.map((item) => `
-    <label>
+    <label class="calendar-check-item">
       <input type="checkbox" data-clip-checklist-key="${item.key}" ${clip.checklist[item.key] ? "checked" : ""} />
       <span>${t(item.labelKey)}</span>
     </label>
