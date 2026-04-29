@@ -1432,6 +1432,14 @@ button:active {
   overflow-y: auto;
 }
 
+.calendar-day-add-btn {
+  margin-top: auto;
+  border-style: dashed !important;
+  color: #845660;
+  background: #fff;
+  font-size: 12px;
+}
+
 .calendar-clip-card {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -1462,6 +1470,36 @@ button:active {
   border: 1px solid #efc2c8;
   background: #fff5f7;
   color: #8f1832;
+}
+
+.calendar-modal-card {
+  width: min(420px, calc(100vw - 24px));
+}
+
+.calendar-clip-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.calendar-clip-form select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.calendar-clip-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.calendar-clip-form-actions button {
+  width: auto;
 }
 
 /* ---------- Loading / skeleton states for the analytics view ---------- */

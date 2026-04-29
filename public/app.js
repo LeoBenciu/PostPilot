@@ -2514,13 +2514,9 @@ function renderDashboardView() {
 }
 
 let calendarWeekOffset = 0;
-const calendarSeed = [
-  { title: "Morning routine hook", type: "REEL", dayOffset: 0, time: "09:30", status: "Scriptat" },
-  { title: "Behind the scenes", type: "STORY", dayOffset: 1, time: "13:00", status: "Filmare" },
-  { title: "3 growth mistakes", type: "CARUSEL", dayOffset: 2, time: "18:30", status: "Editare" },
-  { title: "Weekly recap", type: "STATIC", dayOffset: 4, time: "20:00", status: "Gata" },
-  { title: "Client transformation", type: "REEL", dayOffset: 6, time: "11:00", status: "Idee" },
-];
+let pendingCalendarDate = null;
+const calendarCustomClipsByWeek = new Map();
+const calendarSeed = [];
 
 function startOfWeek(baseDate) {
   const d = new Date(baseDate);
@@ -2545,13 +2541,16 @@ function toLocalDateKey(date) {
 }
 
 function buildCalendarWeekData(weekStart) {
-  return calendarSeed.map((item, idx) => ({
+  const weekKey = toLocalDateKey(weekStart);
+  const baseClips = calendarSeed.map((item, idx) => ({
     id: `seed-${idx}`,
     title: item.title,
     type: item.type,
     status: item.status,
     scheduledAt: `${toLocalDateKey(addDays(weekStart, item.dayOffset))}T${item.time}:00`,
   }));
+  const customClips = calendarCustomClipsByWeek.get(weekKey) || [];
+  return [...baseClips, ...customClips];
 }
 
 function getCalendarWeekStart() {
@@ -2620,9 +2619,48 @@ function renderCalendarView() {
         <span class="calendar-day-date">${dayDate.getDate()}</span>
       </header>
       <div class="calendar-day-clips">${cardsHtml || ""}</div>
+      <button class="secondary calendar-day-add-btn" data-calendar-add-day="${dayIso}" type="button">+ Add clip</button>
     `;
     grid.appendChild(dayColumn);
   }
+}
+
+function openCalendarClipModal(dayIso) {
+  pendingCalendarDate = dayIso;
+  setHidden("calendarClipModal", false);
+  const titleInput = document.getElementById("calendarClipTitleInput");
+  if (titleInput) {
+    titleInput.value = "";
+    titleInput.focus();
+  }
+  const timeInput = document.getElementById("calendarClipTimeInput");
+  if (timeInput) timeInput.value = "19:30";
+}
+
+function closeCalendarClipModal() {
+  pendingCalendarDate = null;
+  setHidden("calendarClipModal", true);
+}
+
+function saveCalendarClipFromForm() {
+  if (!pendingCalendarDate) return;
+  const title = (document.getElementById("calendarClipTitleInput")?.value || "").trim();
+  const type = document.getElementById("calendarClipTypeInput")?.value || "REEL";
+  const time = document.getElementById("calendarClipTimeInput")?.value || "19:30";
+  if (!title) return;
+  const weekStart = getCalendarWeekStart();
+  const weekKey = toLocalDateKey(weekStart);
+  const current = calendarCustomClipsByWeek.get(weekKey) || [];
+  const nextClip = {
+    id: `custom-${Date.now()}`,
+    title,
+    type,
+    status: "Idee",
+    scheduledAt: `${pendingCalendarDate}T${time}:00`,
+  };
+  calendarCustomClipsByWeek.set(weekKey, [...current, nextClip]);
+  closeCalendarClipModal();
+  renderCalendarView();
 }
 
 function setActiveView(view) {
@@ -3440,6 +3478,16 @@ document.getElementById("calendarTodayBtn")?.addEventListener("click", () => {
   renderCalendarView();
 });
 
+document.getElementById("calendarClipModalClose")?.addEventListener("click", closeCalendarClipModal);
+document.getElementById("calendarClipCancelBtn")?.addEventListener("click", closeCalendarClipModal);
+document.getElementById("calendarClipModal")?.addEventListener("click", (event) => {
+  if (event.target?.id === "calendarClipModal") closeCalendarClipModal();
+});
+document.getElementById("calendarClipForm")?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveCalendarClipFromForm();
+});
+
 document.getElementById("dashboardSeeScriptBtn")?.addEventListener("click", () => {
   setActiveView("agent");
   sendPrompt("Give me the full script for today's recommended post, with hook, beats and CTA.");
@@ -3471,6 +3519,13 @@ document.addEventListener("click", (event) => {
     const day = weekDay.getAttribute("data-week-day");
     setActiveView("agent");
     sendPrompt(`Open full brief for ${day}: topic "${topic}". Include hook, script beats, caption and CTA.`);
+    return;
+  }
+
+  const addDayButton = event.target.closest("[data-calendar-add-day]");
+  if (addDayButton) {
+    const dayIso = addDayButton.getAttribute("data-calendar-add-day");
+    if (dayIso) openCalendarClipModal(dayIso);
   }
 });
 

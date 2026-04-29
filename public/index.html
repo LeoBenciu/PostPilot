@@ -625,6 +625,37 @@
         </div>
         <div id="calendarGrid" class="calendar-grid"></div>
       </section>
+      <div id="calendarClipModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="calendarClipModalTitle">
+        <div class="modal-card calendar-modal-card">
+          <div class="modal-head">
+            <h2 id="calendarClipModalTitle">Add clip</h2>
+            <button id="calendarClipModalClose" class="ghost-icon" type="button" aria-label="Close">×</button>
+          </div>
+          <form id="calendarClipForm" class="calendar-clip-form">
+            <label>
+              <span>Title</span>
+              <input id="calendarClipTitleInput" type="text" required maxlength="100" placeholder="Ex: Morning routine hook" />
+            </label>
+            <label>
+              <span>Type</span>
+              <select id="calendarClipTypeInput" required>
+                <option value="REEL">Reel</option>
+                <option value="CARUSEL">Carusel</option>
+                <option value="STORY">Story</option>
+                <option value="STATIC">Static</option>
+              </select>
+            </label>
+            <label>
+              <span>Time</span>
+              <input id="calendarClipTimeInput" type="time" required value="19:30" />
+            </label>
+            <div class="calendar-clip-form-actions">
+              <button id="calendarClipCancelBtn" class="secondary" type="button">Cancel</button>
+              <button id="calendarClipSaveBtn" type="submit">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </main>
   </div>
 
