@@ -2100,6 +2100,21 @@ function renderCardWeekPlan(data) {
     html += `<span class="pp-week-status pp-week-status--${status}"></span>`;
     html += `</div>`;
   }
+  const addCalendarText = currentLanguage === "ro" ? "Adauga-le in Calendar" : "Add all to Calendar";
+  const schedulePayload = encodeURIComponent(
+    JSON.stringify(
+      days.map((d) => ({
+        day: String(d.day || "").trim(),
+        topic: String(d.topic || d.title || "").trim(),
+        format: String(d.format || "").trim(),
+        time: String(d.time || "").trim(),
+        status: String(d.status || "").trim(),
+      })),
+    ),
+  );
+  html += `</div>`;
+  html += `<div class="pp-card-actions">`;
+  html += `<button class="pp-card-btn pp-card-btn--secondary" data-card-action="schedule-week-plan" data-card-plan="${schedulePayload}">${addCalendarText}</button>`;
   html += `</div></div>`;
   return html;
 }
@@ -2272,6 +2287,29 @@ document.addEventListener("click", (e) => {
       }
     } catch (_err) {
       showToast(currentLanguage === "ro" ? "Nu am putut adauga clipul in calendar." : "Could not add clip to calendar.");
+    }
+    return;
+  }
+
+  // Add week plan rows directly into calendar
+  if (action === "schedule-week-plan") {
+    const rawPayload = target.dataset.cardPlan || "";
+    if (!rawPayload) return;
+    try {
+      const days = JSON.parse(decodeURIComponent(rawPayload));
+      const added = scheduleWeekPlanInCalendar(days);
+      if (added > 0) {
+        setActiveView("calendar");
+        showToast(
+          currentLanguage === "ro"
+            ? `Am adaugat ${added} clipuri in Calendar.`
+            : `Added ${added} clips to Calendar.`,
+        );
+      } else {
+        showToast(currentLanguage === "ro" ? "Nu am gasit elemente valide de programat." : "No valid plan items found to schedule.");
+      }
+    } catch (_err) {
+      showToast(currentLanguage === "ro" ? "Nu am putut adauga planul in calendar." : "Could not add the plan to calendar.");
     }
     return;
   }
@@ -2928,6 +2966,7 @@ let calendarWeekOffset = 0;
 let pendingCalendarDate = null;
 let activeCalendarClipDetails = null;
 let lastAgentCalendarDraft = null;
+let lastAgentCalendarPlan = null;
 const calendarCustomClipsByWeek = new Map();
 const calendarClipIndex = new Map();
 const calendarSeed = [];
@@ -3183,10 +3222,41 @@ function scheduleDraftInCalendar(draft, { dayOffset = 1, time = "19:30" } = {}) 
   return result;
 }
 
+function scheduleWeekPlanInCalendar(days = []) {
+  if (!Array.isArray(days) || days.length === 0) return 0;
+  const rows = days.filter((item) => item && (item.topic || item.title));
+  if (!rows.length) return 0;
+  const todayRowIndex = rows.findIndex((row) => String(row.status || "").toLowerCase() === "today");
+  const baseShift = todayRowIndex >= 0 ? -todayRowIndex : 0;
+  let addedCount = 0;
+  rows.forEach((row, idx) => {
+    const offset = Math.max(0, idx + baseShift);
+    const timeMatch = String(row.time || "").match(/(\d{1,2}):(\d{2})/);
+    const hour = Math.max(0, Math.min(23, Number(timeMatch?.[1] ?? 19)));
+    const minuteRaw = Number(timeMatch?.[2] ?? 30);
+    const minute = [0, 15, 30, 45].includes(minuteRaw) ? minuteRaw : 30;
+    const time = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    const targetDate = addDays(toStartOfDayLocal(new Date()), offset);
+    const dateKey = toLocalDateKey(targetDate);
+    const result = addClipToCalendarState({
+      title: String(row.topic || row.title || "").trim(),
+      type: row.format || "REEL",
+      dateKey,
+      time,
+      caption: "",
+      script: "",
+    });
+    if (result?.clip) addedCount += 1;
+  });
+  if (addedCount > 0) renderCalendarView();
+  return addedCount;
+}
+
 function parseScheduleCommand(message) {
   const text = String(message || "").toLowerCase().trim();
-  const commandLike = /(schedule this|add this to calendar|plan this|programeaza asta|adauga in calendar)/.test(text);
+  const commandLike = /(schedule this|add this to calendar|plan this|programeaza asta|programeaza-l|programeaza-le|adauga in calendar|adaug[ăa]-l in calendar|adaug[ăa]-le in calendar|adauga-le in calendar|add them to calendar|schedule them)/.test(text);
   if (!commandLike) return null;
+  const scheduleAll = /(them|le|planul|plan|all)/.test(text);
   const timeMatch = text.match(/(?:at|la)\s+(\d{1,2})(?::(\d{2}))?/);
   const hour = Math.max(0, Math.min(23, Number(timeMatch?.[1] ?? 19)));
   const minuteRaw = Number(timeMatch?.[2] ?? 30);
@@ -3195,7 +3265,7 @@ function parseScheduleCommand(message) {
   let dayOffset = 1;
   if (/(today|azi)/.test(text)) dayOffset = 0;
   else if (/(tomorrow|maine)/.test(text)) dayOffset = 1;
-  return { dayOffset, time };
+  return { dayOffset, time, scheduleAll };
 }
 
 function extractDraftFromAssistantContent(content) {
@@ -3230,6 +3300,25 @@ function extractDraftFromAssistantContent(content) {
     }
   }
   return latestDraft;
+}
+
+function extractWeekPlanFromAssistantContent(content) {
+  const text = String(content || "");
+  const cardRegex = /```card:(\w+)\s*\n([\s\S]*?)```/g;
+  let match;
+  let latestPlan = null;
+  while ((match = cardRegex.exec(text))) {
+    const type = match[1];
+    if (type !== "week_plan") continue;
+    try {
+      const data = JSON.parse(match[2].trim());
+      const days = Array.isArray(data?.days) ? data.days : [];
+      if (days.length) latestPlan = days;
+    } catch (_e) {
+      // Ignore malformed blocks.
+    }
+  }
+  return latestPlan;
 }
 
 function initializeCalendarTimePicker() {
@@ -4009,7 +4098,25 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
     const scheduleIntent = parseScheduleCommand(message);
     if (scheduleIntent) {
       addMessage("user", message);
-      if (!lastAgentCalendarDraft) {
+      if (scheduleIntent.scheduleAll && Array.isArray(lastAgentCalendarPlan) && lastAgentCalendarPlan.length > 0) {
+        const added = scheduleWeekPlanInCalendar(lastAgentCalendarPlan);
+        if (added > 0) {
+          addMessage(
+            "assistant",
+            currentLanguage === "ro"
+              ? `Am adaugat ${added} clipuri in Calendar din ultimul plan generat.`
+              : `I added ${added} clips to Calendar from the latest plan.`,
+          );
+          setActiveView("calendar");
+        } else {
+          addMessage(
+            "assistant",
+            currentLanguage === "ro"
+              ? "Nu am gasit elemente valide de programat in ultimul plan."
+              : "I couldn't find valid plan items to schedule from the latest plan.",
+          );
+        }
+      } else if (!lastAgentCalendarDraft) {
         addMessage(
           "assistant",
           currentLanguage === "ro"
@@ -4047,6 +4154,8 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
     const result = await streamChat(message, sessionId);
     const parsedDraft = extractDraftFromAssistantContent(result?.content || "");
     if (parsedDraft) lastAgentCalendarDraft = parsedDraft;
+    const parsedPlan = extractWeekPlanFromAssistantContent(result?.content || "");
+    if (parsedPlan) lastAgentCalendarPlan = parsedPlan;
     if (result.action === "onboarding_required") {
       setOnboardingMode("onboarding");
       showOnboardingModal();

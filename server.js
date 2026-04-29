@@ -518,7 +518,9 @@ function buildCreatorProfile(state, language = "en") {
   const primaryIntegration = primaryPlatform ? integrations[primaryPlatform] : {};
   const handle = String(primaryIntegration?.username || "").replace(/^@+/, "");
   const avatarUrl = String(primaryIntegration?.avatarUrl || "");
-  const followerCount = Number(primaryIntegration?.followerCount || primaryIntegration?.followers || 0);
+  const followerCount = Number(
+    primaryIntegration?.followersCount || primaryIntegration?.followerCount || primaryIntegration?.followers || 0,
+  );
 
   const now = Date.now();
   const weekMs = 7 * 24 * 60 * 60 * 1000;
