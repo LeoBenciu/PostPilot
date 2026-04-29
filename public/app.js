@@ -2523,38 +2523,26 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
     thisWeekComments === 0 ? "Critical: zero comments this week" : `${formatCompactNumber(thisWeekComments)} comments this week`,
   );
 
-  const bestByType = creator?.metrics?.avgViewsByType || {};
-  const recommendedType = Object.entries(bestByType).sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0]?.[0] || "video";
-  const topTextPost = [...recentPosts]
-    .sort((a, b) => engagementForPost(b) - engagementForPost(a))
-    .find((post) => getPostText(post).length > 0);
-  const hookText = (getPostText(topTextPost).split(/\n|\./)[0] || "Create a high-value post for your audience today").slice(0, 120);
-  const hourPerf = new Map();
-  for (const post of recentPosts) {
-    const ts = Date.parse(post?.postedAt || "");
-    if (!Number.isFinite(ts)) continue;
-    const hour = new Date(ts).getHours();
-    const entry = hourPerf.get(hour) || { score: 0, count: 0 };
-    entry.score += engagementForPost(post);
-    entry.count += 1;
-    hourPerf.set(hour, entry);
-  }
-  let bestHour = 19;
-  let bestScore = -1;
-  for (const [hour, entry] of hourPerf.entries()) {
-    const avg = entry.count ? entry.score / entry.count : 0;
-    if (avg > bestScore) {
-      bestScore = avg;
-      bestHour = hour;
-    }
-  }
-  const recommendedTime = `${String(bestHour).padStart(2, "0")}:00`;
+  const todayCalendarWeekStart = startOfWeek(now);
+  const todayKey = toLocalDateKey(now);
+  const todayCalendarClips = buildCalendarWeekData(todayCalendarWeekStart).filter((clip) =>
+    String(clip?.scheduledAt || "").startsWith(todayKey),
+  );
+  const sortedTodayClips = [...todayCalendarClips].sort((a, b) =>
+    String(a?.scheduledAt || "").localeCompare(String(b?.scheduledAt || "")),
+  );
+  const ideasText = sortedTodayClips.length
+    ? sortedTodayClips.map((clip) => clip.title).join(" • ")
+    : "No post ideas scheduled today in Calendar";
+  const recommendedTime = sortedTodayClips[0]?.scheduledAt
+    ? String(sortedTodayClips[0].scheduledAt).slice(11, 16)
+    : "--:--";
   const postedToday = recentPosts.some((post) => {
     const ts = Date.parse(post?.postedAt || "");
     if (!Number.isFinite(ts)) return false;
     return toLocalDateKey(new Date(ts)) === toLocalDateKey(now);
   });
-  setTextIfExists("dashboardTodayHook", hookText);
+  setTextIfExists("dashboardTodayHook", ideasText);
   setTextIfExists("dashboardTodayMeta", `Recommended time: ${recommendedTime}`);
   const postedIndicator = document.getElementById("dashboardPostedIndicator");
   if (postedIndicator) {
@@ -2563,7 +2551,10 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
   }
   const formatsWrap = document.getElementById("dashboardTodayFormats");
   if (formatsWrap) {
-    formatsWrap.innerHTML = [`${formatMediaType(recommendedType)}`, "INSTAGRAM"]
+    const formatPills = Array.from(
+      new Set(sortedTodayClips.map((clip) => formatMediaType(clip?.type || clip?.mediaType)).filter(Boolean)),
+    );
+    formatsWrap.innerHTML = [...formatPills, "INSTAGRAM"]
       .map((format) => `<span class="dashboard-pill">${format}</span>`)
       .join("");
   }
@@ -2578,9 +2569,12 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
         const reach = Math.max(1, reachForPost(post));
         const er = ((engagementForPost(post) / reach) * 100).toFixed(1);
         const title = (getPostText(post).split(/\n|\./)[0] || `${formatMediaType(post.mediaType)} post`).slice(0, 80);
+        const previewUrl = String(post?.imageUrl || post?.thumbnailUrl || post?.mediaUrl || "").trim();
         return `
         <article class="dashboard-top-post">
-          <div class="dashboard-thumb" aria-hidden="true"></div>
+          <div class="dashboard-thumb" aria-hidden="true">
+            ${previewUrl ? `<img src="${previewUrl}" alt="" loading="lazy" onerror="this.remove()" />` : ""}
+          </div>
           <div>
             <strong>#${idx + 1} ${title}</strong>
             <div class="dashboard-muted">${formatCompactNumber(reachForPost(post))} views - ${formatCompactNumber(post.likes || 0)} likes</div>
@@ -2803,6 +2797,10 @@ function openCalendarClipModal(dayIso) {
   }
   const timeInput = document.getElementById("calendarClipTimeInput");
   if (timeInput) timeInput.value = "19:30";
+  const captionInput = document.getElementById("calendarClipCaptionInput");
+  if (captionInput) captionInput.value = "";
+  const scriptInput = document.getElementById("calendarClipScriptInput");
+  if (scriptInput) scriptInput.value = "";
 }
 
 function closeCalendarClipModal() {
@@ -2836,6 +2834,8 @@ function openCalendarClipDetailsModal(clip) {
     minute: "2-digit",
   });
   setTextIfExists("calendarDetailsScheduledAt", Number.isNaN(dt.getTime()) ? clip.scheduledAt : fmt.format(dt));
+  setTextIfExists("calendarDetailsCaption", clip.caption || "-");
+  setTextIfExists("calendarDetailsScript", clip.script || "-");
   renderCalendarClipChecklist(clip);
   setHidden("calendarClipDetailsModal", false);
 }
@@ -2850,6 +2850,8 @@ function saveCalendarClipFromForm() {
   const title = (document.getElementById("calendarClipTitleInput")?.value || "").trim();
   const type = document.getElementById("calendarClipTypeInput")?.value || "REEL";
   const time = document.getElementById("calendarClipTimeInput")?.value || "19:30";
+  const caption = (document.getElementById("calendarClipCaptionInput")?.value || "").trim();
+  const script = (document.getElementById("calendarClipScriptInput")?.value || "").trim();
   if (!title) return;
   const weekStart = getCalendarWeekStart();
   const weekKey = toLocalDateKey(weekStart);
@@ -2860,6 +2862,8 @@ function saveCalendarClipFromForm() {
     type,
     status: "Idee",
     scheduledAt: `${pendingCalendarDate}T${time}:00`,
+    caption,
+    script,
     checklist: {},
   };
   calendarCustomClipsByWeek.set(weekKey, [...current, nextClip]);

@@ -609,6 +609,14 @@
               <span>Time</span>
               <input id="calendarClipTimeInput" type="time" required value="19:30" />
             </label>
+            <label>
+              <span>Caption</span>
+              <textarea id="calendarClipCaptionInput" rows="3" maxlength="500" placeholder="Write the caption..."></textarea>
+            </label>
+            <label>
+              <span>Script</span>
+              <textarea id="calendarClipScriptInput" rows="5" maxlength="2000" placeholder="Write the script..."></textarea>
+            </label>
             <div class="calendar-clip-form-actions">
               <button id="calendarClipCancelBtn" class="secondary" type="button">Cancel</button>
               <button id="calendarClipSaveBtn" type="submit">Save</button>
@@ -627,6 +635,14 @@
             <p class="calendar-clip-details-row"><span>Type</span><strong id="calendarDetailsType">-</strong></p>
             <p class="calendar-clip-details-row"><span>Status</span><strong id="calendarDetailsStatus">-</strong></p>
             <p class="calendar-clip-details-row"><span>Scheduled</span><strong id="calendarDetailsScheduledAt">-</strong></p>
+          </div>
+          <div class="calendar-clip-details-text-block">
+            <h3>Caption</h3>
+            <p id="calendarDetailsCaption" class="calendar-clip-details-text">-</p>
+          </div>
+          <div class="calendar-clip-details-text-block">
+            <h3>Script</h3>
+            <p id="calendarDetailsScript" class="calendar-clip-details-text">-</p>
           </div>
           <div class="calendar-clip-checklist-wrap">
             <h3 class="calendar-clip-checklist-title">Post checklist</h3>
