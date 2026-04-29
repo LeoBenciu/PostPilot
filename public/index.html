@@ -399,10 +399,6 @@
             <div id="dashboardTodayFormats" class="dashboard-pill-row"></div>
             <p id="dashboardTodayMeta" class="dashboard-muted">-</p>
           </div>
-          <div class="dashboard-today-actions">
-            <button id="dashboardSeeScriptBtn" class="secondary" type="button">See full script</button>
-            <button id="dashboardRegenerateHookBtn" class="secondary" type="button">Regenerate hook</button>
-          </div>
           <p id="dashboardPostedIndicator" class="dashboard-posted-indicator">Not posted yet</p>
         </article>
 
@@ -567,19 +563,19 @@
         </div>
         <div class="calendar-stats-grid">
           <article class="calendar-stat-card">
-            <p class="calendar-stat-label">Total</p>
+            <p class="calendar-stat-label" id="calendarStatTotalLabel">Total</p>
             <p id="calendarTotalValue" class="calendar-stat-value">0</p>
           </article>
           <article class="calendar-stat-card">
-            <p class="calendar-stat-label">Postate</p>
+            <p class="calendar-stat-label" id="calendarStatPostedLabel">Postate</p>
             <p id="calendarPostedValue" class="calendar-stat-value">0</p>
           </article>
           <article class="calendar-stat-card">
-            <p class="calendar-stat-label">In progres</p>
+            <p class="calendar-stat-label" id="calendarStatInProgressLabel">In progres</p>
             <p id="calendarInProgressValue" class="calendar-stat-value">0</p>
           </article>
           <article class="calendar-stat-card">
-            <p class="calendar-stat-label">Rata completare</p>
+            <p class="calendar-stat-label" id="calendarStatCompletionLabel">Rata completare</p>
             <p id="calendarCompletionValue" class="calendar-stat-value">0%</p>
           </article>
         </div>
@@ -593,28 +589,32 @@
           </div>
           <form id="calendarClipForm" class="calendar-clip-form">
             <label>
-              <span>Title</span>
+              <span id="calendarClipTitleLabel">Title</span>
               <input id="calendarClipTitleInput" type="text" required maxlength="100" placeholder="Ex: Morning routine hook" />
             </label>
             <label>
-              <span>Type</span>
+              <span id="calendarClipTypeLabel">Type</span>
               <select id="calendarClipTypeInput" required>
-                <option value="REEL">Reel</option>
-                <option value="CARUSEL">Carusel</option>
-                <option value="STORY">Story</option>
-                <option value="STATIC">Static</option>
+                <option value="REEL" id="calendarTypeOptionReel">Reel</option>
+                <option value="CARUSEL" id="calendarTypeOptionCarousel">Carusel</option>
+                <option value="STORY" id="calendarTypeOptionStory">Story</option>
+                <option value="STATIC" id="calendarTypeOptionStatic">Static</option>
               </select>
             </label>
             <label>
-              <span>Time</span>
-              <input id="calendarClipTimeInput" type="time" required value="19:30" />
+              <span id="calendarClipTimeLabel">Time</span>
+              <div class="calendar-time-picker">
+                <select id="calendarClipHourInput" aria-label="Select hour" required></select>
+                <span class="calendar-time-separator">:</span>
+                <select id="calendarClipMinuteInput" aria-label="Select minute" required></select>
+              </div>
             </label>
             <label>
-              <span>Caption</span>
+              <span id="calendarClipCaptionLabel">Caption</span>
               <textarea id="calendarClipCaptionInput" rows="3" maxlength="500" placeholder="Write the caption..."></textarea>
             </label>
             <label>
-              <span>Script</span>
+              <span id="calendarClipScriptLabel">Script</span>
               <textarea id="calendarClipScriptInput" rows="5" maxlength="2000" placeholder="Write the script..."></textarea>
             </label>
             <div class="calendar-clip-form-actions">
@@ -631,21 +631,21 @@
             <button id="calendarClipDetailsClose" class="ghost-icon" type="button" aria-label="Close">×</button>
           </div>
           <div class="calendar-clip-details">
-            <p class="calendar-clip-details-row"><span>Title</span><strong id="calendarDetailsTitle">-</strong></p>
-            <p class="calendar-clip-details-row"><span>Type</span><strong id="calendarDetailsType">-</strong></p>
-            <p class="calendar-clip-details-row"><span>Status</span><strong id="calendarDetailsStatus">-</strong></p>
-            <p class="calendar-clip-details-row"><span>Scheduled</span><strong id="calendarDetailsScheduledAt">-</strong></p>
+            <p class="calendar-clip-details-row"><span id="calendarDetailsTitleLabel">Title</span><strong id="calendarDetailsTitle">-</strong></p>
+            <p class="calendar-clip-details-row"><span id="calendarDetailsTypeLabel">Type</span><strong id="calendarDetailsType">-</strong></p>
+            <p class="calendar-clip-details-row"><span id="calendarDetailsStatusLabel">Status</span><strong id="calendarDetailsStatus">-</strong></p>
+            <p class="calendar-clip-details-row"><span id="calendarDetailsScheduledLabel">Scheduled</span><strong id="calendarDetailsScheduledAt">-</strong></p>
           </div>
           <div class="calendar-clip-details-text-block">
-            <h3>Caption</h3>
+            <h3 id="calendarDetailsCaptionHeading">Caption</h3>
             <p id="calendarDetailsCaption" class="calendar-clip-details-text">-</p>
           </div>
           <div class="calendar-clip-details-text-block">
-            <h3>Script</h3>
+            <h3 id="calendarDetailsScriptHeading">Script</h3>
             <p id="calendarDetailsScript" class="calendar-clip-details-text">-</p>
           </div>
           <div class="calendar-clip-checklist-wrap">
-            <h3 class="calendar-clip-checklist-title">Post checklist</h3>
+            <h3 class="calendar-clip-checklist-title" id="calendarChecklistHeading">Post checklist</h3>
             <div id="calendarClipChecklist" class="calendar-clip-checklist"></div>
           </div>
         </div>

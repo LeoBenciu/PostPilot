@@ -120,6 +120,43 @@ const I18N = {
     analyticsView: "Analytics",
     calendarView: "Calendar",
     dashboardView: "Dashboard",
+    calendarModalTitle: "Add clip",
+    calendarModalTitleLabel: "Title",
+    calendarModalTypeLabel: "Type",
+    calendarModalTimeLabel: "Time",
+    calendarModalCaptionLabel: "Caption",
+    calendarModalScriptLabel: "Script",
+    calendarModalTypeReel: "Reel",
+    calendarModalTypeCarousel: "Carousel",
+    calendarModalTypeStory: "Story",
+    calendarModalTypeStatic: "Static",
+    calendarModalTitlePlaceholder: "Ex: Morning routine hook",
+    calendarModalCaptionPlaceholder: "Write the caption...",
+    calendarModalScriptPlaceholder: "Write the script...",
+    calendarModalCancel: "Cancel",
+    calendarModalSave: "Save",
+    calendarModalHourAria: "Select hour",
+    calendarModalMinuteAria: "Select minute",
+    calendarTodayBtn: "Today",
+    calendarStatTotal: "Total",
+    calendarStatPosted: "Posted",
+    calendarStatInProgress: "In progress",
+    calendarStatCompletion: "Completion rate",
+    calendarAddClipBtn: "+ Add clip",
+    calendarDetailsModalTitle: "Clip details",
+    calendarDetailsTitle: "Title",
+    calendarDetailsType: "Type",
+    calendarDetailsStatus: "Status",
+    calendarDetailsScheduled: "Scheduled",
+    calendarDetailsCaption: "Caption",
+    calendarDetailsScript: "Script",
+    calendarChecklistTitle: "Post checklist",
+    calendarChecklistHookOverlay: "Hook overlay added",
+    calendarChecklistCaptions: "Captions on",
+    calendarChecklistBinaryQuestion: "Binary question in caption",
+    calendarChecklistHashtags: "Hashtags added",
+    calendarChecklistCoverFrame: "Cover frame set",
+    calendarChecklistBestTime: "Best time selected",
     newChat: "Reset chat",
     settings: "Settings",
     disconnect: "Disconnect",
@@ -375,6 +412,43 @@ const I18N = {
     analyticsView: "Analize",
     calendarView: "Calendar",
     dashboardView: "Dashboard",
+    calendarModalTitle: "Adauga clip",
+    calendarModalTitleLabel: "Titlu",
+    calendarModalTypeLabel: "Tip",
+    calendarModalTimeLabel: "Ora",
+    calendarModalCaptionLabel: "Caption",
+    calendarModalScriptLabel: "Script",
+    calendarModalTypeReel: "Reel",
+    calendarModalTypeCarousel: "Carusel",
+    calendarModalTypeStory: "Story",
+    calendarModalTypeStatic: "Static",
+    calendarModalTitlePlaceholder: "Ex: Rutina mea de dimineata",
+    calendarModalCaptionPlaceholder: "Scrie caption-ul...",
+    calendarModalScriptPlaceholder: "Scrie scriptul...",
+    calendarModalCancel: "Anuleaza",
+    calendarModalSave: "Salveaza",
+    calendarModalHourAria: "Selecteaza ora",
+    calendarModalMinuteAria: "Selecteaza minutul",
+    calendarTodayBtn: "Azi",
+    calendarStatTotal: "Total",
+    calendarStatPosted: "Postate",
+    calendarStatInProgress: "In progres",
+    calendarStatCompletion: "Rata completare",
+    calendarAddClipBtn: "+ Adauga clip",
+    calendarDetailsModalTitle: "Detalii clip",
+    calendarDetailsTitle: "Titlu",
+    calendarDetailsType: "Tip",
+    calendarDetailsStatus: "Status",
+    calendarDetailsScheduled: "Programat",
+    calendarDetailsCaption: "Caption",
+    calendarDetailsScript: "Script",
+    calendarChecklistTitle: "Checklist postare",
+    calendarChecklistHookOverlay: "Hook overlay adaugat",
+    calendarChecklistCaptions: "Caption activ",
+    calendarChecklistBinaryQuestion: "Intrebare binara in caption",
+    calendarChecklistHashtags: "Hashtaguri adaugate",
+    calendarChecklistCoverFrame: "Cover frame setat",
+    calendarChecklistBestTime: "Ora optima selectata",
     newChat: "Reset chat",
     settings: "Setari",
     disconnect: "Deconectare",
@@ -1437,6 +1511,38 @@ function applyLanguage() {
   setTextIfExists("analyticsViewBtnLabel", t("analyticsView"));
   setTextIfExists("calendarViewBtnLabel", t("calendarView"));
   setTextIfExists("dashboardViewBtnLabel", t("dashboardView"));
+  setTextIfExists("calendarClipModalTitle", t("calendarModalTitle"));
+  setTextIfExists("calendarClipTitleLabel", t("calendarModalTitleLabel"));
+  setTextIfExists("calendarClipTypeLabel", t("calendarModalTypeLabel"));
+  setTextIfExists("calendarClipTimeLabel", t("calendarModalTimeLabel"));
+  setTextIfExists("calendarClipCaptionLabel", t("calendarModalCaptionLabel"));
+  setTextIfExists("calendarClipScriptLabel", t("calendarModalScriptLabel"));
+  setTextIfExists("calendarTypeOptionReel", t("calendarModalTypeReel"));
+  setTextIfExists("calendarTypeOptionCarousel", t("calendarModalTypeCarousel"));
+  setTextIfExists("calendarTypeOptionStory", t("calendarModalTypeStory"));
+  setTextIfExists("calendarTypeOptionStatic", t("calendarModalTypeStatic"));
+  setTextIfExists("calendarClipCancelBtn", t("calendarModalCancel"));
+  setTextIfExists("calendarClipSaveBtn", t("calendarModalSave"));
+  setPlaceholderIfExists("calendarClipTitleInput", t("calendarModalTitlePlaceholder"));
+  setPlaceholderIfExists("calendarClipCaptionInput", t("calendarModalCaptionPlaceholder"));
+  setPlaceholderIfExists("calendarClipScriptInput", t("calendarModalScriptPlaceholder"));
+  const calendarHourInput = document.getElementById("calendarClipHourInput");
+  const calendarMinuteInput = document.getElementById("calendarClipMinuteInput");
+  if (calendarHourInput) calendarHourInput.setAttribute("aria-label", t("calendarModalHourAria"));
+  if (calendarMinuteInput) calendarMinuteInput.setAttribute("aria-label", t("calendarModalMinuteAria"));
+  setTextIfExists("calendarTodayBtn", t("calendarTodayBtn"));
+  setTextIfExists("calendarStatTotalLabel", t("calendarStatTotal"));
+  setTextIfExists("calendarStatPostedLabel", t("calendarStatPosted"));
+  setTextIfExists("calendarStatInProgressLabel", t("calendarStatInProgress"));
+  setTextIfExists("calendarStatCompletionLabel", t("calendarStatCompletion"));
+  setTextIfExists("calendarClipDetailsTitle", t("calendarDetailsModalTitle"));
+  setTextIfExists("calendarDetailsTitleLabel", t("calendarDetailsTitle"));
+  setTextIfExists("calendarDetailsTypeLabel", t("calendarDetailsType"));
+  setTextIfExists("calendarDetailsStatusLabel", t("calendarDetailsStatus"));
+  setTextIfExists("calendarDetailsScheduledLabel", t("calendarDetailsScheduled"));
+  setTextIfExists("calendarDetailsCaptionHeading", t("calendarDetailsCaption"));
+  setTextIfExists("calendarDetailsScriptHeading", t("calendarDetailsScript"));
+  setTextIfExists("calendarChecklistHeading", t("calendarChecklistTitle"));
   setTextIfExists("resetChatBtnLabel", t("newChat"));
   setTextIfExists("settingsBtnLabel", t("settings"));
   setTextIfExists("disconnectBtnLabel", t("disconnect"));
@@ -2462,15 +2568,8 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
     month: "long",
   });
   const userName = creator?.user?.firstName || accountState?.user?.name || "creator";
-  const createdAt = accountState?.user?.createdAt ? new Date(accountState.user.createdAt) : null;
-  const challengeTotal = 14;
-  let challengeText = "";
-  if (createdAt && !Number.isNaN(createdAt.getTime())) {
-    const day = Math.max(1, Math.min(challengeTotal, Math.floor((toStartOfDayLocal(now) - toStartOfDayLocal(createdAt)) / (24 * 60 * 60 * 1000)) + 1));
-    challengeText = ` - Ziua ${day} din ${challengeTotal}`;
-  }
   setTextIfExists("dashboardGreeting", `Salut, ${userName}`);
-  setTextIfExists("dashboardDateRow", `${dateFmt.format(now)}${challengeText}`);
+  setTextIfExists("dashboardDateRow", dateFmt.format(now));
 
   const summary = bundle?.summary || {};
   const totals = summary?.totals || {};
@@ -2563,7 +2662,7 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
   if (topWrap) {
     const topPosts = [...recentPosts]
       .sort((a, b) => engagementForPost(b) - engagementForPost(a))
-      .slice(0, 5);
+      .slice(0, 3);
     topWrap.innerHTML = topPosts
       .map((post, idx) => {
         const reach = Math.max(1, reachForPost(post));
@@ -2576,10 +2675,12 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
             ${previewUrl ? `<img src="${previewUrl}" alt="" loading="lazy" onerror="this.remove()" />` : ""}
           </div>
           <div>
-            <strong>#${idx + 1} ${title}</strong>
-            <div class="dashboard-muted">${formatCompactNumber(reachForPost(post))} views - ${formatCompactNumber(post.likes || 0)} likes</div>
+            <div class="dashboard-top-post-head">
+              <h4 class="dashboard-top-post-title">#${idx + 1} ${title}</h4>
+              <span class="dashboard-er-badge">${er}% ER</span>
+            </div>
+            <p class="dashboard-top-post-meta">${formatCompactNumber(reachForPost(post))} views - ${formatCompactNumber(post.likes || 0)} likes</p>
           </div>
-          <span class="dashboard-er-badge">${er}% ER</span>
         </article>
       `;
       })
@@ -2668,12 +2769,12 @@ const calendarCustomClipsByWeek = new Map();
 const calendarClipIndex = new Map();
 const calendarSeed = [];
 const CALENDAR_CHECKLIST_ITEMS = [
-  { key: "hookOverlay", label: "Hook overlay added" },
-  { key: "captions", label: "Captions on" },
-  { key: "binaryQuestion", label: "Binary question in caption" },
-  { key: "hashtags", label: "Hashtags added" },
-  { key: "coverFrame", label: "Cover frame set" },
-  { key: "bestTime", label: "Best time selected" },
+  { key: "hookOverlay", labelKey: "calendarChecklistHookOverlay" },
+  { key: "captions", labelKey: "calendarChecklistCaptions" },
+  { key: "binaryQuestion", labelKey: "calendarChecklistBinaryQuestion" },
+  { key: "hashtags", labelKey: "calendarChecklistHashtags" },
+  { key: "coverFrame", labelKey: "calendarChecklistCoverFrame" },
+  { key: "bestTime", labelKey: "calendarChecklistBestTime" },
 ];
 
 function startOfWeek(baseDate) {
@@ -2781,7 +2882,7 @@ function renderCalendarView() {
         <span class="calendar-day-date">${dayDate.getDate()}</span>
       </header>
       <div class="calendar-day-clips">${cardsHtml || ""}</div>
-      <button class="secondary calendar-day-add-btn" data-calendar-add-day="${dayIso}" type="button">+ Add clip</button>
+      <button class="secondary calendar-day-add-btn" data-calendar-add-day="${dayIso}" type="button">${t("calendarAddClipBtn")}</button>
     `;
     grid.appendChild(dayColumn);
   }
@@ -2795,8 +2896,10 @@ function openCalendarClipModal(dayIso) {
     titleInput.value = "";
     titleInput.focus();
   }
-  const timeInput = document.getElementById("calendarClipTimeInput");
-  if (timeInput) timeInput.value = "19:30";
+  const hourInput = document.getElementById("calendarClipHourInput");
+  const minuteInput = document.getElementById("calendarClipMinuteInput");
+  if (hourInput) hourInput.value = "19";
+  if (minuteInput) minuteInput.value = "30";
   const captionInput = document.getElementById("calendarClipCaptionInput");
   if (captionInput) captionInput.value = "";
   const scriptInput = document.getElementById("calendarClipScriptInput");
@@ -2815,7 +2918,7 @@ function renderCalendarClipChecklist(clip) {
   checklistEl.innerHTML = CALENDAR_CHECKLIST_ITEMS.map((item) => `
     <label>
       <input type="checkbox" data-clip-checklist-key="${item.key}" ${clip.checklist[item.key] ? "checked" : ""} />
-      <span>${item.label}</span>
+      <span>${t(item.labelKey)}</span>
     </label>
   `).join("");
 }
@@ -2849,7 +2952,9 @@ function saveCalendarClipFromForm() {
   if (!pendingCalendarDate) return;
   const title = (document.getElementById("calendarClipTitleInput")?.value || "").trim();
   const type = document.getElementById("calendarClipTypeInput")?.value || "REEL";
-  const time = document.getElementById("calendarClipTimeInput")?.value || "19:30";
+  const hour = (document.getElementById("calendarClipHourInput")?.value || "19").padStart(2, "0");
+  const minute = (document.getElementById("calendarClipMinuteInput")?.value || "30").padStart(2, "0");
+  const time = `${hour}:${minute}`;
   const caption = (document.getElementById("calendarClipCaptionInput")?.value || "").trim();
   const script = (document.getElementById("calendarClipScriptInput")?.value || "").trim();
   if (!title) return;
@@ -2869,6 +2974,24 @@ function saveCalendarClipFromForm() {
   calendarCustomClipsByWeek.set(weekKey, [...current, nextClip]);
   closeCalendarClipModal();
   renderCalendarView();
+}
+
+function initializeCalendarTimePicker() {
+  const hourInput = document.getElementById("calendarClipHourInput");
+  const minuteInput = document.getElementById("calendarClipMinuteInput");
+  if (hourInput && hourInput.options.length === 0) {
+    for (let hour = 0; hour < 24; hour += 1) {
+      const value = String(hour).padStart(2, "0");
+      hourInput.insertAdjacentHTML("beforeend", `<option value="${value}">${value}</option>`);
+    }
+    hourInput.value = "19";
+  }
+  if (minuteInput && minuteInput.options.length === 0) {
+    ["00", "15", "30", "45"].forEach((value) => {
+      minuteInput.insertAdjacentHTML("beforeend", `<option value="${value}">${value}</option>`);
+    });
+    minuteInput.value = "30";
+  }
 }
 
 function setActiveView(view) {
@@ -3700,16 +3823,6 @@ document.getElementById("calendarClipForm")?.addEventListener("submit", (event) 
   saveCalendarClipFromForm();
 });
 
-document.getElementById("dashboardSeeScriptBtn")?.addEventListener("click", () => {
-  setActiveView("agent");
-  sendPrompt("Give me the full script for today's recommended post, with hook, beats and CTA.");
-});
-
-document.getElementById("dashboardRegenerateHookBtn")?.addEventListener("click", () => {
-  setActiveView("agent");
-  sendPrompt("Regenerate 5 better hook variations for today's post, each with a short reason.");
-});
-
 document.getElementById("calendarClipChecklist")?.addEventListener("change", (event) => {
   const target = event.target;
   if (!target?.matches?.("input[data-clip-checklist-key]")) return;
@@ -4206,6 +4319,7 @@ document.getElementById("edgeStartBtn")?.addEventListener("click", () => {
 renderConversation([]);
 applyLandingModeVisibility();
 applyLanguage();
+initializeCalendarTimePicker();
 setActiveView("agent");
 registerLogoDevToggle();
 
