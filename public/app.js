@@ -1581,7 +1581,7 @@ function applyLanguage() {
   }
 
   syncOnboardingLanguage();
-  if (!dashboardView?.classList.contains("hidden")) renderDashboardView();
+  if (!dashboardView?.classList.contains("hidden")) loadDashboardView();
   if (!calendarView?.classList.contains("hidden")) renderCalendarView();
   if (accountState) applySettingsForm(accountState);
 }
@@ -2383,140 +2383,304 @@ function sendPrompt(text) {
   document.getElementById("composer").requestSubmit();
 }
 
-function renderDashboardView() {
+let dashboardLoadToken = 0;
+
+function getPostText(post) {
+  return String(post?.text || post?.caption || "").trim();
+}
+
+function toStartOfDayLocal(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatCompactNumber(value) {
+  return Number(value || 0).toLocaleString();
+}
+
+function formatMediaType(typeRaw) {
+  const type = String(typeRaw || "").toUpperCase();
+  if (type.includes("CAROUSEL")) return "CARUSEL";
+  if (type.includes("REEL") || type === "VIDEO") return "REEL";
+  if (type.includes("STORY")) return "STORY";
+  return "STATIC";
+}
+
+function engagementForPost(post) {
+  return Number(post?.likes || 0) + Number(post?.comments || 0) + Number(post?.shares || 0) + Number(post?.saved || 0);
+}
+
+function reachForPost(post) {
+  return Number(post?.reach || 0) || Number(post?.impressions || 0) || Number(post?.videoViews || 0) || 0;
+}
+
+function buildFunnelState(discoveryScore, visitScore, followScore) {
+  const classify = (score) => (score < 35 ? "critical" : score < 65 ? "moderate" : "good");
+  const discoveryState = classify(discoveryScore);
+  const visitState = classify(visitScore);
+  const followState = classify(followScore);
+  return [
+    {
+      name: "Discovery",
+      state: discoveryState,
+      fix:
+        discoveryState === "critical"
+          ? "Post more short-form hooks with stronger first 2 seconds."
+          : discoveryState === "moderate"
+            ? "Double down on your best media type this week."
+            : "Keep posting in your top-performing format and time slot.",
+    },
+    {
+      name: "Profile Visit",
+      state: visitState,
+      fix:
+        visitState === "critical"
+          ? "Use caption prompts to trigger comments and profile taps."
+          : visitState === "moderate"
+            ? "Add clearer CTA in captions to move people to profile."
+            : "Your interaction depth is healthy. Maintain CTA consistency.",
+    },
+    {
+      name: "Follow",
+      state: followState,
+      fix:
+        followState === "critical"
+          ? "Increase posting consistency to improve follow conversion."
+          : followState === "moderate"
+            ? "Keep weekly cadence stable and reinforce niche clarity."
+            : "Cadence is strong. Optimize hooks to compound follower growth.",
+    },
+  ];
+}
+
+function renderDashboardViewFromData({ creator, bundle, posts }) {
   const now = new Date();
   const dateFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-  const userName = accountState?.user?.name || creatorProfile?.firstName || "creator";
-  const challengeDay = 7;
+  const userName = creator?.user?.firstName || accountState?.user?.name || "creator";
+  const createdAt = accountState?.user?.createdAt ? new Date(accountState.user.createdAt) : null;
   const challengeTotal = 14;
+  let challengeText = "";
+  if (createdAt && !Number.isNaN(createdAt.getTime())) {
+    const day = Math.max(1, Math.min(challengeTotal, Math.floor((toStartOfDayLocal(now) - toStartOfDayLocal(createdAt)) / (24 * 60 * 60 * 1000)) + 1));
+    challengeText = ` - Ziua ${day} din ${challengeTotal}`;
+  }
   setTextIfExists("dashboardGreeting", `Salut, ${userName}`);
-  setTextIfExists("dashboardDateRow", `${dateFmt.format(now)} - Ziua ${challengeDay} din ${challengeTotal}`);
+  setTextIfExists("dashboardDateRow", `${dateFmt.format(now)}${challengeText}`);
 
-  const stats = {
-    followers: 28450,
-    followersDelta: "+430 vs last week",
-    engagement: "4.8%",
-    engagementDelta: "+0.7pp vs last week",
-    views: 186400,
-    viewsDelta: "+12,300 this week",
-    comments: 0,
-  };
-  setTextIfExists("dashboardFollowersValue", stats.followers.toLocaleString());
-  setTextIfExists("dashboardFollowersDelta", stats.followersDelta);
-  setTextIfExists("dashboardEngagementValue", stats.engagement);
-  setTextIfExists("dashboardEngagementDelta", stats.engagementDelta);
-  setTextIfExists("dashboardViewsValue", stats.views.toLocaleString());
-  setTextIfExists("dashboardViewsDelta", stats.viewsDelta);
-  setTextIfExists("dashboardCommentsValue", String(stats.comments));
+  const summary = bundle?.summary || {};
+  const totals = summary?.totals || {};
+  const recentPosts = Array.isArray(posts) ? posts : [];
+
+  const weekStart = startOfWeek(now);
+  const prevWeekStart = addDays(weekStart, -7);
+  const weekEnd = addDays(weekStart, 7);
+
+  const thisWeekPosts = recentPosts.filter((post) => {
+    const ts = Date.parse(post?.postedAt || "");
+    return Number.isFinite(ts) && ts >= weekStart.getTime() && ts < weekEnd.getTime();
+  });
+  const lastWeekPosts = recentPosts.filter((post) => {
+    const ts = Date.parse(post?.postedAt || "");
+    return Number.isFinite(ts) && ts >= prevWeekStart.getTime() && ts < weekStart.getTime();
+  });
+
+  const thisWeekViews = thisWeekPosts.reduce((sum, post) => sum + reachForPost(post), 0);
+  const lastWeekViews = lastWeekPosts.reduce((sum, post) => sum + reachForPost(post), 0);
+  const thisWeekComments = thisWeekPosts.reduce((sum, post) => sum + Number(post?.comments || 0), 0);
+  const thisWeekEngagementRate = thisWeekPosts.length
+    ? thisWeekPosts.reduce((sum, post) => {
+        const reach = reachForPost(post);
+        if (!reach) return sum;
+        return sum + engagementForPost(post) / reach;
+      }, 0) / thisWeekPosts.length
+    : 0;
+  const lastWeekEngagementRate = lastWeekPosts.length
+    ? lastWeekPosts.reduce((sum, post) => {
+        const reach = reachForPost(post);
+        if (!reach) return sum;
+        return sum + engagementForPost(post) / reach;
+      }, 0) / lastWeekPosts.length
+    : 0;
+
+  const followers = Number(creator?.primary?.followerCount || 0);
+  setTextIfExists("dashboardFollowersValue", formatCompactNumber(followers));
+  setTextIfExists("dashboardFollowersDelta", "Follower delta unavailable from current history");
+  setTextIfExists("dashboardEngagementValue", `${Number(creator?.metrics?.avgEngagementRate || 0).toFixed(2)}%`);
+  setTextIfExists(
+    "dashboardEngagementDelta",
+    `${(thisWeekEngagementRate * 100 - lastWeekEngagementRate * 100).toFixed(2)}pp vs last week`,
+  );
+  setTextIfExists("dashboardViewsValue", formatCompactNumber(Number(totals?.impressions || 0)));
+  setTextIfExists("dashboardViewsDelta", `${(thisWeekViews - lastWeekViews) >= 0 ? "+" : ""}${formatCompactNumber(thisWeekViews - lastWeekViews)} vs last week`);
+  setTextIfExists("dashboardCommentsValue", formatCompactNumber(Number(totals?.comments || 0)));
   setTextIfExists(
     "dashboardCommentsDelta",
-    stats.comments === 0 ? "Critical: zero comments" : `+${stats.comments} this week`,
+    thisWeekComments === 0 ? "Critical: zero comments this week" : `${formatCompactNumber(thisWeekComments)} comments this week`,
   );
 
-  const todayPost = {
-    hook: "3 greseli care iti omoara reach-ul in primele 2 secunde",
-    formats: ["REEL", "HOOK TALKING HEAD"],
-    time: "19:30",
-    posted: false,
-  };
-  setTextIfExists("dashboardTodayHook", todayPost.hook);
-  setTextIfExists("dashboardTodayMeta", `Recommended time: ${todayPost.time}`);
+  const bestByType = creator?.metrics?.avgViewsByType || {};
+  const recommendedType = Object.entries(bestByType).sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0]?.[0] || "video";
+  const topTextPost = [...recentPosts]
+    .sort((a, b) => engagementForPost(b) - engagementForPost(a))
+    .find((post) => getPostText(post).length > 0);
+  const hookText = (getPostText(topTextPost).split(/\n|\./)[0] || "Create a high-value post for your audience today").slice(0, 120);
+  const hourPerf = new Map();
+  for (const post of recentPosts) {
+    const ts = Date.parse(post?.postedAt || "");
+    if (!Number.isFinite(ts)) continue;
+    const hour = new Date(ts).getHours();
+    const entry = hourPerf.get(hour) || { score: 0, count: 0 };
+    entry.score += engagementForPost(post);
+    entry.count += 1;
+    hourPerf.set(hour, entry);
+  }
+  let bestHour = 19;
+  let bestScore = -1;
+  for (const [hour, entry] of hourPerf.entries()) {
+    const avg = entry.count ? entry.score / entry.count : 0;
+    if (avg > bestScore) {
+      bestScore = avg;
+      bestHour = hour;
+    }
+  }
+  const recommendedTime = `${String(bestHour).padStart(2, "0")}:00`;
+  const postedToday = recentPosts.some((post) => {
+    const ts = Date.parse(post?.postedAt || "");
+    if (!Number.isFinite(ts)) return false;
+    return toLocalDateKey(new Date(ts)) === toLocalDateKey(now);
+  });
+  setTextIfExists("dashboardTodayHook", hookText);
+  setTextIfExists("dashboardTodayMeta", `Recommended time: ${recommendedTime}`);
   const postedIndicator = document.getElementById("dashboardPostedIndicator");
   if (postedIndicator) {
-    postedIndicator.textContent = todayPost.posted ? "Already posted today" : "Not posted yet";
-    postedIndicator.classList.toggle("is-posted", todayPost.posted);
+    postedIndicator.textContent = postedToday ? "Already posted today" : "Not posted yet";
+    postedIndicator.classList.toggle("is-posted", postedToday);
   }
   const formatsWrap = document.getElementById("dashboardTodayFormats");
   if (formatsWrap) {
-    formatsWrap.innerHTML = todayPost.formats.map((format) => `<span class="dashboard-pill">${format}</span>`).join("");
+    formatsWrap.innerHTML = [`${formatMediaType(recommendedType)}`, "INSTAGRAM"]
+      .map((format) => `<span class="dashboard-pill">${format}</span>`)
+      .join("");
   }
 
-  const weekDays = [
-    { day: "Lun", format: "REEL", topic: "Myth bust", time: "09:30", status: "done" },
-    { day: "Mar", format: "STORY", topic: "BTS", time: "13:00", status: "done" },
-    { day: "Mie", format: "CAR", topic: "3 tips", time: "18:00", status: "today" },
-    { day: "Joi", format: "REEL", topic: "Case study", time: "10:00", status: "upcoming" },
-    { day: "Vin", format: "ST", topic: "Q&A", time: "20:00", status: "upcoming" },
-    { day: "Sam", format: "REEL", topic: "Trend", time: "12:00", status: "upcoming" },
-    { day: "Dum", format: "CAR", topic: "Recap", time: "17:00", status: "upcoming" },
-  ];
-  const weekWrap = document.getElementById("dashboardWeeklyPlan");
-  if (weekWrap) {
-    weekWrap.innerHTML = weekDays.map((item) => `
-      <button class="dashboard-week-day ${item.status === "today" ? "is-today" : ""}" data-week-topic="${item.topic}" data-week-day="${item.day}" type="button">
-        <strong>${item.day}</strong>
-        <div>${item.format}</div>
-        <div>${item.topic}</div>
-        <div>${item.time}</div>
-      </button>
-    `).join("");
-  }
-
-  const topPosts = [
-    { title: "How I script in 10 min", views: "48k", likes: "3.4k", er: "7.1%" },
-    { title: "Morning creator routine", views: "35k", likes: "2.6k", er: "6.4%" },
-    { title: "Avoid this hook mistake", views: "29k", likes: "2.1k", er: "5.8%" },
-  ];
   const topWrap = document.getElementById("dashboardTopPosts");
   if (topWrap) {
-    topWrap.innerHTML = topPosts.map((post, idx) => `
-      <article class="dashboard-top-post">
-        <div class="dashboard-thumb" aria-hidden="true"></div>
-        <div>
-          <strong>#${idx + 1} ${post.title}</strong>
-          <div class="dashboard-muted">${post.views} views - ${post.likes} likes</div>
-        </div>
-        <span class="dashboard-er-badge">${post.er} ER</span>
-      </article>
-    `).join("");
+    const topPosts = [...recentPosts]
+      .sort((a, b) => engagementForPost(b) - engagementForPost(a))
+      .slice(0, 5);
+    topWrap.innerHTML = topPosts
+      .map((post, idx) => {
+        const reach = Math.max(1, reachForPost(post));
+        const er = ((engagementForPost(post) / reach) * 100).toFixed(1);
+        const title = (getPostText(post).split(/\n|\./)[0] || `${formatMediaType(post.mediaType)} post`).slice(0, 80);
+        return `
+        <article class="dashboard-top-post">
+          <div class="dashboard-thumb" aria-hidden="true"></div>
+          <div>
+            <strong>#${idx + 1} ${title}</strong>
+            <div class="dashboard-muted">${formatCompactNumber(reachForPost(post))} views - ${formatCompactNumber(post.likes || 0)} likes</div>
+          </div>
+          <span class="dashboard-er-badge">${er}% ER</span>
+        </article>
+      `;
+      })
+      .join("");
   }
 
+  const discoveryScore = lastWeekViews > 0 ? Math.max(0, Math.min(100, ((thisWeekViews / lastWeekViews) * 50))) : (thisWeekViews > 0 ? 70 : 20);
+  const visitScore = thisWeekViews > 0 ? Math.max(0, Math.min(100, (thisWeekComments / thisWeekViews) * 12000)) : 20;
+  const followScore = Number(creator?.scores?.consistency || 0);
+  const funnel = buildFunnelState(discoveryScore, visitScore, followScore);
   const funnelWrap = document.getElementById("dashboardFunnel");
   if (funnelWrap) {
-    funnelWrap.innerHTML = `
-      <div class="dashboard-funnel-row" data-state="moderate"><strong>Discovery</strong><span>Moderate - improve first-frame contrast.</span></div>
-      <div class="dashboard-funnel-row" data-state="critical"><strong>Profile Visit</strong><span>Critical - bio CTA is unclear. Add binary CTA.</span></div>
-      <div class="dashboard-funnel-row" data-state="good"><strong>Follow</strong><span>Good - follower conversion is stable this week.</span></div>
-    `;
+    funnelWrap.innerHTML = funnel
+      .map(
+        (row) => `<div class="dashboard-funnel-row" data-state="${row.state}"><strong>${row.name}</strong><span>${row.fix}</span></div>`,
+      )
+      .join("");
   }
 
   const insightWrap = document.getElementById("dashboardInsights");
   if (insightWrap) {
-    insightWrap.innerHTML = `
-      <article class="dashboard-insight"><strong>⚠ Comment depth is low</strong><span>Use one binary question in next caption.</span></article>
-      <article class="dashboard-insight"><strong>⚠ Hook pacing drops at 2s</strong><span>Cut first pause and front-load result.</span></article>
-      <article class="dashboard-insight"><strong>✅ Reel timing opportunity</strong><span>Best posting window today is 19:00-20:00.</span></article>
-      <article class="dashboard-insight"><strong>✅ Carousel saves are rising</strong><span>Repurpose best reel into 5-slide carousel.</span></article>
-    `;
+    const critical = (creator?.unlock || []).slice(0, 2).map((item) => ({ icon: "⚠", title: item.title, body: item.body }));
+    const opportunities = (creator?.superpower || []).slice(0, 2).map((item) => ({ icon: "✅", title: item.title, body: item.body }));
+    const insights = [...critical, ...opportunities];
+    insightWrap.innerHTML = insights
+      .map((item) => `<article class="dashboard-insight"><strong>${item.icon} ${item.title}</strong><span>${item.body}</span></article>`)
+      .join("");
   }
 
-  const health = {
-    total: 72,
-    parts: [
-      ["Hook quality", 69],
-      ["Consistency", 81],
-      ["Engagement", 58],
-      ["Profile completeness", 80],
-    ],
-  };
+  const commentRate = thisWeekViews > 0 ? thisWeekComments / thisWeekViews : 0;
+  const hookQuality = Math.max(0, Math.min(100, Math.round(Number(creator?.scores?.growth || 0) * 0.7 + Math.min(100, commentRate * 15000) * 0.3)));
+  const consistency = Number(creator?.scores?.consistency || 0);
+  const engagement = Number(creator?.scores?.growth || 0);
+  const profileCompleteness = Math.max(
+    0,
+    Math.min(
+      100,
+      (creator?.hasAnyConnection ? 50 : 0) +
+        (creator?.primary?.handle ? 25 : 0) +
+        (creator?.primary?.avatarUrl ? 15 : 0) +
+        (Number(creator?.primary?.followerCount || 0) > 0 ? 10 : 0),
+    ),
+  );
+  const parts = [
+    ["Hook quality", hookQuality],
+    ["Consistency", consistency],
+    ["Engagement", engagement],
+    ["Profile completeness", profileCompleteness],
+  ];
+  const total = Math.round(parts.reduce((sum, [, score]) => sum + Number(score || 0), 0) / parts.length);
   const healthBar = document.getElementById("dashboardHealthBar");
-  if (healthBar) healthBar.style.width = `${health.total}%`;
-  setTextIfExists("dashboardHealthValue", String(health.total));
-  setTextIfExists("dashboardHealthSummary", "Biggest lever now: improve hook retention in first 2 seconds.");
+  if (healthBar) healthBar.style.width = `${total}%`;
+  setTextIfExists("dashboardHealthValue", String(total));
+  const biggestLever = [...parts].sort((a, b) => a[1] - b[1])[0]?.[0] || "Consistency";
+  setTextIfExists("dashboardHealthSummary", `Biggest lever now: improve ${biggestLever.toLowerCase()}.`);
   const healthBreakdown = document.getElementById("dashboardHealthBreakdown");
   if (healthBreakdown) {
-    healthBreakdown.innerHTML = health.parts.map(([label, value]) => `<p>${label}: <strong>${value}</strong></p>`).join("");
+    healthBreakdown.innerHTML = parts.map(([label, value]) => `<p>${label}: <strong>${Math.round(value)}</strong></p>`).join("");
+  }
+}
+
+async function loadDashboardView() {
+  const token = ++dashboardLoadToken;
+  try {
+    const [creator, bundle, postsRes] = await Promise.all([
+      api(`/api/creator/profile?language=${encodeURIComponent(currentLanguage)}`),
+      api("/api/analytics/bundle?refresh=1"),
+      api("/api/posts/recent?limit=30"),
+    ]);
+    if (token !== dashboardLoadToken) return;
+    renderDashboardViewFromData({
+      creator,
+      bundle,
+      posts: postsRes?.posts || bundle?.posts || [],
+    });
+  } catch (error) {
+    console.error("Dashboard load error:", error);
+    showToast(`Could not load dashboard data: ${error.message}`);
   }
 }
 
 let calendarWeekOffset = 0;
 let pendingCalendarDate = null;
+let activeCalendarClipDetails = null;
 const calendarCustomClipsByWeek = new Map();
+const calendarClipIndex = new Map();
 const calendarSeed = [];
+const CALENDAR_CHECKLIST_ITEMS = [
+  { key: "hookOverlay", label: "Hook overlay added" },
+  { key: "captions", label: "Captions on" },
+  { key: "binaryQuestion", label: "Binary question in caption" },
+  { key: "hashtags", label: "Hashtags added" },
+  { key: "coverFrame", label: "Cover frame set" },
+  { key: "bestTime", label: "Best time selected" },
+];
 
 function startOfWeek(baseDate) {
   const d = new Date(baseDate);
@@ -2582,6 +2746,10 @@ function updateCalendarStats(clips) {
 function renderCalendarView() {
   const weekStart = getCalendarWeekStart();
   const clips = buildCalendarWeekData(weekStart);
+  calendarClipIndex.clear();
+  clips.forEach((clip) => {
+    if (clip?.id) calendarClipIndex.set(clip.id, clip);
+  });
   setTextIfExists("calendarRangeLabel", formatCalendarRange(weekStart));
   updateCalendarStats(clips);
   const grid = document.getElementById("calendarGrid");
@@ -2604,11 +2772,11 @@ function renderCalendarView() {
       .map((clip) => {
         const clipDate = new Date(clip.scheduledAt);
         return `
-          <div class="calendar-clip-card">
+          <button class="calendar-clip-card" data-calendar-clip-id="${clip.id}" type="button">
             <p class="calendar-clip-title">${clip.title}</p>
             <p class="calendar-clip-meta">${clip.type} - ${timeFmt.format(clipDate)}</p>
             <span class="calendar-clip-status">${clip.status}</span>
-          </div>
+          </button>
         `;
       })
       .join("");
@@ -2642,6 +2810,41 @@ function closeCalendarClipModal() {
   setHidden("calendarClipModal", true);
 }
 
+function renderCalendarClipChecklist(clip) {
+  const checklistEl = document.getElementById("calendarClipChecklist");
+  if (!checklistEl || !clip) return;
+  if (!clip.checklist || typeof clip.checklist !== "object") clip.checklist = {};
+  checklistEl.innerHTML = CALENDAR_CHECKLIST_ITEMS.map((item) => `
+    <label>
+      <input type="checkbox" data-clip-checklist-key="${item.key}" ${clip.checklist[item.key] ? "checked" : ""} />
+      <span>${item.label}</span>
+    </label>
+  `).join("");
+}
+
+function openCalendarClipDetailsModal(clip) {
+  activeCalendarClipDetails = clip;
+  setTextIfExists("calendarDetailsTitle", clip.title || "-");
+  setTextIfExists("calendarDetailsType", clip.type || "-");
+  setTextIfExists("calendarDetailsStatus", clip.status || "-");
+  const dt = new Date(clip.scheduledAt);
+  const fmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  setTextIfExists("calendarDetailsScheduledAt", Number.isNaN(dt.getTime()) ? clip.scheduledAt : fmt.format(dt));
+  renderCalendarClipChecklist(clip);
+  setHidden("calendarClipDetailsModal", false);
+}
+
+function closeCalendarClipDetailsModal() {
+  activeCalendarClipDetails = null;
+  setHidden("calendarClipDetailsModal", true);
+}
+
 function saveCalendarClipFromForm() {
   if (!pendingCalendarDate) return;
   const title = (document.getElementById("calendarClipTitleInput")?.value || "").trim();
@@ -2657,6 +2860,7 @@ function saveCalendarClipFromForm() {
     type,
     status: "Idee",
     scheduledAt: `${pendingCalendarDate}T${time}:00`,
+    checklist: {},
   };
   calendarCustomClipsByWeek.set(weekKey, [...current, nextClip]);
   closeCalendarClipModal();
@@ -3453,9 +3657,9 @@ analyticsViewBtn?.addEventListener("click", async () => {
   await loadAnalyticsView();
 });
 
-dashboardViewBtn?.addEventListener("click", () => {
+dashboardViewBtn?.addEventListener("click", async () => {
   setActiveView("dashboard");
-  renderDashboardView();
+  await loadDashboardView();
 });
 
 calendarViewBtn?.addEventListener("click", () => {
@@ -3483,6 +3687,10 @@ document.getElementById("calendarClipCancelBtn")?.addEventListener("click", clos
 document.getElementById("calendarClipModal")?.addEventListener("click", (event) => {
   if (event.target?.id === "calendarClipModal") closeCalendarClipModal();
 });
+document.getElementById("calendarClipDetailsClose")?.addEventListener("click", closeCalendarClipDetailsModal);
+document.getElementById("calendarClipDetailsModal")?.addEventListener("click", (event) => {
+  if (event.target?.id === "calendarClipDetailsModal") closeCalendarClipDetailsModal();
+});
 document.getElementById("calendarClipForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
   saveCalendarClipFromForm();
@@ -3498,21 +3706,19 @@ document.getElementById("dashboardRegenerateHookBtn")?.addEventListener("click",
   sendPrompt("Regenerate 5 better hook variations for today's post, each with a short reason.");
 });
 
-document.getElementById("dashboardChecklistToggle")?.addEventListener("click", () => {
-  document.getElementById("dashboardChecklistBody")?.classList.toggle("hidden");
+document.getElementById("calendarClipChecklist")?.addEventListener("change", (event) => {
+  const target = event.target;
+  if (!target?.matches?.("input[data-clip-checklist-key]")) return;
+  if (!activeCalendarClipDetails) return;
+  const key = target.getAttribute("data-clip-checklist-key");
+  if (!key) return;
+  if (!activeCalendarClipDetails.checklist || typeof activeCalendarClipDetails.checklist !== "object") {
+    activeCalendarClipDetails.checklist = {};
+  }
+  activeCalendarClipDetails.checklist[key] = Boolean(target.checked);
 });
 
 document.addEventListener("click", (event) => {
-  const quickAction = event.target.closest("[data-dashboard-action]");
-  if (quickAction) {
-    const action = quickAction.getAttribute("data-dashboard-action");
-    if (action) {
-      setActiveView("agent");
-      sendPrompt(`${action} for my Instagram account using my latest performance data.`);
-    }
-    return;
-  }
-
   const weekDay = event.target.closest("[data-week-topic]");
   if (weekDay) {
     const topic = weekDay.getAttribute("data-week-topic");
@@ -3526,6 +3732,15 @@ document.addEventListener("click", (event) => {
   if (addDayButton) {
     const dayIso = addDayButton.getAttribute("data-calendar-add-day");
     if (dayIso) openCalendarClipModal(dayIso);
+    return;
+  }
+
+  const clipCard = event.target.closest("[data-calendar-clip-id]");
+  if (clipCard) {
+    const clipId = clipCard.getAttribute("data-calendar-clip-id");
+    if (!clipId) return;
+    const clip = calendarClipIndex.get(clipId);
+    if (clip) openCalendarClipDetailsModal(clip);
   }
 });
 

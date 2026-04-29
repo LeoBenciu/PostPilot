@@ -788,9 +788,6 @@ body {
 
 .dashboard-health-breakdown p { margin: 0; font-size: 12px; color: #845660; }
 .dashboard-collapse-btn { width: auto; }
-.dashboard-checklist { display: grid; gap: 8px; margin-top: 8px; }
-.dashboard-checklist.hidden { display: none; }
-.dashboard-checklist label { margin: 0; font-size: 13px; color: #4a2230; display: flex; gap: 8px; align-items: center; }
 
 .agent-view {
   display: flex;
@@ -1445,6 +1442,12 @@ button:active {
   border-radius: 12px;
   padding: 8px;
   background: #fff;
+  cursor: pointer;
+}
+
+.calendar-clip-card:hover {
+  border-color: #fbcfe8;
+  box-shadow: 0 8px 18px rgba(120, 28, 50, 0.08);
 }
 
 .calendar-clip-title {
@@ -1500,6 +1503,59 @@ button:active {
 
 .calendar-clip-form-actions button {
   width: auto;
+}
+
+.calendar-clip-details {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.calendar-clip-details-row {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #efd0d7;
+  border-radius: 12px;
+  background: #fff8fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.calendar-clip-details-row span {
+  font-size: 12px;
+  color: #845660;
+}
+
+.calendar-clip-details-row strong {
+  font-size: 13px;
+  color: #2d1218;
+  text-align: right;
+}
+
+.calendar-clip-checklist-wrap {
+  margin-top: 12px;
+}
+
+.calendar-clip-checklist-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #4a2230;
+}
+
+.calendar-clip-checklist {
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-clip-checklist label {
+  margin: 0;
+  font-size: 13px;
+  color: #4a2230;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 /* ---------- Loading / skeleton states for the analytics view ---------- */

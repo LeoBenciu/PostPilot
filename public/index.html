@@ -406,34 +406,6 @@
           <p id="dashboardPostedIndicator" class="dashboard-posted-indicator">Not posted yet</p>
         </article>
 
-        <div class="dashboard-quick-grid">
-          <button class="dashboard-quick-card" data-dashboard-action="Generate idea">
-            <span class="dashboard-quick-icon">💡</span>
-            <strong>Generate idea</strong>
-            <span>Get one tailored idea for today.</span>
-          </button>
-          <button class="dashboard-quick-card" data-dashboard-action="Write hook">
-            <span class="dashboard-quick-icon">✍</span>
-            <strong>Write hook</strong>
-            <span>Create 5 strong hook options.</span>
-          </button>
-          <button class="dashboard-quick-card" data-dashboard-action="Build this week's plan">
-            <span class="dashboard-quick-icon">🗓</span>
-            <strong>Build this week's plan</strong>
-            <span>Generate full week schedule.</span>
-          </button>
-          <button class="dashboard-quick-card" data-dashboard-action="Analyze last post">
-            <span class="dashboard-quick-icon">📊</span>
-            <strong>Analyze last post</strong>
-            <span>Find weak points and fixes.</span>
-          </button>
-        </div>
-
-        <article class="dashboard-card">
-          <h3>Weekly plan</h3>
-          <div id="dashboardWeeklyPlan" class="dashboard-week-strip"></div>
-        </article>
-
         <article class="dashboard-card">
           <h3>Top posts (last 30 days)</h3>
           <div id="dashboardTopPosts" class="dashboard-top-posts"></div>
@@ -459,18 +431,6 @@
             <div id="dashboardHealthBreakdown" class="dashboard-health-breakdown"></div>
           </div>
           <p id="dashboardHealthSummary" class="dashboard-muted">-</p>
-        </article>
-
-        <article class="dashboard-card">
-          <button id="dashboardChecklistToggle" class="dashboard-collapse-btn" type="button">Post checklist</button>
-          <div id="dashboardChecklistBody" class="dashboard-checklist">
-            <label><input type="checkbox" /> Hook overlay added</label>
-            <label><input type="checkbox" /> Captions on</label>
-            <label><input type="checkbox" /> Binary question in caption</label>
-            <label><input type="checkbox" /> Hashtags added</label>
-            <label><input type="checkbox" /> Cover frame set</label>
-            <label><input type="checkbox" /> Best time selected</label>
-          </div>
         </article>
       </section>
       <section id="agentView" class="app-view agent-view">
@@ -654,6 +614,24 @@
               <button id="calendarClipSaveBtn" type="submit">Save</button>
             </div>
           </form>
+        </div>
+      </div>
+      <div id="calendarClipDetailsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="calendarClipDetailsTitle">
+        <div class="modal-card calendar-modal-card">
+          <div class="modal-head">
+            <h2 id="calendarClipDetailsTitle">Clip details</h2>
+            <button id="calendarClipDetailsClose" class="ghost-icon" type="button" aria-label="Close">×</button>
+          </div>
+          <div class="calendar-clip-details">
+            <p class="calendar-clip-details-row"><span>Title</span><strong id="calendarDetailsTitle">-</strong></p>
+            <p class="calendar-clip-details-row"><span>Type</span><strong id="calendarDetailsType">-</strong></p>
+            <p class="calendar-clip-details-row"><span>Status</span><strong id="calendarDetailsStatus">-</strong></p>
+            <p class="calendar-clip-details-row"><span>Scheduled</span><strong id="calendarDetailsScheduledAt">-</strong></p>
+          </div>
+          <div class="calendar-clip-checklist-wrap">
+            <h3 class="calendar-clip-checklist-title">Post checklist</h3>
+            <div id="calendarClipChecklist" class="calendar-clip-checklist"></div>
+          </div>
         </div>
       </div>
     </main>
