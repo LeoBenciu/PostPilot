@@ -322,6 +322,10 @@
   <div class="app-shell hidden" id="chatApp">
     <aside class="sidebar">
       <div class="sidebar-top-nav">
+        <button id="dashboardViewBtn" class="secondary sidebar-view-btn">
+          <span aria-hidden="true" class="btn-icon">⌂</span>
+          <span id="dashboardViewBtnLabel">Dashboard</span>
+        </button>
         <button id="agentViewBtn" class="secondary sidebar-view-btn active">
           <span aria-hidden="true" class="btn-icon">✦</span>
           <span id="agentViewBtnLabel">Coach</span>
@@ -359,6 +363,116 @@
           <p id="chatHeaderSubtitle">Your creator growth assistant</p>
         </div>
       </header>
+      <section id="dashboardView" class="app-view dashboard-view hidden">
+        <article class="dashboard-hero-card">
+          <h2 id="dashboardGreeting">Bine ai revenit!</h2>
+          <p id="dashboardDateRow">-</p>
+        </article>
+
+        <div class="dashboard-stats-grid">
+          <article class="dashboard-stat-card">
+            <p class="dashboard-stat-label">Followers</p>
+            <p id="dashboardFollowersValue" class="dashboard-stat-value">0</p>
+            <p id="dashboardFollowersDelta" class="dashboard-stat-delta">+0 saptamana asta</p>
+          </article>
+          <article class="dashboard-stat-card">
+            <p class="dashboard-stat-label">Average engagement rate</p>
+            <p id="dashboardEngagementValue" class="dashboard-stat-value">0%</p>
+            <p id="dashboardEngagementDelta" class="dashboard-stat-delta">0 vs last week</p>
+          </article>
+          <article class="dashboard-stat-card">
+            <p class="dashboard-stat-label">Total views</p>
+            <p id="dashboardViewsValue" class="dashboard-stat-value">0</p>
+            <p id="dashboardViewsDelta" class="dashboard-stat-delta">+0 saptamana asta</p>
+          </article>
+          <article class="dashboard-stat-card">
+            <p class="dashboard-stat-label">Comments</p>
+            <p id="dashboardCommentsValue" class="dashboard-stat-value">0</p>
+            <p id="dashboardCommentsDelta" class="dashboard-stat-delta dashboard-stat-delta-critical">Critical: zero comments</p>
+          </article>
+        </div>
+
+        <article class="dashboard-today-card">
+          <div>
+            <p class="dashboard-kicker">Today's post</p>
+            <h3 id="dashboardTodayHook">-</h3>
+            <div id="dashboardTodayFormats" class="dashboard-pill-row"></div>
+            <p id="dashboardTodayMeta" class="dashboard-muted">-</p>
+          </div>
+          <div class="dashboard-today-actions">
+            <button id="dashboardSeeScriptBtn" class="secondary" type="button">See full script</button>
+            <button id="dashboardRegenerateHookBtn" class="secondary" type="button">Regenerate hook</button>
+          </div>
+          <p id="dashboardPostedIndicator" class="dashboard-posted-indicator">Not posted yet</p>
+        </article>
+
+        <div class="dashboard-quick-grid">
+          <button class="dashboard-quick-card" data-dashboard-action="Generate idea">
+            <span class="dashboard-quick-icon">💡</span>
+            <strong>Generate idea</strong>
+            <span>Get one tailored idea for today.</span>
+          </button>
+          <button class="dashboard-quick-card" data-dashboard-action="Write hook">
+            <span class="dashboard-quick-icon">✍</span>
+            <strong>Write hook</strong>
+            <span>Create 5 strong hook options.</span>
+          </button>
+          <button class="dashboard-quick-card" data-dashboard-action="Build this week's plan">
+            <span class="dashboard-quick-icon">🗓</span>
+            <strong>Build this week's plan</strong>
+            <span>Generate full week schedule.</span>
+          </button>
+          <button class="dashboard-quick-card" data-dashboard-action="Analyze last post">
+            <span class="dashboard-quick-icon">📊</span>
+            <strong>Analyze last post</strong>
+            <span>Find weak points and fixes.</span>
+          </button>
+        </div>
+
+        <article class="dashboard-card">
+          <h3>Weekly plan</h3>
+          <div id="dashboardWeeklyPlan" class="dashboard-week-strip"></div>
+        </article>
+
+        <article class="dashboard-card">
+          <h3>Top posts (last 30 days)</h3>
+          <div id="dashboardTopPosts" class="dashboard-top-posts"></div>
+        </article>
+
+        <article class="dashboard-card">
+          <h3>Funnel insights</h3>
+          <div id="dashboardFunnel" class="dashboard-funnel"></div>
+        </article>
+
+        <article class="dashboard-card">
+          <h3>AI insights</h3>
+          <div id="dashboardInsights" class="dashboard-insights-grid"></div>
+        </article>
+
+        <article class="dashboard-card">
+          <h3>Content health score</h3>
+          <div class="dashboard-health-wrap">
+            <div class="dashboard-health-gauge">
+              <div id="dashboardHealthBar" class="dashboard-health-gauge-fill"></div>
+              <span id="dashboardHealthValue" class="dashboard-health-value">0</span>
+            </div>
+            <div id="dashboardHealthBreakdown" class="dashboard-health-breakdown"></div>
+          </div>
+          <p id="dashboardHealthSummary" class="dashboard-muted">-</p>
+        </article>
+
+        <article class="dashboard-card">
+          <button id="dashboardChecklistToggle" class="dashboard-collapse-btn" type="button">Post checklist</button>
+          <div id="dashboardChecklistBody" class="dashboard-checklist">
+            <label><input type="checkbox" /> Hook overlay added</label>
+            <label><input type="checkbox" /> Captions on</label>
+            <label><input type="checkbox" /> Binary question in caption</label>
+            <label><input type="checkbox" /> Hashtags added</label>
+            <label><input type="checkbox" /> Cover frame set</label>
+            <label><input type="checkbox" /> Best time selected</label>
+          </div>
+        </article>
+      </section>
       <section id="agentView" class="app-view agent-view">
         <div class="agent-scores" id="agentScores">
           <button type="button" class="score-chip" data-score="momentum" aria-label="Momentum score details">

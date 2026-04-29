@@ -26,10 +26,12 @@ const closeSignin = document.getElementById("closeSignin");
 const closeOnboarding = document.getElementById("closeOnboarding");
 const disconnectBtn = document.getElementById("disconnectBtn");
 const resetChatBtn = document.getElementById("resetChatBtn");
+const dashboardViewBtn = document.getElementById("dashboardViewBtn");
 const agentViewBtn = document.getElementById("agentViewBtn");
 const analyticsViewBtn = document.getElementById("analyticsViewBtn");
 const calendarViewBtn = document.getElementById("calendarViewBtn");
 const referralOpenBtn = document.getElementById("referralOpenBtn");
+const dashboardView = document.getElementById("dashboardView");
 const agentView = document.getElementById("agentView");
 const analyticsView = document.getElementById("analyticsView");
 const calendarView = document.getElementById("calendarView");
@@ -117,6 +119,7 @@ const I18N = {
     agentView: "Agent",
     analyticsView: "Analytics",
     calendarView: "Calendar",
+    dashboardView: "Dashboard",
     newChat: "Reset chat",
     settings: "Settings",
     disconnect: "Disconnect",
@@ -371,6 +374,7 @@ const I18N = {
     agentView: "Agent",
     analyticsView: "Analize",
     calendarView: "Calendar",
+    dashboardView: "Dashboard",
     newChat: "Reset chat",
     settings: "Setari",
     disconnect: "Deconectare",
@@ -1432,6 +1436,7 @@ function applyLanguage() {
   setTextIfExists("agentViewBtnLabel", t("agentView"));
   setTextIfExists("analyticsViewBtnLabel", t("analyticsView"));
   setTextIfExists("calendarViewBtnLabel", t("calendarView"));
+  setTextIfExists("dashboardViewBtnLabel", t("dashboardView"));
   setTextIfExists("resetChatBtnLabel", t("newChat"));
   setTextIfExists("settingsBtnLabel", t("settings"));
   setTextIfExists("disconnectBtnLabel", t("disconnect"));
@@ -1576,6 +1581,7 @@ function applyLanguage() {
   }
 
   syncOnboardingLanguage();
+  if (!dashboardView?.classList.contains("hidden")) renderDashboardView();
   if (!calendarView?.classList.contains("hidden")) renderCalendarView();
   if (accountState) applySettingsForm(accountState);
 }
@@ -2377,6 +2383,136 @@ function sendPrompt(text) {
   document.getElementById("composer").requestSubmit();
 }
 
+function renderDashboardView() {
+  const now = new Date();
+  const dateFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const userName = accountState?.user?.name || creatorProfile?.firstName || "creator";
+  const challengeDay = 7;
+  const challengeTotal = 14;
+  setTextIfExists("dashboardGreeting", `Salut, ${userName}`);
+  setTextIfExists("dashboardDateRow", `${dateFmt.format(now)} - Ziua ${challengeDay} din ${challengeTotal}`);
+
+  const stats = {
+    followers: 28450,
+    followersDelta: "+430 vs last week",
+    engagement: "4.8%",
+    engagementDelta: "+0.7pp vs last week",
+    views: 186400,
+    viewsDelta: "+12,300 this week",
+    comments: 0,
+  };
+  setTextIfExists("dashboardFollowersValue", stats.followers.toLocaleString());
+  setTextIfExists("dashboardFollowersDelta", stats.followersDelta);
+  setTextIfExists("dashboardEngagementValue", stats.engagement);
+  setTextIfExists("dashboardEngagementDelta", stats.engagementDelta);
+  setTextIfExists("dashboardViewsValue", stats.views.toLocaleString());
+  setTextIfExists("dashboardViewsDelta", stats.viewsDelta);
+  setTextIfExists("dashboardCommentsValue", String(stats.comments));
+  setTextIfExists(
+    "dashboardCommentsDelta",
+    stats.comments === 0 ? "Critical: zero comments" : `+${stats.comments} this week`,
+  );
+
+  const todayPost = {
+    hook: "3 greseli care iti omoara reach-ul in primele 2 secunde",
+    formats: ["REEL", "HOOK TALKING HEAD"],
+    time: "19:30",
+    posted: false,
+  };
+  setTextIfExists("dashboardTodayHook", todayPost.hook);
+  setTextIfExists("dashboardTodayMeta", `Recommended time: ${todayPost.time}`);
+  const postedIndicator = document.getElementById("dashboardPostedIndicator");
+  if (postedIndicator) {
+    postedIndicator.textContent = todayPost.posted ? "Already posted today" : "Not posted yet";
+    postedIndicator.classList.toggle("is-posted", todayPost.posted);
+  }
+  const formatsWrap = document.getElementById("dashboardTodayFormats");
+  if (formatsWrap) {
+    formatsWrap.innerHTML = todayPost.formats.map((format) => `<span class="dashboard-pill">${format}</span>`).join("");
+  }
+
+  const weekDays = [
+    { day: "Lun", format: "REEL", topic: "Myth bust", time: "09:30", status: "done" },
+    { day: "Mar", format: "STORY", topic: "BTS", time: "13:00", status: "done" },
+    { day: "Mie", format: "CAR", topic: "3 tips", time: "18:00", status: "today" },
+    { day: "Joi", format: "REEL", topic: "Case study", time: "10:00", status: "upcoming" },
+    { day: "Vin", format: "ST", topic: "Q&A", time: "20:00", status: "upcoming" },
+    { day: "Sam", format: "REEL", topic: "Trend", time: "12:00", status: "upcoming" },
+    { day: "Dum", format: "CAR", topic: "Recap", time: "17:00", status: "upcoming" },
+  ];
+  const weekWrap = document.getElementById("dashboardWeeklyPlan");
+  if (weekWrap) {
+    weekWrap.innerHTML = weekDays.map((item) => `
+      <button class="dashboard-week-day ${item.status === "today" ? "is-today" : ""}" data-week-topic="${item.topic}" data-week-day="${item.day}" type="button">
+        <strong>${item.day}</strong>
+        <div>${item.format}</div>
+        <div>${item.topic}</div>
+        <div>${item.time}</div>
+      </button>
+    `).join("");
+  }
+
+  const topPosts = [
+    { title: "How I script in 10 min", views: "48k", likes: "3.4k", er: "7.1%" },
+    { title: "Morning creator routine", views: "35k", likes: "2.6k", er: "6.4%" },
+    { title: "Avoid this hook mistake", views: "29k", likes: "2.1k", er: "5.8%" },
+  ];
+  const topWrap = document.getElementById("dashboardTopPosts");
+  if (topWrap) {
+    topWrap.innerHTML = topPosts.map((post, idx) => `
+      <article class="dashboard-top-post">
+        <div class="dashboard-thumb" aria-hidden="true"></div>
+        <div>
+          <strong>#${idx + 1} ${post.title}</strong>
+          <div class="dashboard-muted">${post.views} views - ${post.likes} likes</div>
+        </div>
+        <span class="dashboard-er-badge">${post.er} ER</span>
+      </article>
+    `).join("");
+  }
+
+  const funnelWrap = document.getElementById("dashboardFunnel");
+  if (funnelWrap) {
+    funnelWrap.innerHTML = `
+      <div class="dashboard-funnel-row" data-state="moderate"><strong>Discovery</strong><span>Moderate - improve first-frame contrast.</span></div>
+      <div class="dashboard-funnel-row" data-state="critical"><strong>Profile Visit</strong><span>Critical - bio CTA is unclear. Add binary CTA.</span></div>
+      <div class="dashboard-funnel-row" data-state="good"><strong>Follow</strong><span>Good - follower conversion is stable this week.</span></div>
+    `;
+  }
+
+  const insightWrap = document.getElementById("dashboardInsights");
+  if (insightWrap) {
+    insightWrap.innerHTML = `
+      <article class="dashboard-insight"><strong>⚠ Comment depth is low</strong><span>Use one binary question in next caption.</span></article>
+      <article class="dashboard-insight"><strong>⚠ Hook pacing drops at 2s</strong><span>Cut first pause and front-load result.</span></article>
+      <article class="dashboard-insight"><strong>✅ Reel timing opportunity</strong><span>Best posting window today is 19:00-20:00.</span></article>
+      <article class="dashboard-insight"><strong>✅ Carousel saves are rising</strong><span>Repurpose best reel into 5-slide carousel.</span></article>
+    `;
+  }
+
+  const health = {
+    total: 72,
+    parts: [
+      ["Hook quality", 69],
+      ["Consistency", 81],
+      ["Engagement", 58],
+      ["Profile completeness", 80],
+    ],
+  };
+  const healthBar = document.getElementById("dashboardHealthBar");
+  if (healthBar) healthBar.style.width = `${health.total}%`;
+  setTextIfExists("dashboardHealthValue", String(health.total));
+  setTextIfExists("dashboardHealthSummary", "Biggest lever now: improve hook retention in first 2 seconds.");
+  const healthBreakdown = document.getElementById("dashboardHealthBreakdown");
+  if (healthBreakdown) {
+    healthBreakdown.innerHTML = health.parts.map(([label, value]) => `<p>${label}: <strong>${value}</strong></p>`).join("");
+  }
+}
+
 let calendarWeekOffset = 0;
 const calendarSeed = [
   { title: "Morning routine hook", type: "REEL", dayOffset: 0, time: "09:30", status: "Scriptat" },
@@ -2401,13 +2537,20 @@ function addDays(date, days) {
   return copy;
 }
 
+function toLocalDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function buildCalendarWeekData(weekStart) {
   return calendarSeed.map((item, idx) => ({
     id: `seed-${idx}`,
     title: item.title,
     type: item.type,
     status: item.status,
-    scheduledAt: `${addDays(weekStart, item.dayOffset).toISOString().slice(0, 10)}T${item.time}:00`,
+    scheduledAt: `${toLocalDateKey(addDays(weekStart, item.dayOffset))}T${item.time}:00`,
   }));
 }
 
@@ -2448,11 +2591,11 @@ function renderCalendarView() {
 
   const dayNameFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", { weekday: "short" });
   const timeFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", { hour: "2-digit", minute: "2-digit" });
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = toLocalDateKey(new Date());
 
   for (let i = 0; i < 7; i += 1) {
     const dayDate = addDays(weekStart, i);
-    const dayIso = dayDate.toISOString().slice(0, 10);
+    const dayIso = toLocalDateKey(dayDate);
     const dayClips = clips.filter((clip) => clip.scheduledAt.startsWith(dayIso));
     const dayColumn = document.createElement("article");
     dayColumn.className = "calendar-day-column";
@@ -2484,6 +2627,7 @@ function renderCalendarView() {
 
 function setActiveView(view) {
   const views = {
+    dashboard: document.getElementById("dashboardView"),
     agent: document.getElementById("agentView"),
     analytics: document.getElementById("analyticsView"),
     calendar: document.getElementById("calendarView"),
@@ -2492,10 +2636,17 @@ function setActiveView(view) {
     if (!el) return;
     el.classList.toggle("hidden", name !== view);
   });
+  dashboardViewBtn?.classList.toggle("active", view === "dashboard");
   agentViewBtn?.classList.toggle("active", view === "agent");
   analyticsViewBtn?.classList.toggle("active", view === "analytics");
   calendarViewBtn?.classList.toggle("active", view === "calendar");
-  const activeViewLabel = view === "analytics" ? t("analyticsView") : view === "calendar" ? t("calendarView") : t("agentView");
+  const activeViewLabel = view === "dashboard"
+    ? t("dashboardView")
+    : view === "analytics"
+      ? t("analyticsView")
+      : view === "calendar"
+        ? t("calendarView")
+        : t("agentView");
   setTextIfExists("activeViewLabel", activeViewLabel);
   refreshAgentEmptyState();
 }
@@ -3264,6 +3415,11 @@ analyticsViewBtn?.addEventListener("click", async () => {
   await loadAnalyticsView();
 });
 
+dashboardViewBtn?.addEventListener("click", () => {
+  setActiveView("dashboard");
+  renderDashboardView();
+});
+
 calendarViewBtn?.addEventListener("click", () => {
   setActiveView("calendar");
   renderCalendarView();
@@ -3282,6 +3438,40 @@ document.getElementById("calendarNextWeekBtn")?.addEventListener("click", () => 
 document.getElementById("calendarTodayBtn")?.addEventListener("click", () => {
   calendarWeekOffset = 0;
   renderCalendarView();
+});
+
+document.getElementById("dashboardSeeScriptBtn")?.addEventListener("click", () => {
+  setActiveView("agent");
+  sendPrompt("Give me the full script for today's recommended post, with hook, beats and CTA.");
+});
+
+document.getElementById("dashboardRegenerateHookBtn")?.addEventListener("click", () => {
+  setActiveView("agent");
+  sendPrompt("Regenerate 5 better hook variations for today's post, each with a short reason.");
+});
+
+document.getElementById("dashboardChecklistToggle")?.addEventListener("click", () => {
+  document.getElementById("dashboardChecklistBody")?.classList.toggle("hidden");
+});
+
+document.addEventListener("click", (event) => {
+  const quickAction = event.target.closest("[data-dashboard-action]");
+  if (quickAction) {
+    const action = quickAction.getAttribute("data-dashboard-action");
+    if (action) {
+      setActiveView("agent");
+      sendPrompt(`${action} for my Instagram account using my latest performance data.`);
+    }
+    return;
+  }
+
+  const weekDay = event.target.closest("[data-week-topic]");
+  if (weekDay) {
+    const topic = weekDay.getAttribute("data-week-topic");
+    const day = weekDay.getAttribute("data-week-day");
+    setActiveView("agent");
+    sendPrompt(`Open full brief for ${day}: topic "${topic}". Include hook, script beats, caption and CTA.`);
+  }
 });
 
 document.getElementById("obConnectInstagramBtn")?.addEventListener("click", () => {
