@@ -6,6 +6,7 @@ const DEV_AUTH_OVERRIDE_KEY = "postpilot_dev_auth_override";
 const BASE_WAITLIST_MODE = document.body?.dataset?.mode === "waitlist";
 const WAITLIST_MODE = BASE_WAITLIST_MODE && localStorage.getItem(DEV_AUTH_OVERRIDE_KEY) !== "1";
 const REFERRAL_CAPTURE_KEY = "postpilot_referral_code";
+const ACTIVE_VIEW_KEY = "postpilot_active_view";
 const referralParamFromUrl = new URLSearchParams(window.location.search).get("ref") || "";
 if (referralParamFromUrl) {
   localStorage.setItem(REFERRAL_CAPTURE_KEY, String(referralParamFromUrl).trim().toUpperCase());
@@ -155,6 +156,13 @@ const I18N = {
     dashboardFixFollowGood: "Cadence is strong. Optimize hooks to compound follower growth.",
     dashboardBiggestLeverNow: "Biggest lever now",
     dashboardImprovePrefix: "improve",
+    dashboardStateCritical: "Critical",
+    dashboardStateModerate: "Moderate",
+    dashboardStateGood: "Good",
+    dashboardHookQuality: "Hook quality",
+    dashboardConsistency: "Consistency",
+    dashboardEngagement: "Engagement",
+    dashboardProfileCompleteness: "Profile completeness",
     calendarModalTitle: "Add clip",
     calendarModalTitleLabel: "Title",
     calendarModalTypeLabel: "Type",
@@ -482,6 +490,13 @@ const I18N = {
     dashboardFixFollowGood: "Cadenta este puternica. Optimizeaza hook-urile pentru crestere accelerata.",
     dashboardBiggestLeverNow: "Cel mai mare levier acum",
     dashboardImprovePrefix: "imbunatateste",
+    dashboardStateCritical: "Critic",
+    dashboardStateModerate: "Mediu",
+    dashboardStateGood: "Bun",
+    dashboardHookQuality: "Calitatea hook-ului",
+    dashboardConsistency: "Consistenta",
+    dashboardEngagement: "Engagement",
+    dashboardProfileCompleteness: "Completitudinea profilului",
     calendarModalTitle: "Adauga clip",
     calendarModalTitleLabel: "Titlu",
     calendarModalTypeLabel: "Tip",
@@ -1613,6 +1628,15 @@ function applyLanguage() {
   setTextIfExists("calendarDetailsCaptionHeading", t("calendarDetailsCaption"));
   setTextIfExists("calendarDetailsScriptHeading", t("calendarDetailsScript"));
   setTextIfExists("calendarChecklistHeading", t("calendarChecklistTitle"));
+  setTextIfExists("dashboardFollowersLabel", t("dashboardFollowersLabel"));
+  setTextIfExists("dashboardEngagementLabel", t("dashboardEngagementLabel"));
+  setTextIfExists("dashboardViewsLabel", t("dashboardViewsLabel"));
+  setTextIfExists("dashboardCommentsLabel", t("dashboardCommentsLabel"));
+  setTextIfExists("dashboardTodayPostLabel", t("dashboardTodayPostLabel"));
+  setTextIfExists("dashboardTopPostsHeading", t("dashboardTopPostsHeading"));
+  setTextIfExists("dashboardFunnelHeading", t("dashboardFunnelHeading"));
+  setTextIfExists("dashboardAiInsightsHeading", t("dashboardAiInsightsHeading"));
+  setTextIfExists("dashboardHealthHeading", t("dashboardHealthHeading"));
   setTextIfExists("resetChatBtnLabel", t("newChat"));
   setTextIfExists("settingsBtnLabel", t("settings"));
   setTextIfExists("disconnectBtnLabel", t("disconnect"));
@@ -2023,6 +2047,16 @@ function renderCardNextPost(data) {
 
   html += `<div class="pp-card-actions">`;
   html += `<button class="pp-card-btn pp-card-btn--primary" data-card-action="prompt" data-prompt="${escapeHtml(promptText)}">${btnText}</button>`;
+  const addCalendarText = currentLanguage === "ro" ? "Adauga in Calendar" : "Add to Calendar";
+  const schedulePayload = encodeURIComponent(
+    JSON.stringify({
+      title: rawHook || data.title || "New clip",
+      type: (Array.isArray(pills) && pills[0]) ? String(pills[0]).toUpperCase() : "REEL",
+      caption: data.caption || "",
+      script: data.script || rawHook || "",
+    }),
+  );
+  html += `<button class="pp-card-btn pp-card-btn--secondary" data-card-action="schedule-from-card" data-card-clip="${schedulePayload}">${addCalendarText}</button>`;
   html += `</div></div>`;
   return html;
 }
@@ -2114,6 +2148,22 @@ function renderCardScript(data) {
     }
     html += `</div>`;
   }
+  html += `</div>`;
+  const addCalendarText = currentLanguage === "ro" ? "Adauga in Calendar" : "Add to Calendar";
+  const scriptText = beats
+    .map((beat) => String(beat.text || beat.content || "").trim())
+    .filter(Boolean)
+    .join("\n");
+  const schedulePayload = encodeURIComponent(
+    JSON.stringify({
+      title: title || "Script clip",
+      type: "REEL",
+      caption: data.caption || "",
+      script: scriptText,
+    }),
+  );
+  html += `<div class="pp-card-actions">`;
+  html += `<button class="pp-card-btn pp-card-btn--secondary" data-card-action="schedule-from-card" data-card-clip="${schedulePayload}">${addCalendarText}</button>`;
   html += `</div></div>`;
   return html;
 }
@@ -2196,6 +2246,33 @@ document.addEventListener("click", (e) => {
     const prompt = target.dataset.prompt;
     if (prompt && typeof sendPrompt === "function") {
       sendPrompt(prompt);
+    }
+    return;
+  }
+
+  // Add generated card content directly into calendar
+  if (action === "schedule-from-card") {
+    const rawPayload = target.dataset.cardClip || "";
+    if (!rawPayload) return;
+    try {
+      const payload = JSON.parse(decodeURIComponent(rawPayload));
+      const draft = {
+        title: String(payload.title || "").trim() || "New clip",
+        type: normalizeClipType(payload.type || "REEL"),
+        caption: String(payload.caption || "").trim(),
+        script: String(payload.script || "").trim(),
+      };
+      lastAgentCalendarDraft = draft;
+      const scheduled = scheduleDraftInCalendar(draft, { dayOffset: 1, time: "19:30" });
+      if (scheduled?.clip) {
+        showToast(
+          currentLanguage === "ro"
+            ? `Clip adaugat in Calendar pentru maine la 19:30.`
+            : `Clip added to Calendar for tomorrow at 19:30.`,
+        );
+      }
+    } catch (_err) {
+      showToast(currentLanguage === "ro" ? "Nu am putut adauga clipul in calendar." : "Could not add clip to calendar.");
     }
     return;
   }
@@ -2598,34 +2675,52 @@ function buildFunnelState(discoveryScore, visitScore, followScore) {
   const followState = classify(followScore);
   return [
     {
-      name: "Discovery",
+      name: t("dashboardFunnelDiscovery"),
       state: discoveryState,
+      stateLabel:
+        discoveryState === "critical"
+          ? t("dashboardStateCritical")
+          : discoveryState === "moderate"
+            ? t("dashboardStateModerate")
+            : t("dashboardStateGood"),
       fix:
         discoveryState === "critical"
-          ? "Post more short-form hooks with stronger first 2 seconds."
+          ? t("dashboardFixDiscoveryCritical")
           : discoveryState === "moderate"
-            ? "Double down on your best media type this week."
-            : "Keep posting in your top-performing format and time slot.",
+            ? t("dashboardFixDiscoveryModerate")
+            : t("dashboardFixDiscoveryGood"),
     },
     {
-      name: "Profile Visit",
+      name: t("dashboardFunnelProfileVisit"),
       state: visitState,
+      stateLabel:
+        visitState === "critical"
+          ? t("dashboardStateCritical")
+          : visitState === "moderate"
+            ? t("dashboardStateModerate")
+            : t("dashboardStateGood"),
       fix:
         visitState === "critical"
-          ? "Use caption prompts to trigger comments and profile taps."
+          ? t("dashboardFixVisitCritical")
           : visitState === "moderate"
-            ? "Add clearer CTA in captions to move people to profile."
-            : "Your interaction depth is healthy. Maintain CTA consistency.",
+            ? t("dashboardFixVisitModerate")
+            : t("dashboardFixVisitGood"),
     },
     {
-      name: "Follow",
+      name: t("dashboardFunnelFollow"),
       state: followState,
+      stateLabel:
+        followState === "critical"
+          ? t("dashboardStateCritical")
+          : followState === "moderate"
+            ? t("dashboardStateModerate")
+            : t("dashboardStateGood"),
       fix:
         followState === "critical"
-          ? "Increase posting consistency to improve follow conversion."
+          ? t("dashboardFixFollowCritical")
           : followState === "moderate"
-            ? "Keep weekly cadence stable and reinforce niche clarity."
-            : "Cadence is strong. Optimize hooks to compound follower growth.",
+            ? t("dashboardFixFollowModerate")
+            : t("dashboardFixFollowGood"),
     },
   ];
 }
@@ -2638,7 +2733,7 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
     month: "long",
   });
   const userName = creator?.user?.firstName || accountState?.user?.name || "creator";
-  setTextIfExists("dashboardGreeting", `Salut, ${userName}`);
+  setTextIfExists("dashboardGreeting", `${t("dashboardGreetingPrefix")}, ${userName}`);
   setTextIfExists("dashboardDateRow", dateFmt.format(now));
 
   const summary = bundle?.summary || {};
@@ -2678,18 +2773,18 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
 
   const followers = Number(creator?.primary?.followerCount || 0);
   setTextIfExists("dashboardFollowersValue", formatCompactNumber(followers));
-  setTextIfExists("dashboardFollowersDelta", "Follower delta unavailable from current history");
+  setTextIfExists("dashboardFollowersDelta", t("dashboardFollowerDeltaUnavailable"));
   setTextIfExists("dashboardEngagementValue", `${Number(creator?.metrics?.avgEngagementRate || 0).toFixed(2)}%`);
   setTextIfExists(
     "dashboardEngagementDelta",
-    `${(thisWeekEngagementRate * 100 - lastWeekEngagementRate * 100).toFixed(2)}pp vs last week`,
+    `${(thisWeekEngagementRate * 100 - lastWeekEngagementRate * 100).toFixed(2)}pp ${t("dashboardVsLastWeek")}`,
   );
   setTextIfExists("dashboardViewsValue", formatCompactNumber(Number(totals?.impressions || 0)));
-  setTextIfExists("dashboardViewsDelta", `${(thisWeekViews - lastWeekViews) >= 0 ? "+" : ""}${formatCompactNumber(thisWeekViews - lastWeekViews)} vs last week`);
+  setTextIfExists("dashboardViewsDelta", `${(thisWeekViews - lastWeekViews) >= 0 ? "+" : ""}${formatCompactNumber(thisWeekViews - lastWeekViews)} ${t("dashboardVsLastWeek")}`);
   setTextIfExists("dashboardCommentsValue", formatCompactNumber(Number(totals?.comments || 0)));
   setTextIfExists(
     "dashboardCommentsDelta",
-    thisWeekComments === 0 ? "Critical: zero comments this week" : `${formatCompactNumber(thisWeekComments)} comments this week`,
+    thisWeekComments === 0 ? t("dashboardCriticalZeroCommentsWeek") : `${formatCompactNumber(thisWeekComments)} ${t("dashboardCommentsThisWeek")}`,
   );
 
   const todayCalendarWeekStart = startOfWeek(now);
@@ -2702,7 +2797,7 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
   );
   const ideasText = sortedTodayClips.length
     ? sortedTodayClips.map((clip) => clip.title).join(" • ")
-    : "No post ideas scheduled today in Calendar";
+    : t("dashboardNoIdeasToday");
   const recommendedTime = sortedTodayClips[0]?.scheduledAt
     ? String(sortedTodayClips[0].scheduledAt).slice(11, 16)
     : "--:--";
@@ -2712,10 +2807,10 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
     return toLocalDateKey(new Date(ts)) === toLocalDateKey(now);
   });
   setTextIfExists("dashboardTodayHook", ideasText);
-  setTextIfExists("dashboardTodayMeta", `Recommended time: ${recommendedTime}`);
+  setTextIfExists("dashboardTodayMeta", `${t("dashboardRecommendedTime")}: ${recommendedTime}`);
   const postedIndicator = document.getElementById("dashboardPostedIndicator");
   if (postedIndicator) {
-    postedIndicator.textContent = postedToday ? "Already posted today" : "Not posted yet";
+    postedIndicator.textContent = postedToday ? t("dashboardPostedToday") : t("dashboardNotPostedYet");
     postedIndicator.classList.toggle("is-posted", postedToday);
   }
   const formatsWrap = document.getElementById("dashboardTodayFormats");
@@ -2747,9 +2842,9 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
           <div>
             <div class="dashboard-top-post-head">
               <h4 class="dashboard-top-post-title">#${idx + 1} ${title}</h4>
-              <span class="dashboard-er-badge">${er}% ER</span>
+              <span class="dashboard-er-badge">${er}% ${t("dashboardErUnit")}</span>
             </div>
-            <p class="dashboard-top-post-meta">${formatCompactNumber(reachForPost(post))} views - ${formatCompactNumber(post.likes || 0)} likes</p>
+            <p class="dashboard-top-post-meta">${formatCompactNumber(reachForPost(post))} ${t("dashboardViewsUnit")} - ${formatCompactNumber(post.likes || 0)} ${t("dashboardLikesUnit")}</p>
           </div>
         </article>
       `;
@@ -2769,7 +2864,7 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
           <article class="dashboard-funnel-row" data-state="${row.state}">
             <div class="dashboard-funnel-row-head">
               <h4>${row.name}</h4>
-              <span class="dashboard-funnel-state">${row.state}</span>
+              <span class="dashboard-funnel-state">${row.stateLabel}</span>
             </div>
             <p>${row.fix}</p>
           </article>
@@ -2814,17 +2909,17 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
     ),
   );
   const parts = [
-    ["Hook quality", hookQuality],
-    ["Consistency", consistency],
-    ["Engagement", engagement],
-    ["Profile completeness", profileCompleteness],
+    [t("dashboardHookQuality"), hookQuality],
+    [t("dashboardConsistency"), consistency],
+    [t("dashboardEngagement"), engagement],
+    [t("dashboardProfileCompleteness"), profileCompleteness],
   ];
   const total = Math.round(parts.reduce((sum, [, score]) => sum + Number(score || 0), 0) / parts.length);
   const healthBar = document.getElementById("dashboardHealthBar");
   if (healthBar) healthBar.style.width = `${total}%`;
   setTextIfExists("dashboardHealthValue", String(total));
-  const biggestLever = [...parts].sort((a, b) => a[1] - b[1])[0]?.[0] || "Consistency";
-  setTextIfExists("dashboardHealthSummary", `Biggest lever now: improve ${biggestLever.toLowerCase()}.`);
+  const biggestLever = [...parts].sort((a, b) => a[1] - b[1])[0]?.[0] || t("dashboardConsistency");
+  setTextIfExists("dashboardHealthSummary", `${t("dashboardBiggestLeverNow")}: ${t("dashboardImprovePrefix")} ${biggestLever.toLowerCase()}.`);
   const healthBreakdown = document.getElementById("dashboardHealthBreakdown");
   if (healthBreakdown) {
     healthBreakdown.innerHTML = parts.map(([label, value]) => `<p>${label}: <strong>${Math.round(value)}</strong></p>`).join("");
@@ -2854,6 +2949,7 @@ async function loadDashboardView() {
 let calendarWeekOffset = 0;
 let pendingCalendarDate = null;
 let activeCalendarClipDetails = null;
+let lastAgentCalendarDraft = null;
 const calendarCustomClipsByWeek = new Map();
 const calendarClipIndex = new Map();
 const calendarSeed = [];
@@ -3067,6 +3163,97 @@ function saveCalendarClipFromForm() {
   renderCalendarView();
 }
 
+function normalizeClipType(rawType) {
+  const value = String(rawType || "").toUpperCase();
+  if (value.includes("CAROUSEL")) return "CARUSEL";
+  if (value.includes("STORY")) return "STORY";
+  if (value.includes("STATIC") || value.includes("IMAGE") || value.includes("PHOTO")) return "STATIC";
+  return "REEL";
+}
+
+function addClipToCalendarState({ title, type, dateKey, time, caption = "", script = "" }) {
+  const weekStart = startOfWeek(new Date(`${dateKey}T12:00:00`));
+  const weekKey = toLocalDateKey(weekStart);
+  const current = calendarCustomClipsByWeek.get(weekKey) || [];
+  const nextClip = {
+    id: `custom-${Date.now()}-${Math.round(Math.random() * 1000)}`,
+    title: String(title || "").trim() || "New clip",
+    type: normalizeClipType(type),
+    status: "Idee",
+    scheduledAt: `${dateKey}T${time}:00`,
+    caption: String(caption || "").trim(),
+    script: String(script || "").trim(),
+    checklist: {},
+  };
+  calendarCustomClipsByWeek.set(weekKey, [...current, nextClip]);
+  return { clip: nextClip, weekStart };
+}
+
+function scheduleDraftInCalendar(draft, { dayOffset = 1, time = "19:30" } = {}) {
+  if (!draft || !draft.title) return null;
+  const targetDate = addDays(toStartOfDayLocal(new Date()), dayOffset);
+  const dateKey = toLocalDateKey(targetDate);
+  const result = addClipToCalendarState({
+    title: draft.title,
+    type: draft.type || "REEL",
+    dateKey,
+    time,
+    caption: draft.caption || "",
+    script: draft.script || "",
+  });
+  renderCalendarView();
+  return result;
+}
+
+function parseScheduleCommand(message) {
+  const text = String(message || "").toLowerCase().trim();
+  const commandLike = /(schedule this|add this to calendar|plan this|programeaza asta|adauga in calendar)/.test(text);
+  if (!commandLike) return null;
+  const timeMatch = text.match(/(?:at|la)\s+(\d{1,2})(?::(\d{2}))?/);
+  const hour = Math.max(0, Math.min(23, Number(timeMatch?.[1] ?? 19)));
+  const minuteRaw = Number(timeMatch?.[2] ?? 30);
+  const minute = [0, 15, 30, 45].includes(minuteRaw) ? minuteRaw : 30;
+  const time = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  let dayOffset = 1;
+  if (/(today|azi)/.test(text)) dayOffset = 0;
+  else if (/(tomorrow|maine)/.test(text)) dayOffset = 1;
+  return { dayOffset, time };
+}
+
+function extractDraftFromAssistantContent(content) {
+  const text = String(content || "");
+  const cardRegex = /```card:(\w+)\s*\n([\s\S]*?)```/g;
+  let match;
+  let latestDraft = null;
+  while ((match = cardRegex.exec(text))) {
+    const type = match[1];
+    let data;
+    try {
+      data = JSON.parse(match[2].trim());
+    } catch (_e) {
+      continue;
+    }
+    if (type === "next_post") {
+      latestDraft = {
+        title: String(data.hook || data.text || data.title || "").trim() || "New clip",
+        type: normalizeClipType(data.format || data.type || "REEL"),
+        caption: String(data.caption || "").trim(),
+        script: String(data.script || data.hook || "").trim(),
+      };
+    }
+    if (type === "script") {
+      const beats = Array.isArray(data.beats) ? data.beats : [];
+      latestDraft = {
+        title: String(data.title || "Script clip").trim(),
+        type: normalizeClipType(data.type || "REEL"),
+        caption: String(data.caption || "").trim(),
+        script: beats.map((beat) => String(beat.text || beat.content || "").trim()).filter(Boolean).join("\n"),
+      };
+    }
+  }
+  return latestDraft;
+}
+
 function initializeCalendarTimePicker() {
   const hourInput = document.getElementById("calendarClipHourInput");
   const minuteInput = document.getElementById("calendarClipMinuteInput");
@@ -3109,6 +3296,22 @@ function setActiveView(view) {
         : t("agentView");
   setTextIfExists("activeViewLabel", activeViewLabel);
   refreshAgentEmptyState();
+  try {
+    localStorage.setItem(ACTIVE_VIEW_KEY, view);
+  } catch (_err) {
+    // Non-blocking: view persistence is best-effort.
+  }
+}
+
+function getInitialActiveView() {
+  const allowed = new Set(["dashboard", "agent", "analytics", "calendar"]);
+  try {
+    const saved = localStorage.getItem(ACTIVE_VIEW_KEY);
+    if (saved && allowed.has(saved)) return saved;
+  } catch (_err) {
+    // ignore storage issues and fallback
+  }
+  return "dashboard";
 }
 
 function refreshAgentEmptyState() {
@@ -3825,6 +4028,35 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
   setComposerBusy(true);
   input.value = "";
   try {
+    const scheduleIntent = parseScheduleCommand(message);
+    if (scheduleIntent) {
+      addMessage("user", message);
+      if (!lastAgentCalendarDraft) {
+        addMessage(
+          "assistant",
+          currentLanguage === "ro"
+            ? "Nu am ce sa programez inca. Genereaza mai intai o idee sau un script, apoi spune-mi sa o programez."
+            : "I do not have a draft to schedule yet. Generate an idea or script first, then ask me to schedule it.",
+        );
+      } else {
+        const scheduled = scheduleDraftInCalendar(lastAgentCalendarDraft, scheduleIntent);
+        if (scheduled?.clip) {
+          const dayText =
+            scheduleIntent.dayOffset === 0
+              ? (currentLanguage === "ro" ? "azi" : "today")
+              : (currentLanguage === "ro" ? "maine" : "tomorrow");
+          addMessage(
+            "assistant",
+            currentLanguage === "ro"
+              ? `Am programat "${scheduled.clip.title}" pentru ${dayText} la ${scheduleIntent.time} in Calendar.`
+              : `I scheduled "${scheduled.clip.title}" for ${dayText} at ${scheduleIntent.time} in Calendar.`,
+          );
+          setActiveView("calendar");
+        }
+      }
+      return;
+    }
+
     const canChat = await ensureOnboardingForChat();
     if (!canChat) {
       input.value = message;
@@ -3835,6 +4067,8 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
     addMessage("user", message);
 
     const result = await streamChat(message, sessionId);
+    const parsedDraft = extractDraftFromAssistantContent(result?.content || "");
+    if (parsedDraft) lastAgentCalendarDraft = parsedDraft;
     if (result.action === "onboarding_required") {
       setOnboardingMode("onboarding");
       showOnboardingModal();
@@ -4411,7 +4645,15 @@ renderConversation([]);
 applyLandingModeVisibility();
 applyLanguage();
 initializeCalendarTimePicker();
-setActiveView("agent");
+const initialView = getInitialActiveView();
+setActiveView(initialView);
+if (initialView === "dashboard") {
+  loadDashboardView().catch(() => {});
+} else if (initialView === "analytics") {
+  loadAnalyticsView().catch(() => {});
+} else if (initialView === "calendar") {
+  renderCalendarView();
+}
 registerLogoDevToggle();
 
 const authQueryState = getAuthQueryState();
