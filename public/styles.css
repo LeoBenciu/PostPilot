@@ -650,7 +650,7 @@ body {
 .dashboard-stat-card { padding: 12px 14px; }
 .dashboard-stat-label { margin: 0; font-size: 11px; color: #845660; text-transform: uppercase; }
 .dashboard-stat-value { margin: 6px 0 0; font-size: 24px; font-weight: 700; color: #3d1b25; }
-.dashboard-stat-delta { margin: 5px 0 0; font-size: 12px; color: #6a9f73; }
+.dashboard-stat-delta { display: none; }
 .dashboard-stat-delta-critical { color: #b42318; font-weight: 600; }
 
 .dashboard-today-card { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
