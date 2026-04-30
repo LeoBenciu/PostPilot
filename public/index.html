@@ -373,7 +373,31 @@
         <span aria-hidden="true" class="btn-icon">⏻</span>
         <span id="disconnectBtnLabel">Disconnect</span>
       </button>
+      <button id="mobileMoreBtn" class="secondary sidebar-more-btn" aria-label="More options">
+        <span aria-hidden="true" class="btn-icon">···</span>
+        <span>More</span>
+      </button>
     </aside>
+
+    <div id="mobileMoreSheet" class="mobile-more-backdrop" hidden>
+      <div class="mobile-more-sheet" role="dialog" aria-modal="true" aria-label="More options">
+        <div class="mobile-more-handle"></div>
+        <button id="mobileSheetReferralBtn" class="mobile-sheet-item referral-cta-btn">
+          <span aria-hidden="true" class="mobile-sheet-icon">
+            <img src="/reffer.png" alt="" class="referral-cta-icon" style="width:22px;height:22px;" />
+          </span>
+          <span id="mobileSheetReferralLabel">Earn a free month</span>
+        </button>
+        <button id="mobileSheetSettingsBtn" class="mobile-sheet-item">
+          <span aria-hidden="true" class="mobile-sheet-icon">⚙</span>
+          <span id="mobileSheetSettingsLabel">Settings</span>
+        </button>
+        <button id="mobileSheetDisconnectBtn" class="mobile-sheet-item disconnect-btn">
+          <span aria-hidden="true" class="mobile-sheet-icon">⏻</span>
+          <span id="mobileSheetDisconnectLabel">Disconnect</span>
+        </button>
+      </div>
+    </div>
 
     <main class="chat-layout">
       <header class="chat-header">

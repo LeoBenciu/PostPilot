@@ -5688,3 +5688,49 @@ if (WAITLIST_MODE) {
     .catch(() => {});
 }
 
+// Mobile more sheet
+(function () {
+  const backdrop = document.getElementById("mobileMoreSheet");
+  const moreBtn = document.getElementById("mobileMoreBtn");
+
+  function openSheet() {
+    [
+      ["referralOpenBtnLabel", "mobileSheetReferralLabel"],
+      ["settingsBtnLabel", "mobileSheetSettingsLabel"],
+      ["disconnectBtnLabel", "mobileSheetDisconnectLabel"],
+    ].forEach(([srcId, dstId]) => {
+      const src = document.getElementById(srcId);
+      const dst = document.getElementById(dstId);
+      if (src && dst) dst.textContent = src.textContent;
+    });
+    backdrop.hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeSheet() {
+    backdrop.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  moreBtn?.addEventListener("click", openSheet);
+  backdrop?.addEventListener("click", (e) => {
+    if (e.target === backdrop) closeSheet();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !backdrop?.hidden) closeSheet();
+  });
+
+  document.getElementById("mobileSheetReferralBtn")?.addEventListener("click", () => {
+    closeSheet();
+    document.getElementById("referralOpenBtn")?.click();
+  });
+  document.getElementById("mobileSheetSettingsBtn")?.addEventListener("click", () => {
+    closeSheet();
+    document.getElementById("settingsBtn")?.click();
+  });
+  document.getElementById("mobileSheetDisconnectBtn")?.addEventListener("click", () => {
+    closeSheet();
+    document.getElementById("disconnectBtn")?.click();
+  });
+})();
+
