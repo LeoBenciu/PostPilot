@@ -2047,7 +2047,13 @@ function toggleDevAuthOverride() {
 function registerLogoDevToggle() {
   const logoEl = document.querySelector(".hero-logo");
   if (!logoEl) return;
-  logoEl.addEventListener("click", () => {
+  let lastTapTs = 0;
+  const onLogoTap = () => {
+    const now = Date.now();
+    // On some mobile browsers both touch/pointer and click can fire.
+    // Deduplicate taps fired within a very short interval.
+    if (now - lastTapTs < 250) return;
+    lastTapTs = now;
     logoTapCount += 1;
     if (logoTapResetTimer) window.clearTimeout(logoTapResetTimer);
     logoTapResetTimer = window.setTimeout(() => {
@@ -2061,7 +2067,10 @@ function registerLogoDevToggle() {
       }
       toggleDevAuthOverride();
     }
-  });
+  };
+
+  logoEl.addEventListener("click", onLogoTap);
+  logoEl.addEventListener("pointerup", onLogoTap);
 }
 
 function escapeHtml(raw) {
