@@ -416,16 +416,6 @@
           <div id="dashboardTopPosts" class="dashboard-top-posts"></div>
         </article>
 
-        <article class="dashboard-today-card">
-          <div>
-            <p class="dashboard-kicker" id="dashboardTodayPostLabel">Today's post</p>
-            <h3 id="dashboardTodayHook">-</h3>
-            <div id="dashboardTodayFormats" class="dashboard-pill-row"></div>
-            <p id="dashboardTodayMeta" class="dashboard-muted">-</p>
-          </div>
-          <p id="dashboardPostedIndicator" class="dashboard-posted-indicator">Not posted yet</p>
-        </article>
-
         <article class="dashboard-card">
           <h3 id="dashboardFunnelHeading">Funnel insights</h3>
           <div id="dashboardFunnel" class="dashboard-funnel"></div>
@@ -568,59 +558,77 @@
           <canvas id="chartTopPosts"></canvas>
         </article>
       </section>
-      <section id="calendarView" class="app-view calendar-view hidden">
-        <div class="calendar-header">
-          <button id="calendarPrevWeekBtn" class="secondary calendar-nav-btn" type="button">←</button>
-          <p id="calendarRangeLabel" class="calendar-range-label">-</p>
-          <button id="calendarNextWeekBtn" class="secondary calendar-nav-btn" type="button">→</button>
-          <button id="calendarTodayBtn" class="secondary calendar-today-btn" type="button">Azi</button>
-        </div>
-        <div class="calendar-stats-grid">
-          <article class="calendar-stat-card">
-            <p class="calendar-stat-label" id="calendarStatTotalLabel">Total</p>
-            <p id="calendarTotalValue" class="calendar-stat-value">0</p>
-          </article>
-          <article class="calendar-stat-card">
-            <p class="calendar-stat-label" id="calendarStatPostedLabel">Postate</p>
-            <p id="calendarPostedValue" class="calendar-stat-value">0</p>
-          </article>
-          <article class="calendar-stat-card">
-            <p class="calendar-stat-label" id="calendarStatInProgressLabel">In progres</p>
-            <p id="calendarInProgressValue" class="calendar-stat-value">0</p>
-          </article>
-          <article class="calendar-stat-card">
-            <p class="calendar-stat-label" id="calendarStatCompletionLabel">Rata completare</p>
-            <p id="calendarCompletionValue" class="calendar-stat-value">0%</p>
-          </article>
-        </div>
-        <div id="calendarGrid" class="calendar-grid"></div>
-      </section>
-      <div id="calendarClipModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="calendarClipModalTitle">
-        <div class="modal-card calendar-modal-card">
-          <div class="modal-head">
-            <h2 id="calendarClipModalTitle">Add clip</h2>
-            <button id="calendarClipModalClose" class="ghost-icon" type="button" aria-label="Close">×</button>
+      <section id="calendarView" class="app-view calendar-v2 hidden">
+        <header class="calendar-toolbar">
+          <div class="calendar-toolbar-left">
+            <h1 id="calendarHeading" class="calendar-title">Calendar</h1>
+            <span id="calendarRangeLabel" class="calendar-range">-</span>
           </div>
-          <form id="calendarClipForm" class="calendar-clip-form">
-            <label>
-              <span id="calendarClipTitleLabel">Title</span>
-              <input id="calendarClipTitleInput" type="text" required maxlength="100" placeholder="Ex: Morning routine hook" />
-            </label>
-            <label>
-              <span id="calendarClipTypeLabel">Type</span>
-              <select id="calendarClipTypeInput" required>
-                <option value="REEL" id="calendarTypeOptionReel">Reel</option>
-                <option value="CARUSEL" id="calendarTypeOptionCarousel">Carusel</option>
-                <option value="STORY" id="calendarTypeOptionStory">Story</option>
-                <option value="STATIC" id="calendarTypeOptionStatic">Static</option>
-              </select>
-            </label>
-            <label>
-              <span id="calendarClipTimeLabel">Time</span>
-              <div class="calendar-time-picker">
-                <select id="calendarClipHourInput" aria-label="Select hour" required></select>
-                <span class="calendar-time-separator">:</span>
-                <select id="calendarClipMinuteInput" aria-label="Select minute" required></select>
+          <div class="calendar-toolbar-center">
+            <button id="calendarPrevBtn" class="calendar-icon-btn" type="button" aria-label="Previous">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="12 4 6 10 12 16"/></svg>
+            </button>
+            <button id="calendarTodayBtn" class="calendar-pill-btn" type="button">Today</button>
+            <button id="calendarNextBtn" class="calendar-icon-btn" type="button" aria-label="Next">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="8 4 14 10 8 16"/></svg>
+            </button>
+          </div>
+          <div class="calendar-toolbar-right">
+            <div class="calendar-mode-tabs" role="tablist" aria-label="Calendar view mode">
+              <button data-calendar-mode="week" class="calendar-mode-tab is-active" type="button" role="tab" id="calendarModeWeekBtn">Week</button>
+              <button data-calendar-mode="month" class="calendar-mode-tab" type="button" role="tab" id="calendarModeMonthBtn">Month</button>
+              <button data-calendar-mode="agenda" class="calendar-mode-tab" type="button" role="tab" id="calendarModeAgendaBtn">List</button>
+            </div>
+            <button id="calendarNewClipBtn" class="calendar-new-btn" type="button">
+              <span aria-hidden="true">+</span><span id="calendarNewClipBtnLabel">New clip</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="calendar-stats">
+          <div class="calendar-stat">
+            <span class="calendar-stat-label" id="calendarStatTotalLabel">Total</span>
+            <strong id="calendarTotalValue" class="calendar-stat-value">0</strong>
+          </div>
+          <div class="calendar-stat">
+            <span class="calendar-stat-label" id="calendarStatPostedLabel">Posted</span>
+            <strong id="calendarPostedValue" class="calendar-stat-value">0</strong>
+          </div>
+          <div class="calendar-stat">
+            <span class="calendar-stat-label" id="calendarStatInProgressLabel">In progress</span>
+            <strong id="calendarInProgressValue" class="calendar-stat-value">0</strong>
+          </div>
+          <div class="calendar-stat">
+            <span class="calendar-stat-label" id="calendarStatCompletionLabel">Completion</span>
+            <strong id="calendarCompletionValue" class="calendar-stat-value">0%</strong>
+          </div>
+        </div>
+
+        <div id="calendarBody" class="calendar-body" aria-live="polite"></div>
+      </section>
+
+      <div id="calendarClipModal" class="modal calendar-modal-v2 hidden" role="dialog" aria-modal="true" aria-labelledby="calendarClipModalTitle">
+        <div class="modal-card calendar-modal-card-v2">
+          <header class="calendar-modal-head">
+            <div class="calendar-modal-head-text">
+              <h2 id="calendarClipModalTitle">New clip</h2>
+              <p id="calendarClipModalSubtitle" class="calendar-modal-subtitle">-</p>
+            </div>
+            <button id="calendarClipModalClose" class="calendar-modal-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>
+            </button>
+          </header>
+          <form id="calendarClipForm" class="calendar-modal-body" novalidate>
+            <div class="cm-field cm-field-full">
+              <label for="calendarClipTitleInput" id="calendarClipTitleLabel">Title</label>
+              <input id="calendarClipTitleInput" type="text" required maxlength="200" placeholder="Ex: Morning routine hook" autocomplete="off" />
+              <p class="cm-error" id="calendarClipTitleError" hidden></p>
+            </div>
+
+            <div class="cm-row">
+              <div class="cm-field">
+                <label for="calendarClipDateInput" id="calendarClipDateLabel">Date</label>
+                <input id="calendarClipDateInput" type="date" required />
               </div>
             </label>
             <label>
@@ -640,7 +648,69 @@
             <div class="calendar-clip-form-actions">
               <button id="calendarClipCancelBtn" class="secondary" type="button">Cancel</button>
               <button id="calendarClipSaveBtn" type="submit">Save</button>
+              <div class="cm-field">
+                <label for="calendarClipTimeInput" id="calendarClipTimeLabel">Time</label>
+                <input id="calendarClipTimeInput" type="time" required step="300" />
+              </div>
             </div>
+
+            <div class="cm-row">
+              <div class="cm-field">
+                <label for="calendarClipTypeInput" id="calendarClipTypeLabel">Type</label>
+                <select id="calendarClipTypeInput">
+                  <option value="REEL" id="calendarTypeOptionReel">Reel</option>
+                  <option value="CAROUSEL" id="calendarTypeOptionCarousel">Carousel</option>
+                  <option value="STORY" id="calendarTypeOptionStory">Story</option>
+                  <option value="STATIC" id="calendarTypeOptionStatic">Static</option>
+                </select>
+              </div>
+              <div class="cm-field">
+                <label for="calendarClipStatusInput" id="calendarClipStatusLabel">Status</label>
+                <select id="calendarClipStatusInput">
+                  <option value="IDEA" id="calendarStatusOptionIdea">Idea</option>
+                  <option value="SCRIPTED" id="calendarStatusOptionScripted">Scripted</option>
+                  <option value="FILMING" id="calendarStatusOptionFilming">Filming</option>
+                  <option value="EDITING" id="calendarStatusOptionEditing">Editing</option>
+                  <option value="READY" id="calendarStatusOptionReady">Ready</option>
+                  <option value="POSTED" id="calendarStatusOptionPosted">Posted</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="cm-field cm-field-full">
+              <label for="calendarClipCaptionInput" id="calendarClipCaptionLabel">Caption</label>
+              <textarea id="calendarClipCaptionInput" rows="3" maxlength="2000" placeholder="Write the caption..."></textarea>
+              <p class="cm-counter"><span id="calendarClipCaptionCount">0</span>/2000</p>
+            </div>
+
+            <div class="cm-field cm-field-full">
+              <div class="cm-script-label-row">
+                <label for="calendarClipScriptInput" id="calendarClipScriptLabel">Script</label>
+                <button type="button" id="openTeleprompterFromFormBtn" class="teleprompter-launch-btn">
+                  <span aria-hidden="true" class="teleprompter-launch-icon">▶</span>
+                  <span id="openTeleprompterFromFormBtnLabel">Teleprompter</span>
+                </button>
+              </div>
+              <div id="calendarClipScriptStructured" class="calendar-script-structured hidden"></div>
+              <textarea id="calendarClipScriptInput" rows="6" maxlength="8000" placeholder="Hook, beats, CTA..."></textarea>
+              <p class="cm-counter"><span id="calendarClipScriptCount">0</span>/8000</p>
+            </div>
+
+            <div class="cm-field cm-field-full" id="calendarClipChecklistField">
+              <label id="calendarChecklistHeading">Post checklist</label>
+              <div id="calendarClipChecklist" class="cm-checklist"></div>
+            </div>
+
+            <footer class="calendar-modal-footer">
+              <button id="calendarClipDeleteBtn" class="calendar-modal-delete" type="button" hidden>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 6 16 6"/><path d="M7 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 6l1 10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1l1-10"/></svg>
+                <span id="calendarClipDeleteBtnLabel">Delete</span>
+              </button>
+              <div class="calendar-modal-footer-actions">
+                <button id="calendarClipCancelBtn" class="calendar-modal-cancel" type="button">Cancel</button>
+                <button id="calendarClipSaveBtn" class="calendar-modal-save" type="submit">Save</button>
+              </div>
+            </footer>
           </form>
         </div>
       </div>
@@ -669,13 +739,89 @@
               </button>
             </div>
             <p id="calendarDetailsScript" class="calendar-clip-details-text">-</p>
+      <div id="teleprompterOverlay" class="teleprompter-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="teleprompterTitle">
+        <div class="teleprompter-topbar">
+          <button type="button" id="teleprompterCloseBtn" class="teleprompter-icon-btn" aria-label="Close teleprompter">×</button>
+          <h2 id="teleprompterTitle" class="teleprompter-title">Teleprompter</h2>
+          <button type="button" id="teleprompterMirrorBtn" class="teleprompter-icon-btn" aria-pressed="false" aria-label="Mirror text">
+            <span aria-hidden="true">⇋</span>
+          </button>
+        </div>
+        <div id="teleprompterStage" class="teleprompter-stage">
+          <div class="teleprompter-reticle" aria-hidden="true"></div>
+          <div id="teleprompterScroller" class="teleprompter-scroller">
+            <div id="teleprompterContent" class="teleprompter-content"></div>
           </div>
-          <div class="calendar-clip-checklist-wrap">
-            <h3 class="calendar-clip-checklist-title" id="calendarChecklistHeading">Post checklist</h3>
-            <div id="calendarClipChecklist" class="calendar-clip-checklist"></div>
+        </div>
+        <div class="teleprompter-controls">
+          <div class="teleprompter-control-row">
+            <button type="button" id="teleprompterRestartBtn" class="teleprompter-secondary-btn">
+              <span aria-hidden="true">↺</span>
+              <span id="teleprompterRestartLabel">Restart</span>
+            </button>
+            <button type="button" id="teleprompterPlayBtn" class="teleprompter-play-btn" aria-pressed="false">
+              <span id="teleprompterPlayIcon" aria-hidden="true">▶</span>
+              <span id="teleprompterPlayLabel">Play</span>
+            </button>
           </div>
-          <div class="calendar-clip-details-actions">
-            <button id="calendarClipDeleteBtn" class="danger-btn" type="button">Delete clip</button>
+          <div class="teleprompter-slider-row">
+            <label class="teleprompter-slider">
+              <span class="teleprompter-slider-label">
+                <span id="teleprompterSpeedLabel">Speed</span>
+                <span id="teleprompterSpeedValue" class="teleprompter-slider-value">1.0×</span>
+              </span>
+              <input id="teleprompterSpeedInput" type="range" min="0.3" max="3" step="0.1" value="1" />
+            </label>
+            <label class="teleprompter-slider">
+              <span class="teleprompter-slider-label">
+                <span id="teleprompterFontLabel">Font size</span>
+                <span id="teleprompterFontValue" class="teleprompter-slider-value">42px</span>
+              </span>
+              <input id="teleprompterFontInput" type="range" min="22" max="84" step="1" value="42" />
+            </label>
+          </div>
+        </div>
+      </div>
+      <div id="teleprompterOverlay" class="teleprompter-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="teleprompterTitle">
+        <div class="teleprompter-topbar">
+          <button type="button" id="teleprompterCloseBtn" class="teleprompter-icon-btn" aria-label="Close teleprompter">×</button>
+          <h2 id="teleprompterTitle" class="teleprompter-title">Teleprompter</h2>
+          <button type="button" id="teleprompterMirrorBtn" class="teleprompter-icon-btn" aria-pressed="false" aria-label="Mirror text">
+            <span aria-hidden="true">⇋</span>
+          </button>
+        </div>
+        <div id="teleprompterStage" class="teleprompter-stage">
+          <div class="teleprompter-reticle" aria-hidden="true"></div>
+          <div id="teleprompterScroller" class="teleprompter-scroller">
+            <div id="teleprompterContent" class="teleprompter-content"></div>
+          </div>
+        </div>
+        <div class="teleprompter-controls">
+          <div class="teleprompter-control-row">
+            <button type="button" id="teleprompterRestartBtn" class="teleprompter-secondary-btn">
+              <span aria-hidden="true">↺</span>
+              <span id="teleprompterRestartLabel">Restart</span>
+            </button>
+            <button type="button" id="teleprompterPlayBtn" class="teleprompter-play-btn" aria-pressed="false">
+              <span id="teleprompterPlayIcon" aria-hidden="true">▶</span>
+              <span id="teleprompterPlayLabel">Play</span>
+            </button>
+          </div>
+          <div class="teleprompter-slider-row">
+            <label class="teleprompter-slider">
+              <span class="teleprompter-slider-label">
+                <span id="teleprompterSpeedLabel">Speed</span>
+                <span id="teleprompterSpeedValue" class="teleprompter-slider-value">1.0×</span>
+              </span>
+              <input id="teleprompterSpeedInput" type="range" min="0.3" max="3" step="0.1" value="1" />
+            </label>
+            <label class="teleprompter-slider">
+              <span class="teleprompter-slider-label">
+                <span id="teleprompterFontLabel">Font size</span>
+                <span id="teleprompterFontValue" class="teleprompter-slider-value">42px</span>
+              </span>
+              <input id="teleprompterFontInput" type="range" min="22" max="84" step="1" value="42" />
+            </label>
           </div>
         </div>
       </div>
