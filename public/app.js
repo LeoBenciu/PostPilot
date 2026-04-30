@@ -2443,10 +2443,12 @@ document.addEventListener("click", (e) => {
     if (!rawPayload) return;
     try {
       const payload = JSON.parse(decodeURIComponent(rawPayload));
+      const fallbackCaption =
+        String(payload.caption || "").trim() || String(lastAgentCalendarDraft?.caption || "").trim();
       const draft = {
         title: String(payload.title || "").trim() || "New clip",
         type: normalizeClipType(payload.type || "REEL"),
-        caption: String(payload.caption || "").trim(),
+        caption: fallbackCaption,
         script: String(payload.script || "").trim(),
         scriptBeats: normalizeScriptBeats(payload.scriptBeats),
       };
@@ -3975,6 +3977,7 @@ function extractDraftFromAssistantContent(content) {
   const cardRegex = /```card:(\w+)\s*\n([\s\S]*?)```/g;
   let match;
   let latestDraft = null;
+  let pendingCaption = "";
   while ((match = cardRegex.exec(text))) {
     const type = match[1];
     let data;
@@ -3987,7 +3990,7 @@ function extractDraftFromAssistantContent(content) {
       latestDraft = {
         title: String(data.hook || data.text || data.title || "").trim() || "New clip",
         type: normalizeClipType(data.format || data.type || "REEL"),
-        caption: String(data.caption || "").trim(),
+        caption: String(data.caption || "").trim() || pendingCaption,
         script: String(data.script || data.hook || "").trim(),
       };
     }
@@ -3996,10 +3999,19 @@ function extractDraftFromAssistantContent(content) {
       latestDraft = {
         title: String(data.title || "Script clip").trim(),
         type: normalizeClipType(data.type || "REEL"),
-        caption: String(data.caption || "").trim(),
+        caption: String(data.caption || "").trim() || pendingCaption,
         script: beats.map((beat) => String(beat.text || beat.content || "").trim()).filter(Boolean).join("\n"),
         scriptBeats: normalizeScriptBeats(beats),
       };
+    }
+    if (type === "caption") {
+      const captionText = String(data.caption || data.text || "").trim();
+      const hashtags = String(data.hashtags || "").trim();
+      const combined = [captionText, hashtags].filter(Boolean).join("\n\n");
+      if (combined) {
+        pendingCaption = combined;
+        if (latestDraft) latestDraft.caption = combined;
+      }
     }
   }
   return latestDraft;
