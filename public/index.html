@@ -630,6 +630,24 @@
                 <label for="calendarClipDateInput" id="calendarClipDateLabel">Date</label>
                 <input id="calendarClipDateInput" type="date" required />
               </div>
+            </label>
+            <label>
+              <span id="calendarClipCaptionLabel">Caption</span>
+              <textarea id="calendarClipCaptionInput" rows="3" maxlength="500" placeholder="Write the caption..."></textarea>
+            </label>
+            <label>
+              <div class="calendar-clip-details-script-head">
+                <span id="calendarClipScriptLabel">Script</span>
+                <button type="button" id="openTeleprompterFromFormBtn" class="teleprompter-launch-btn">
+                  <span aria-hidden="true" class="teleprompter-launch-icon">▶</span>
+                  <span id="openTeleprompterFromFormBtnLabel">Teleprompter</span>
+                </button>
+              </div>
+              <textarea id="calendarClipScriptInput" rows="5" maxlength="2000" placeholder="Write the script..."></textarea>
+            </label>
+            <div class="calendar-clip-form-actions">
+              <button id="calendarClipCancelBtn" class="secondary" type="button">Cancel</button>
+              <button id="calendarClipSaveBtn" type="submit">Save</button>
               <div class="cm-field">
                 <label for="calendarClipTimeInput" id="calendarClipTimeLabel">Time</label>
                 <input id="calendarClipTimeInput" type="time" required step="300" />
@@ -666,7 +684,13 @@
             </div>
 
             <div class="cm-field cm-field-full">
-              <label for="calendarClipScriptInput" id="calendarClipScriptLabel">Script</label>
+              <div class="cm-script-label-row">
+                <label for="calendarClipScriptInput" id="calendarClipScriptLabel">Script</label>
+                <button type="button" id="openTeleprompterFromFormBtn" class="teleprompter-launch-btn">
+                  <span aria-hidden="true" class="teleprompter-launch-icon">▶</span>
+                  <span id="openTeleprompterFromFormBtnLabel">Teleprompter</span>
+                </button>
+              </div>
               <div id="calendarClipScriptStructured" class="calendar-script-structured hidden"></div>
               <textarea id="calendarClipScriptInput" rows="6" maxlength="8000" placeholder="Hook, beats, CTA..."></textarea>
               <p class="cm-counter"><span id="calendarClipScriptCount">0</span>/8000</p>
@@ -715,6 +739,49 @@
               </button>
             </div>
             <p id="calendarDetailsScript" class="calendar-clip-details-text">-</p>
+      <div id="teleprompterOverlay" class="teleprompter-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="teleprompterTitle">
+        <div class="teleprompter-topbar">
+          <button type="button" id="teleprompterCloseBtn" class="teleprompter-icon-btn" aria-label="Close teleprompter">×</button>
+          <h2 id="teleprompterTitle" class="teleprompter-title">Teleprompter</h2>
+          <button type="button" id="teleprompterMirrorBtn" class="teleprompter-icon-btn" aria-pressed="false" aria-label="Mirror text">
+            <span aria-hidden="true">⇋</span>
+          </button>
+        </div>
+        <div id="teleprompterStage" class="teleprompter-stage">
+          <div class="teleprompter-reticle" aria-hidden="true"></div>
+          <div id="teleprompterScroller" class="teleprompter-scroller">
+            <div id="teleprompterContent" class="teleprompter-content"></div>
+          </div>
+        </div>
+        <div class="teleprompter-controls">
+          <div class="teleprompter-control-row">
+            <button type="button" id="teleprompterRestartBtn" class="teleprompter-secondary-btn">
+              <span aria-hidden="true">↺</span>
+              <span id="teleprompterRestartLabel">Restart</span>
+            </button>
+            <button type="button" id="teleprompterPlayBtn" class="teleprompter-play-btn" aria-pressed="false">
+              <span id="teleprompterPlayIcon" aria-hidden="true">▶</span>
+              <span id="teleprompterPlayLabel">Play</span>
+            </button>
+          </div>
+          <div class="teleprompter-slider-row">
+            <label class="teleprompter-slider">
+              <span class="teleprompter-slider-label">
+                <span id="teleprompterSpeedLabel">Speed</span>
+                <span id="teleprompterSpeedValue" class="teleprompter-slider-value">1.0×</span>
+              </span>
+              <input id="teleprompterSpeedInput" type="range" min="0.3" max="3" step="0.1" value="1" />
+            </label>
+            <label class="teleprompter-slider">
+              <span class="teleprompter-slider-label">
+                <span id="teleprompterFontLabel">Font size</span>
+                <span id="teleprompterFontValue" class="teleprompter-slider-value">42px</span>
+              </span>
+              <input id="teleprompterFontInput" type="range" min="22" max="84" step="1" value="42" />
+            </label>
+          </div>
+        </div>
+      </div>
       <div id="teleprompterOverlay" class="teleprompter-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="teleprompterTitle">
         <div class="teleprompter-topbar">
           <button type="button" id="teleprompterCloseBtn" class="teleprompter-icon-btn" aria-label="Close teleprompter">×</button>
