@@ -6173,6 +6173,18 @@ pre {
   margin: 0;
 }
 
+.cm-script-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.cm-script-label-row label {
+  margin: 0;
+}
+
 .teleprompter-launch-btn {
   display: inline-flex;
   align-items: center;
