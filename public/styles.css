@@ -649,10 +649,11 @@ body {
 .dashboard-hero-card {
   position: relative;
   padding: 22px 24px;
+  min-height: 92px;
   background:
     radial-gradient(120% 140% at 100% 0%, rgba(255, 75, 117, 0.12) 0%, rgba(255, 255, 255, 0) 55%),
     linear-gradient(135deg, #fff 0%, #fff8fa 100%);
-  overflow: hidden;
+  overflow: visible;
 }
 .dashboard-hero-card::before {
   content: "";
@@ -665,6 +666,7 @@ body {
 .dashboard-hero-card h2 {
   margin: 0;
   font-size: 24px;
+  line-height: 1.2;
   font-weight: 700;
   color: #2d1218;
   letter-spacing: -0.01em;
@@ -723,18 +725,7 @@ body {
   line-height: 1.1;
 }
 .dashboard-stat-delta {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin: 0;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #845660;
-  background: #fff5f7;
-  border: 1px solid #f5d8de;
-  border-radius: 999px;
-  padding: 3px 8px;
-  max-width: 100%;
+  display: none;
 }
 .dashboard-stat-delta-critical {
   color: #b42318;
