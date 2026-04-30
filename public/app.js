@@ -1710,6 +1710,14 @@ function applyLanguage() {
   setTextIfExists("calendarStatPostedLabel", t("calendarStatPosted"));
   setTextIfExists("calendarStatInProgressLabel", t("calendarStatInProgress"));
   setTextIfExists("calendarStatCompletionLabel", t("calendarStatCompletion"));
+  setTextIfExists("calendarClipDetailsTitle", t("calendarDetailsModalTitle"));
+  setTextIfExists("calendarDetailsTitleLabel", t("calendarDetailsTitle"));
+  setTextIfExists("calendarDetailsTypeLabel", t("calendarDetailsType"));
+  setTextIfExists("calendarDetailsStatusLabel", t("calendarDetailsStatus"));
+  setTextIfExists("calendarDetailsScheduledLabel", t("calendarDetailsScheduled"));
+  setTextIfExists("calendarDetailsCaptionHeading", t("calendarDetailsCaption"));
+  setTextIfExists("calendarDetailsScriptHeading", t("calendarDetailsScript"));
+  setTextIfExists("openTeleprompterBtnLabel", t("teleprompterLaunch"));
   setTextIfExists("teleprompterTitle", t("teleprompterTitle"));
   setTextIfExists("teleprompterRestartLabel", t("teleprompterRestart"));
   setTextIfExists("teleprompterPlayLabel", t("teleprompterPlay"));
@@ -4728,6 +4736,195 @@ document.addEventListener("keydown", (event) => {
     if (modal && !modal.classList.contains("hidden")) {
       closeCalendarClipModal();
     }
+  }
+});
+
+const teleprompterState = {
+  playing: false,
+  speed: 1,
+  fontSize: 42,
+  mirrored: false,
+  rafId: null,
+  lastFrameTs: 0,
+  previousBodyOverflow: "",
+  wakeLock: null,
+};
+
+function setTeleprompterPlaying(playing) {
+  teleprompterState.playing = Boolean(playing);
+  const playBtn = document.getElementById("teleprompterPlayBtn");
+  const playIcon = document.getElementById("teleprompterPlayIcon");
+  const playLabel = document.getElementById("teleprompterPlayLabel");
+  if (playBtn) playBtn.setAttribute("aria-pressed", teleprompterState.playing ? "true" : "false");
+  if (playIcon) playIcon.textContent = teleprompterState.playing ? "❚❚" : "▶";
+  if (playLabel) playLabel.textContent = teleprompterState.playing ? t("teleprompterPause") : t("teleprompterPlay");
+}
+
+function teleprompterTick(ts) {
+  if (!teleprompterState.playing) {
+    teleprompterState.rafId = null;
+    return;
+  }
+  const scroller = document.getElementById("teleprompterScroller");
+  if (!scroller) {
+    teleprompterState.rafId = null;
+    return;
+  }
+  if (!teleprompterState.lastFrameTs) teleprompterState.lastFrameTs = ts;
+  const dt = ts - teleprompterState.lastFrameTs;
+  teleprompterState.lastFrameTs = ts;
+  const pixelsPerSecond = 60 * teleprompterState.speed;
+  scroller.scrollTop += (pixelsPerSecond * dt) / 1000;
+  const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+  if (scroller.scrollTop >= maxScroll - 1) {
+    scroller.scrollTop = maxScroll;
+    setTeleprompterPlaying(false);
+    teleprompterState.rafId = null;
+    return;
+  }
+  teleprompterState.rafId = window.requestAnimationFrame(teleprompterTick);
+}
+
+function startTeleprompterAnimation() {
+  if (teleprompterState.rafId) return;
+  teleprompterState.lastFrameTs = 0;
+  teleprompterState.rafId = window.requestAnimationFrame(teleprompterTick);
+}
+
+function stopTeleprompterAnimation() {
+  if (teleprompterState.rafId) {
+    window.cancelAnimationFrame(teleprompterState.rafId);
+    teleprompterState.rafId = null;
+  }
+}
+
+function applyTeleprompterFontSize(size) {
+  const px = Math.max(22, Math.min(84, Math.round(size)));
+  teleprompterState.fontSize = px;
+  const content = document.getElementById("teleprompterContent");
+  const label = document.getElementById("teleprompterFontValue");
+  if (content) content.style.fontSize = `${px}px`;
+  if (label) label.textContent = `${px}px`;
+  const input = document.getElementById("teleprompterFontInput");
+  if (input && Number(input.value) !== px) input.value = String(px);
+}
+
+function applyTeleprompterSpeed(speed) {
+  const value = Math.max(0.3, Math.min(3, Math.round(Number(speed) * 10) / 10));
+  teleprompterState.speed = value;
+  const label = document.getElementById("teleprompterSpeedValue");
+  if (label) label.textContent = `${value.toFixed(1)}×`;
+  const input = document.getElementById("teleprompterSpeedInput");
+  if (input && Number(input.value) !== value) input.value = String(value);
+}
+
+function applyTeleprompterMirror(mirrored) {
+  teleprompterState.mirrored = Boolean(mirrored);
+  const content = document.getElementById("teleprompterContent");
+  const btn = document.getElementById("teleprompterMirrorBtn");
+  if (content) content.classList.toggle("is-mirrored", teleprompterState.mirrored);
+  if (btn) btn.setAttribute("aria-pressed", teleprompterState.mirrored ? "true" : "false");
+}
+
+async function requestTeleprompterWakeLock() {
+  try {
+    if ("wakeLock" in navigator && typeof navigator.wakeLock.request === "function") {
+      teleprompterState.wakeLock = await navigator.wakeLock.request("screen");
+    }
+  } catch (err) {
+    teleprompterState.wakeLock = null;
+  }
+}
+
+function releaseTeleprompterWakeLock() {
+  if (teleprompterState.wakeLock && typeof teleprompterState.wakeLock.release === "function") {
+    teleprompterState.wakeLock.release().catch(() => {});
+  }
+  teleprompterState.wakeLock = null;
+}
+
+function openTeleprompter(scriptText, title) {
+  const overlay = document.getElementById("teleprompterOverlay");
+  const content = document.getElementById("teleprompterContent");
+  const scroller = document.getElementById("teleprompterScroller");
+  const titleEl = document.getElementById("teleprompterTitle");
+  if (!overlay || !content || !scroller) return;
+  const safeText = String(scriptText || "").trim() || t("teleprompterEmptyScript");
+  content.textContent = safeText;
+  if (titleEl) titleEl.textContent = title ? title : t("teleprompterTitle");
+  applyTeleprompterFontSize(teleprompterState.fontSize);
+  applyTeleprompterSpeed(teleprompterState.speed);
+  applyTeleprompterMirror(teleprompterState.mirrored);
+  scroller.scrollTop = 0;
+  setTeleprompterPlaying(false);
+  teleprompterState.previousBodyOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+  overlay.classList.remove("hidden");
+  requestTeleprompterWakeLock();
+}
+
+function closeTeleprompter() {
+  const overlay = document.getElementById("teleprompterOverlay");
+  if (!overlay) return;
+  setTeleprompterPlaying(false);
+  stopTeleprompterAnimation();
+  overlay.classList.add("hidden");
+  document.body.style.overflow = teleprompterState.previousBodyOverflow || "";
+  releaseTeleprompterWakeLock();
+}
+
+document.getElementById("openTeleprompterBtn")?.addEventListener("click", () => {
+  const clip = activeCalendarClipDetails;
+  const scriptText = clip?.script || "";
+  openTeleprompter(scriptText, clip?.title || "");
+});
+
+document.getElementById("teleprompterCloseBtn")?.addEventListener("click", closeTeleprompter);
+
+document.getElementById("teleprompterPlayBtn")?.addEventListener("click", () => {
+  if (teleprompterState.playing) {
+    setTeleprompterPlaying(false);
+    stopTeleprompterAnimation();
+  } else {
+    setTeleprompterPlaying(true);
+    startTeleprompterAnimation();
+  }
+});
+
+document.getElementById("teleprompterRestartBtn")?.addEventListener("click", () => {
+  const scroller = document.getElementById("teleprompterScroller");
+  if (scroller) scroller.scrollTop = 0;
+  setTeleprompterPlaying(false);
+  stopTeleprompterAnimation();
+});
+
+document.getElementById("teleprompterMirrorBtn")?.addEventListener("click", () => {
+  applyTeleprompterMirror(!teleprompterState.mirrored);
+});
+
+document.getElementById("teleprompterSpeedInput")?.addEventListener("input", (event) => {
+  applyTeleprompterSpeed(event.target.value);
+});
+
+document.getElementById("teleprompterFontInput")?.addEventListener("input", (event) => {
+  applyTeleprompterFontSize(event.target.value);
+});
+
+document.addEventListener("keydown", (event) => {
+  const overlay = document.getElementById("teleprompterOverlay");
+  if (!overlay || overlay.classList.contains("hidden")) return;
+  if (event.key === "Escape") {
+    closeTeleprompter();
+  } else if (event.key === " " || event.code === "Space") {
+    event.preventDefault();
+    document.getElementById("teleprompterPlayBtn")?.click();
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && teleprompterState.wakeLock === null) {
+    const overlay = document.getElementById("teleprompterOverlay");
+    if (overlay && !overlay.classList.contains("hidden")) requestTeleprompterWakeLock();
   }
 });
 
