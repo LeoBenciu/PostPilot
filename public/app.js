@@ -204,6 +204,32 @@ const I18N = {
     calendarDeleteClipBtn: "Delete clip",
     calendarDeleteClipConfirm: "Delete this clip from calendar?",
     calendarDeleteClipSuccess: "Clip deleted from calendar.",
+    calendarHeading: "Calendar",
+    calendarModeWeek: "Week",
+    calendarModeMonth: "Month",
+    calendarModeAgenda: "List",
+    calendarNewClip: "New clip",
+    calendarDateLabel: "Date",
+    calendarStatusLabel: "Status",
+    calendarStatusIdea: "Idea",
+    calendarStatusScripted: "Scripted",
+    calendarStatusFilming: "Filming",
+    calendarStatusEditing: "Editing",
+    calendarStatusReady: "Ready",
+    calendarStatusPosted: "Posted",
+    calendarEmptyTitle: "No clips yet",
+    calendarEmptySubtitle: "Click any day to start scheduling, or use the New clip button.",
+    calendarSubtitleNew: "Pick a date and time to schedule a new clip.",
+    calendarSubtitleEdit: "Editing existing clip — changes save instantly.",
+    calendarSaveError: "Could not save clip. Please try again.",
+    calendarLoadError: "Could not load your calendar.",
+    calendarTitleRequired: "Please enter a title.",
+    calendarMonthAddHint: "+ Add",
+    calendarAgendaToday: "Today",
+    calendarAgendaTomorrow: "Tomorrow",
+    calendarAgendaEmpty: "Nothing scheduled in this range.",
+    calendarMoveSuccess: "Clip rescheduled.",
+    calendarMoveError: "Could not move clip.",
     newChat: "Reset chat",
     settings: "Settings",
     disconnect: "Disconnect",
@@ -542,6 +568,32 @@ const I18N = {
     calendarDeleteClipBtn: "Sterge clipul",
     calendarDeleteClipConfirm: "Stergi acest clip din calendar?",
     calendarDeleteClipSuccess: "Clipul a fost sters din calendar.",
+    calendarHeading: "Calendar",
+    calendarModeWeek: "Saptamana",
+    calendarModeMonth: "Luna",
+    calendarModeAgenda: "Lista",
+    calendarNewClip: "Clip nou",
+    calendarDateLabel: "Data",
+    calendarStatusLabel: "Status",
+    calendarStatusIdea: "Idee",
+    calendarStatusScripted: "Scriptat",
+    calendarStatusFilming: "Filmare",
+    calendarStatusEditing: "Editare",
+    calendarStatusReady: "Gata",
+    calendarStatusPosted: "Postat",
+    calendarEmptyTitle: "Niciun clip planificat",
+    calendarEmptySubtitle: "Apasa pe orice zi sau pe Clip nou pentru a programa.",
+    calendarSubtitleNew: "Alege o data si ora pentru a programa un clip nou.",
+    calendarSubtitleEdit: "Editezi clipul existent — modificarile se salveaza instant.",
+    calendarSaveError: "Nu am putut salva clipul. Incearca din nou.",
+    calendarLoadError: "Nu am putut incarca calendarul.",
+    calendarTitleRequired: "Adauga un titlu.",
+    calendarMonthAddHint: "+ Adauga",
+    calendarAgendaToday: "Azi",
+    calendarAgendaTomorrow: "Maine",
+    calendarAgendaEmpty: "Nimic programat in acest interval.",
+    calendarMoveSuccess: "Clip reprogramat.",
+    calendarMoveError: "Nu am putut muta clipul.",
     newChat: "Reset chat",
     settings: "Setari",
     disconnect: "Deconectare",
@@ -1612,35 +1664,37 @@ function applyLanguage() {
   setTextIfExists("calendarClipTitleLabel", t("calendarModalTitleLabel"));
   setTextIfExists("calendarClipTypeLabel", t("calendarModalTypeLabel"));
   setTextIfExists("calendarClipTimeLabel", t("calendarModalTimeLabel"));
+  setTextIfExists("calendarClipDateLabel", t("calendarDateLabel"));
+  setTextIfExists("calendarClipStatusLabel", t("calendarStatusLabel"));
   setTextIfExists("calendarClipCaptionLabel", t("calendarModalCaptionLabel"));
   setTextIfExists("calendarClipScriptLabel", t("calendarModalScriptLabel"));
   setTextIfExists("calendarTypeOptionReel", t("calendarModalTypeReel"));
   setTextIfExists("calendarTypeOptionCarousel", t("calendarModalTypeCarousel"));
   setTextIfExists("calendarTypeOptionStory", t("calendarModalTypeStory"));
   setTextIfExists("calendarTypeOptionStatic", t("calendarModalTypeStatic"));
+  setTextIfExists("calendarStatusOptionIdea", t("calendarStatusIdea"));
+  setTextIfExists("calendarStatusOptionScripted", t("calendarStatusScripted"));
+  setTextIfExists("calendarStatusOptionFilming", t("calendarStatusFilming"));
+  setTextIfExists("calendarStatusOptionEditing", t("calendarStatusEditing"));
+  setTextIfExists("calendarStatusOptionReady", t("calendarStatusReady"));
+  setTextIfExists("calendarStatusOptionPosted", t("calendarStatusPosted"));
   setTextIfExists("calendarClipCancelBtn", t("calendarModalCancel"));
   setTextIfExists("calendarClipSaveBtn", t("calendarModalSave"));
+  setTextIfExists("calendarClipDeleteBtnLabel", t("calendarDeleteClipBtn"));
   setPlaceholderIfExists("calendarClipTitleInput", t("calendarModalTitlePlaceholder"));
   setPlaceholderIfExists("calendarClipCaptionInput", t("calendarModalCaptionPlaceholder"));
   setPlaceholderIfExists("calendarClipScriptInput", t("calendarModalScriptPlaceholder"));
-  const calendarHourInput = document.getElementById("calendarClipHourInput");
-  const calendarMinuteInput = document.getElementById("calendarClipMinuteInput");
-  if (calendarHourInput) calendarHourInput.setAttribute("aria-label", t("calendarModalHourAria"));
-  if (calendarMinuteInput) calendarMinuteInput.setAttribute("aria-label", t("calendarModalMinuteAria"));
   setTextIfExists("calendarTodayBtn", t("calendarTodayBtn"));
+  setTextIfExists("calendarHeading", t("calendarHeading"));
+  setTextIfExists("calendarModeWeekBtn", t("calendarModeWeek"));
+  setTextIfExists("calendarModeMonthBtn", t("calendarModeMonth"));
+  setTextIfExists("calendarModeAgendaBtn", t("calendarModeAgenda"));
+  setTextIfExists("calendarNewClipBtnLabel", t("calendarNewClip"));
   setTextIfExists("calendarStatTotalLabel", t("calendarStatTotal"));
   setTextIfExists("calendarStatPostedLabel", t("calendarStatPosted"));
   setTextIfExists("calendarStatInProgressLabel", t("calendarStatInProgress"));
   setTextIfExists("calendarStatCompletionLabel", t("calendarStatCompletion"));
-  setTextIfExists("calendarClipDetailsTitle", t("calendarDetailsModalTitle"));
-  setTextIfExists("calendarDetailsTitleLabel", t("calendarDetailsTitle"));
-  setTextIfExists("calendarDetailsTypeLabel", t("calendarDetailsType"));
-  setTextIfExists("calendarDetailsStatusLabel", t("calendarDetailsStatus"));
-  setTextIfExists("calendarDetailsScheduledLabel", t("calendarDetailsScheduled"));
-  setTextIfExists("calendarDetailsCaptionHeading", t("calendarDetailsCaption"));
-  setTextIfExists("calendarDetailsScriptHeading", t("calendarDetailsScript"));
   setTextIfExists("calendarChecklistHeading", t("calendarChecklistTitle"));
-  setTextIfExists("calendarClipDeleteBtn", t("calendarDeleteClipBtn"));
   setTextIfExists("dashboardFollowersLabel", t("dashboardFollowersLabel"));
   setTextIfExists("dashboardEngagementLabel", t("dashboardEngagementLabel"));
   setTextIfExists("dashboardViewsLabel", t("dashboardViewsLabel"));
@@ -2975,14 +3029,11 @@ async function loadDashboardView() {
   }
 }
 
-let calendarWeekOffset = 0;
-let pendingCalendarDate = null;
-let activeCalendarClipDetails = null;
-let lastAgentCalendarDraft = null;
-let lastAgentCalendarPlan = null;
-const calendarCustomClipsByWeek = new Map();
-const calendarClipIndex = new Map();
-const calendarSeed = [];
+const CALENDAR_VIEW_MODE_KEY = "postpilot:calendarMode";
+const CALENDAR_VALID_MODES = new Set(["week", "month", "agenda"]);
+const CALENDAR_STATUSES = ["IDEA", "SCRIPTED", "FILMING", "EDITING", "READY", "POSTED"];
+const CALENDAR_TYPES = ["REEL", "CAROUSEL", "STORY", "STATIC"];
+const CALENDAR_DEFAULT_TIME = "19:30";
 const CALENDAR_CHECKLIST_ITEMS = [
   { key: "hookOverlay", labelKey: "calendarChecklistHookOverlay" },
   { key: "captions", labelKey: "calendarChecklistCaptions" },
@@ -2992,18 +3043,51 @@ const CALENDAR_CHECKLIST_ITEMS = [
   { key: "bestTime", labelKey: "calendarChecklistBestTime" },
 ];
 
-function startOfWeek(baseDate) {
-  const d = new Date(baseDate);
+let calendarMode = "week";
+try {
+  const saved = localStorage.getItem(CALENDAR_VIEW_MODE_KEY);
+  if (saved && CALENDAR_VALID_MODES.has(saved)) calendarMode = saved;
+} catch (_e) { /* ignore */ }
+
+let calendarAnchor = startOfDayLocal(new Date());
+let calendarLoaded = false;
+let calendarLoading = false;
+let calendarClips = [];
+let calendarEditingClipId = null;
+let calendarDragId = null;
+let lastAgentCalendarDraft = null;
+let lastAgentCalendarPlan = null;
+
+function startOfDayLocal(date) {
+  const d = new Date(date);
   d.setHours(0, 0, 0, 0);
-  const day = d.getDay();
-  const diffToMonday = (day + 6) % 7;
+  return d;
+}
+
+function startOfWeek(baseDate) {
+  const d = startOfDayLocal(baseDate);
+  const diffToMonday = (d.getDay() + 6) % 7;
   d.setDate(d.getDate() - diffToMonday);
+  return d;
+}
+
+function startOfMonth(baseDate) {
+  const d = new Date(baseDate);
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
   return d;
 }
 
 function addDays(date, days) {
   const copy = new Date(date);
   copy.setDate(copy.getDate() + days);
+  return copy;
+}
+
+function addMonths(date, months) {
+  const copy = new Date(date);
+  copy.setDate(1);
+  copy.setMonth(copy.getMonth() + months);
   return copy;
 }
 
@@ -3014,38 +3098,105 @@ function toLocalDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
-function buildCalendarWeekData(weekStart) {
-  const weekKey = toLocalDateKey(weekStart);
-  const baseClips = calendarSeed.map((item, idx) => ({
-    id: `seed-${idx}`,
-    title: item.title,
-    type: item.type,
-    status: item.status,
-    scheduledAt: `${toLocalDateKey(addDays(weekStart, item.dayOffset))}T${item.time}:00`,
-  }));
-  const customClips = calendarCustomClipsByWeek.get(weekKey) || [];
-  return [...baseClips, ...customClips];
+function calendarLocale() {
+  return currentLanguage === "ro" ? "ro-RO" : "en-GB";
 }
 
-function getCalendarWeekStart() {
-  const nowWeekStart = startOfWeek(new Date());
-  return addDays(nowWeekStart, calendarWeekOffset * 7);
+function escapeHtml(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
-function formatCalendarRange(weekStart) {
-  const weekEnd = addDays(weekStart, 6);
-  const fmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+function calendarStatusLabel(status) {
+  switch (String(status || "").toUpperCase()) {
+    case "IDEA": return t("calendarStatusIdea");
+    case "SCRIPTED": return t("calendarStatusScripted");
+    case "FILMING": return t("calendarStatusFilming");
+    case "EDITING": return t("calendarStatusEditing");
+    case "READY": return t("calendarStatusReady");
+    case "POSTED": return t("calendarStatusPosted");
+    default: return t("calendarStatusIdea");
+  }
+}
+
+function calendarTypeLabel(type) {
+  switch (String(type || "").toUpperCase()) {
+    case "REEL": return t("calendarModalTypeReel");
+    case "CAROUSEL":
+    case "CARUSEL": return t("calendarModalTypeCarousel");
+    case "STORY": return t("calendarModalTypeStory");
+    case "STATIC": return t("calendarModalTypeStatic");
+    default: return t("calendarModalTypeReel");
+  }
+}
+
+function normalizeClipType(rawType) {
+  const value = String(rawType || "").toUpperCase();
+  if (value.includes("CAROUSEL") || value.includes("CARUSEL")) return "CAROUSEL";
+  if (value.includes("STORY")) return "STORY";
+  if (value.includes("STATIC") || value.includes("IMAGE") || value.includes("PHOTO")) return "STATIC";
+  return "REEL";
+}
+
+function calendarStatusClass(status) {
+  return `is-status-${String(status || "IDEA").toLowerCase()}`;
+}
+
+function calendarVisibleRange() {
+  if (calendarMode === "month") {
+    const start = startOfMonth(calendarAnchor);
+    const end = addMonths(start, 1);
+    return { start, end: addDays(end, -1) };
+  }
+  if (calendarMode === "agenda") {
+    const start = startOfDayLocal(calendarAnchor);
+    return { start, end: addDays(start, 13) };
+  }
+  const start = startOfWeek(calendarAnchor);
+  return { start, end: addDays(start, 6) };
+}
+
+function clipsInRange(start, end) {
+  const startMs = start.getTime();
+  const endMs = addDays(end, 1).getTime();
+  return calendarClips.filter((clip) => {
+    const t = new Date(clip.scheduledAt).getTime();
+    return Number.isFinite(t) && t >= startMs && t < endMs;
   });
-  return `${fmt.format(weekStart)} - ${fmt.format(weekEnd)}`;
 }
 
-function updateCalendarStats(clips) {
-  const total = clips.length;
-  const posted = clips.filter((clip) => clip.status === "Postat").length;
-  const inProgress = clips.filter((clip) => ["Scriptat", "Filmare", "Editare", "Gata"].includes(clip.status)).length;
+function clipsForDay(dayDate) {
+  const key = toLocalDateKey(dayDate);
+  return calendarClips
+    .filter((clip) => String(clip.scheduledAt).startsWith(key))
+    .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+}
+
+function getClipById(id) {
+  return calendarClips.find((c) => String(c.id) === String(id));
+}
+
+function formatRangeLabel() {
+  const { start, end } = calendarVisibleRange();
+  const locale = calendarLocale();
+  if (calendarMode === "month") {
+    return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(start);
+  }
+  const fmt = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" });
+  const yearFmt = new Intl.DateTimeFormat(locale, { year: "numeric" });
+  return `${fmt.format(start)} – ${fmt.format(end)} ${yearFmt.format(end)}`;
+}
+
+function updateCalendarStats() {
+  const { start, end } = calendarVisibleRange();
+  const visible = clipsInRange(start, end);
+  const total = visible.length;
+  const posted = visible.filter((c) => c.status === "POSTED").length;
+  const inProgress = visible.filter((c) => ["SCRIPTED", "FILMING", "EDITING", "READY"].includes(c.status)).length;
   const completion = total > 0 ? Math.round((posted / total) * 100) : 0;
   setTextIfExists("calendarTotalValue", String(total));
   setTextIfExists("calendarPostedValue", String(posted));
@@ -3053,170 +3204,416 @@ function updateCalendarStats(clips) {
   setTextIfExists("calendarCompletionValue", `${completion}%`);
 }
 
-function renderCalendarView() {
-  const weekStart = getCalendarWeekStart();
-  const clips = buildCalendarWeekData(weekStart);
-  calendarClipIndex.clear();
-  clips.forEach((clip) => {
-    if (clip?.id) calendarClipIndex.set(clip.id, clip);
-  });
-  setTextIfExists("calendarRangeLabel", formatCalendarRange(weekStart));
-  updateCalendarStats(clips);
-  const grid = document.getElementById("calendarGrid");
-  if (!grid) return;
-  grid.innerHTML = "";
+function clipCardHtml(clip, { compact = false } = {}) {
+  const time = new Intl.DateTimeFormat(calendarLocale(), { hour: "2-digit", minute: "2-digit" })
+    .format(new Date(clip.scheduledAt));
+  return `
+    <button class="cal-clip ${calendarStatusClass(clip.status)}${compact ? " is-compact" : ""}"
+            type="button"
+            draggable="true"
+            data-calendar-clip-id="${escapeHtml(clip.id)}">
+      <span class="cal-clip-time">${escapeHtml(time)}</span>
+      <span class="cal-clip-title">${escapeHtml(clip.title)}</span>
+      ${compact ? "" : `<span class="cal-clip-meta">${escapeHtml(calendarTypeLabel(clip.type))} · ${escapeHtml(calendarStatusLabel(clip.status))}</span>`}
+    </button>
+  `;
+}
 
-  const dayNameFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", { weekday: "short" });
-  const timeFmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", { hour: "2-digit", minute: "2-digit" });
-  const todayIso = toLocalDateKey(new Date());
-  const todayStart = toStartOfDayLocal(new Date());
+function emptyStateHtml() {
+  return `
+    <div class="cal-empty">
+      <div class="cal-empty-mark" aria-hidden="true">📅</div>
+      <h3>${escapeHtml(t("calendarEmptyTitle"))}</h3>
+      <p>${escapeHtml(t("calendarEmptySubtitle"))}</p>
+      <button type="button" class="cal-empty-cta" data-calendar-add-day="${escapeHtml(toLocalDateKey(new Date()))}">+ ${escapeHtml(t("calendarNewClip"))}</button>
+    </div>
+  `;
+}
 
+function renderWeekView(body) {
+  const { start } = calendarVisibleRange();
+  const locale = calendarLocale();
+  const dayName = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  const dayNum = new Intl.DateTimeFormat(locale, { day: "numeric" });
+  const todayKey = toLocalDateKey(new Date());
+  const cols = [];
+  let total = 0;
   for (let i = 0; i < 7; i += 1) {
-    const dayDate = addDays(weekStart, i);
+    const dayDate = addDays(start, i);
     const dayIso = toLocalDateKey(dayDate);
-    const dayClips = clips.filter((clip) => clip.scheduledAt.startsWith(dayIso));
-    const isPastDay = toStartOfDayLocal(dayDate).getTime() < todayStart.getTime();
-    const dayColumn = document.createElement("article");
-    dayColumn.className = "calendar-day-column";
-    if (dayIso === todayIso) dayColumn.classList.add("is-today");
+    const dayClips = clipsForDay(dayDate);
+    total += dayClips.length;
+    const isToday = dayIso === todayKey;
+    cols.push(`
+      <article class="cal-day${isToday ? " is-today" : ""}" data-calendar-drop-day="${dayIso}">
+        <header class="cal-day-head">
+          <span class="cal-day-name">${escapeHtml(dayName.format(dayDate))}</span>
+          <span class="cal-day-num">${escapeHtml(dayNum.format(dayDate))}</span>
+        </header>
+        <div class="cal-day-clips">
+          ${dayClips.map((c) => clipCardHtml(c)).join("")}
+        </div>
+        <button class="cal-day-add" type="button" data-calendar-add-day="${dayIso}" aria-label="${escapeHtml(t("calendarAddClipBtn"))}">
+          + ${escapeHtml(t("calendarAddClipBtn").replace(/^[+]\s*/, ""))}
+        </button>
+      </article>
+    `);
+  }
+  body.innerHTML = total === 0
+    ? `<div class="cal-week">${cols.join("")}</div>${emptyStateHtml()}`
+    : `<div class="cal-week">${cols.join("")}</div>`;
+}
 
-    const cardsHtml = dayClips
-      .map((clip) => {
-        const clipDate = new Date(clip.scheduledAt);
-        return `
-          <button class="calendar-clip-card" data-calendar-clip-id="${clip.id}" type="button">
-            <p class="calendar-clip-title">${clip.title}</p>
-            <p class="calendar-clip-meta">${clip.type} - ${timeFmt.format(clipDate)}</p>
-            <span class="calendar-clip-status">${clip.status}</span>
-          </button>
-        `;
-      })
-      .join("");
+function renderMonthView(body) {
+  const monthStart = startOfMonth(calendarAnchor);
+  const gridStart = startOfWeek(monthStart);
+  const locale = calendarLocale();
+  const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  const todayKey = toLocalDateKey(new Date());
+  const monthIdx = monthStart.getMonth();
 
-    dayColumn.innerHTML = `
-      <header class="calendar-day-header">
-        <span class="calendar-day-name">${dayNameFmt.format(dayDate)}</span>
-        <span class="calendar-day-date">${dayDate.getDate()}</span>
-      </header>
-      <div class="calendar-day-clips">${cardsHtml || ""}</div>
-      ${isPastDay ? "" : `<button class="secondary calendar-day-add-btn" data-calendar-add-day="${dayIso}" type="button">${t("calendarAddClipBtn")}</button>`}
-    `;
-    grid.appendChild(dayColumn);
+  const headers = [];
+  for (let i = 0; i < 7; i += 1) {
+    headers.push(`<div class="cal-month-weekday">${escapeHtml(weekdayFmt.format(addDays(gridStart, i)))}</div>`);
+  }
+
+  const cells = [];
+  for (let i = 0; i < 42; i += 1) {
+    const cellDate = addDays(gridStart, i);
+    const cellIso = toLocalDateKey(cellDate);
+    const inMonth = cellDate.getMonth() === monthIdx;
+    const isToday = cellIso === todayKey;
+    const dayClips = clipsForDay(cellDate);
+    const visible = dayClips.slice(0, 3).map((c) => clipCardHtml(c, { compact: true })).join("");
+    const moreCount = Math.max(0, dayClips.length - 3);
+    cells.push(`
+      <div class="cal-month-cell${inMonth ? "" : " is-out"}${isToday ? " is-today" : ""}"
+           data-calendar-drop-day="${cellIso}">
+        <header class="cal-month-cell-head">
+          <span class="cal-month-cell-num">${cellDate.getDate()}</span>
+          <button class="cal-month-cell-add" type="button" data-calendar-add-day="${cellIso}" aria-label="${escapeHtml(t("calendarMonthAddHint"))}">+</button>
+        </header>
+        <div class="cal-month-cell-clips">${visible}</div>
+        ${moreCount > 0 ? `<button class="cal-month-cell-more" type="button" data-calendar-day-jump="${cellIso}">+${moreCount}</button>` : ""}
+      </div>
+    `);
+  }
+
+  body.innerHTML = `
+    <div class="cal-month">
+      <div class="cal-month-weekdays">${headers.join("")}</div>
+      <div class="cal-month-grid">${cells.join("")}</div>
+    </div>
+  `;
+}
+
+function renderAgendaView(body) {
+  const { start, end } = calendarVisibleRange();
+  const locale = calendarLocale();
+  const dayHeader = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "short" });
+  const todayKey = toLocalDateKey(new Date());
+  const tomorrowKey = toLocalDateKey(addDays(new Date(), 1));
+  const groups = [];
+  let totalShown = 0;
+
+  for (let cursor = new Date(start); cursor <= end; cursor = addDays(cursor, 1)) {
+    const dayClips = clipsForDay(cursor);
+    if (!dayClips.length) continue;
+    totalShown += dayClips.length;
+    const iso = toLocalDateKey(cursor);
+    let label = dayHeader.format(cursor);
+    if (iso === todayKey) label = `${t("calendarAgendaToday")} · ${label}`;
+    else if (iso === tomorrowKey) label = `${t("calendarAgendaTomorrow")} · ${label}`;
+    groups.push(`
+      <section class="cal-agenda-day" data-calendar-drop-day="${iso}">
+        <header class="cal-agenda-head">
+          <h3>${escapeHtml(label)}</h3>
+          <button class="cal-agenda-add" type="button" data-calendar-add-day="${iso}">+ ${escapeHtml(t("calendarAddClipBtn").replace(/^[+]\s*/, ""))}</button>
+        </header>
+        <div class="cal-agenda-list">
+          ${dayClips.map((c) => clipCardHtml(c)).join("")}
+        </div>
+      </section>
+    `);
+  }
+
+  body.innerHTML = totalShown === 0
+    ? emptyStateHtml()
+    : `<div class="cal-agenda">${groups.join("")}</div>`;
+}
+
+function renderCalendarView() {
+  const body = document.getElementById("calendarBody");
+  if (!body) return;
+  setTextIfExists("calendarRangeLabel", formatRangeLabel());
+  updateCalendarStats();
+  document.querySelectorAll("[data-calendar-mode]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.getAttribute("data-calendar-mode") === calendarMode);
+    btn.setAttribute("aria-selected", btn.getAttribute("data-calendar-mode") === calendarMode ? "true" : "false");
+  });
+  if (calendarLoading) {
+    body.innerHTML = `<div class="cal-loading"><span class="cal-loading-spinner" aria-hidden="true"></span></div>`;
+    return;
+  }
+  if (calendarMode === "month") return renderMonthView(body);
+  if (calendarMode === "agenda") return renderAgendaView(body);
+  return renderWeekView(body);
+}
+
+async function loadCalendarClips({ silent = false } = {}) {
+  if (!silent) calendarLoading = true;
+  if (!silent) renderCalendarView();
+  try {
+    const data = await api("/api/calendar/clips");
+    calendarClips = Array.isArray(data?.clips) ? data.clips : [];
+    calendarLoaded = true;
+  } catch (err) {
+    showToast(`${t("calendarLoadError")}: ${err.message || err}`);
+  } finally {
+    calendarLoading = false;
+    renderCalendarView();
   }
 }
 
-function openCalendarClipModal(dayIso) {
-  pendingCalendarDate = dayIso;
-  setHidden("calendarClipModal", false);
-  const titleInput = document.getElementById("calendarClipTitleInput");
-  if (titleInput) {
-    titleInput.value = "";
-    titleInput.focus();
+async function ensureCalendarLoaded() {
+  if (!calendarLoaded && !calendarLoading) await loadCalendarClips();
+}
+
+async function createClipApi(payload) {
+  const res = await api("/api/calendar/clips", "POST", payload);
+  return res?.clip || null;
+}
+
+async function updateClipApi(id, patch) {
+  const res = await api(`/api/calendar/clips/${encodeURIComponent(id)}`, "PUT", patch);
+  return res?.clip || null;
+}
+
+async function deleteClipApi(id) {
+  await api(`/api/calendar/clips/${encodeURIComponent(id)}`, "DELETE");
+}
+
+function setCalendarMode(mode) {
+  if (!CALENDAR_VALID_MODES.has(mode)) return;
+  calendarMode = mode;
+  try { localStorage.setItem(CALENDAR_VIEW_MODE_KEY, mode); } catch (_e) { /* ignore */ }
+  renderCalendarView();
+}
+
+function navigateCalendar(direction) {
+  if (calendarMode === "month") {
+    calendarAnchor = addMonths(calendarAnchor, direction);
+  } else if (calendarMode === "agenda") {
+    calendarAnchor = addDays(calendarAnchor, direction * 14);
+  } else {
+    calendarAnchor = addDays(calendarAnchor, direction * 7);
   }
-  const hourInput = document.getElementById("calendarClipHourInput");
-  const minuteInput = document.getElementById("calendarClipMinuteInput");
-  if (hourInput) hourInput.value = "19";
-  if (minuteInput) minuteInput.value = "30";
-  const captionInput = document.getElementById("calendarClipCaptionInput");
-  if (captionInput) captionInput.value = "";
-  const scriptInput = document.getElementById("calendarClipScriptInput");
-  if (scriptInput) scriptInput.value = "";
+  renderCalendarView();
 }
 
-function closeCalendarClipModal() {
-  pendingCalendarDate = null;
-  setHidden("calendarClipModal", true);
+function gotoToday() {
+  calendarAnchor = startOfDayLocal(new Date());
+  renderCalendarView();
 }
 
-function renderCalendarClipChecklist(clip) {
-  const checklistEl = document.getElementById("calendarClipChecklist");
-  if (!checklistEl || !clip) return;
-  if (!clip.checklist || typeof clip.checklist !== "object") clip.checklist = {};
-  checklistEl.innerHTML = CALENDAR_CHECKLIST_ITEMS.map((item) => `
-    <label class="calendar-check-item">
-      <input type="checkbox" data-clip-checklist-key="${item.key}" ${clip.checklist[item.key] ? "checked" : ""} />
-      <span>${t(item.labelKey)}</span>
+function focusOnDay(dayIso) {
+  const dt = new Date(`${dayIso}T12:00:00`);
+  if (Number.isNaN(dt.getTime())) return;
+  calendarAnchor = startOfDayLocal(dt);
+  setCalendarMode("agenda");
+}
+
+function renderModalChecklist(clip) {
+  const el = document.getElementById("calendarClipChecklist");
+  if (!el) return;
+  const checklist = (clip && typeof clip.checklist === "object" && !Array.isArray(clip.checklist)) ? clip.checklist : {};
+  el.innerHTML = CALENDAR_CHECKLIST_ITEMS.map((item) => `
+    <label class="cm-check">
+      <input type="checkbox" data-clip-checklist-key="${item.key}" ${checklist[item.key] ? "checked" : ""} />
+      <span>${escapeHtml(t(item.labelKey))}</span>
     </label>
   `).join("");
 }
 
-function openCalendarClipDetailsModal(clip) {
-  activeCalendarClipDetails = clip;
-  setTextIfExists("calendarDetailsTitle", clip.title || "-");
-  setTextIfExists("calendarDetailsType", clip.type || "-");
-  setTextIfExists("calendarDetailsStatus", clip.status || "-");
-  const dt = new Date(clip.scheduledAt);
-  const fmt = new Intl.DateTimeFormat(currentLanguage === "ro" ? "ro-RO" : "en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  setTextIfExists("calendarDetailsScheduledAt", Number.isNaN(dt.getTime()) ? clip.scheduledAt : fmt.format(dt));
-  setTextIfExists("calendarDetailsCaption", clip.caption || "-");
-  setTextIfExists("calendarDetailsScript", clip.script || "-");
-  renderCalendarClipChecklist(clip);
-  setHidden("calendarClipDetailsModal", false);
+function setModalCounters() {
+  const cap = document.getElementById("calendarClipCaptionInput");
+  const scr = document.getElementById("calendarClipScriptInput");
+  if (cap) setTextIfExists("calendarClipCaptionCount", String(cap.value.length));
+  if (scr) setTextIfExists("calendarClipScriptCount", String(scr.value.length));
 }
 
-function closeCalendarClipDetailsModal() {
-  activeCalendarClipDetails = null;
-  setHidden("calendarClipDetailsModal", true);
-}
+function fillModalForClip(clip, defaultDateIso) {
+  const isEdit = Boolean(clip);
+  calendarEditingClipId = isEdit ? String(clip.id) : null;
+  const titleInput = document.getElementById("calendarClipTitleInput");
+  const dateInput = document.getElementById("calendarClipDateInput");
+  const timeInput = document.getElementById("calendarClipTimeInput");
+  const typeInput = document.getElementById("calendarClipTypeInput");
+  const statusInput = document.getElementById("calendarClipStatusInput");
+  const captionInput = document.getElementById("calendarClipCaptionInput");
+  const scriptInput = document.getElementById("calendarClipScriptInput");
+  const errorEl = document.getElementById("calendarClipTitleError");
+  const deleteBtn = document.getElementById("calendarClipDeleteBtn");
+  const subtitle = document.getElementById("calendarClipModalSubtitle");
+  const modalTitle = document.getElementById("calendarClipModalTitle");
 
-function deleteCalendarClipById(clipId) {
-  const id = String(clipId || "").trim();
-  if (!id) return false;
-  let removed = false;
-  for (const [weekKey, clips] of calendarCustomClipsByWeek.entries()) {
-    if (!Array.isArray(clips) || clips.length === 0) continue;
-    const nextClips = clips.filter((clip) => String(clip?.id || "") !== id);
-    if (nextClips.length !== clips.length) {
-      removed = true;
-      if (nextClips.length) calendarCustomClipsByWeek.set(weekKey, nextClips);
-      else calendarCustomClipsByWeek.delete(weekKey);
-      break;
+  if (errorEl) errorEl.hidden = true;
+
+  if (isEdit) {
+    if (titleInput) titleInput.value = clip.title || "";
+    const dt = new Date(clip.scheduledAt);
+    if (dateInput && !Number.isNaN(dt.getTime())) dateInput.value = toLocalDateKey(dt);
+    if (timeInput && !Number.isNaN(dt.getTime())) {
+      timeInput.value = `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`;
     }
+    if (typeInput) typeInput.value = CALENDAR_TYPES.includes(clip.type) ? clip.type : "REEL";
+    if (statusInput) statusInput.value = CALENDAR_STATUSES.includes(clip.status) ? clip.status : "IDEA";
+    if (captionInput) captionInput.value = clip.caption || "";
+    if (scriptInput) scriptInput.value = clip.script || "";
+    if (subtitle) subtitle.textContent = t("calendarSubtitleEdit");
+    if (modalTitle) modalTitle.textContent = t("calendarDetailsModalTitle");
+    if (deleteBtn) deleteBtn.hidden = false;
+  } else {
+    if (titleInput) titleInput.value = "";
+    if (dateInput) dateInput.value = defaultDateIso || toLocalDateKey(new Date());
+    if (timeInput) timeInput.value = CALENDAR_DEFAULT_TIME;
+    if (typeInput) typeInput.value = "REEL";
+    if (statusInput) statusInput.value = "IDEA";
+    if (captionInput) captionInput.value = "";
+    if (scriptInput) scriptInput.value = "";
+    if (subtitle) subtitle.textContent = t("calendarSubtitleNew");
+    if (modalTitle) modalTitle.textContent = t("calendarModalTitle");
+    if (deleteBtn) deleteBtn.hidden = true;
   }
-  if (removed) calendarClipIndex.delete(id);
-  return removed;
+
+  renderModalChecklist(clip);
+  setModalCounters();
 }
 
-function saveCalendarClipFromForm() {
-  if (!pendingCalendarDate) return;
+function openCalendarClipModal({ dayIso, clipId } = {}) {
+  const clip = clipId ? getClipById(clipId) : null;
+  fillModalForClip(clip, dayIso);
+  setHidden("calendarClipModal", false);
+  document.body.classList.add("cal-modal-open");
+  setTimeout(() => {
+    const titleInput = document.getElementById("calendarClipTitleInput");
+    titleInput?.focus();
+    titleInput?.select?.();
+  }, 30);
+}
+
+function closeCalendarClipModal() {
+  calendarEditingClipId = null;
+  setHidden("calendarClipModal", true);
+  document.body.classList.remove("cal-modal-open");
+}
+
+function readChecklistFromModal() {
+  const result = {};
+  document.querySelectorAll("#calendarClipChecklist input[data-clip-checklist-key]").forEach((input) => {
+    const key = input.getAttribute("data-clip-checklist-key");
+    if (key) result[key] = Boolean(input.checked);
+  });
+  return result;
+}
+
+function buildClipPayloadFromModal() {
   const title = (document.getElementById("calendarClipTitleInput")?.value || "").trim();
+  const dateValue = document.getElementById("calendarClipDateInput")?.value || "";
+  const timeValue = document.getElementById("calendarClipTimeInput")?.value || CALENDAR_DEFAULT_TIME;
   const type = document.getElementById("calendarClipTypeInput")?.value || "REEL";
-  const hour = (document.getElementById("calendarClipHourInput")?.value || "19").padStart(2, "0");
-  const minute = (document.getElementById("calendarClipMinuteInput")?.value || "30").padStart(2, "0");
-  const time = `${hour}:${minute}`;
-  const caption = (document.getElementById("calendarClipCaptionInput")?.value || "").trim();
-  const script = (document.getElementById("calendarClipScriptInput")?.value || "").trim();
-  if (!title) return;
-  const weekStart = getCalendarWeekStart();
-  const weekKey = toLocalDateKey(weekStart);
-  const current = calendarCustomClipsByWeek.get(weekKey) || [];
-  const nextClip = {
-    id: `custom-${Date.now()}`,
-    title,
-    type,
-    status: "Idee",
-    scheduledAt: `${pendingCalendarDate}T${time}:00`,
-    caption,
-    script,
-    checklist: {},
+  const status = document.getElementById("calendarClipStatusInput")?.value || "IDEA";
+  const caption = document.getElementById("calendarClipCaptionInput")?.value || "";
+  const script = document.getElementById("calendarClipScriptInput")?.value || "";
+  if (!title) return { error: "title" };
+  if (!dateValue) return { error: "date" };
+  const scheduledAt = `${dateValue}T${timeValue.length === 5 ? `${timeValue}:00` : timeValue}`;
+  return {
+    payload: {
+      title,
+      type: normalizeClipType(type),
+      status: CALENDAR_STATUSES.includes(status) ? status : "IDEA",
+      scheduledAt,
+      caption,
+      script,
+      checklist: readChecklistFromModal(),
+    },
   };
-  calendarCustomClipsByWeek.set(weekKey, [...current, nextClip]);
-  closeCalendarClipModal();
-  renderCalendarView();
 }
 
-function normalizeClipType(rawType) {
-  const value = String(rawType || "").toUpperCase();
-  if (value.includes("CAROUSEL")) return "CARUSEL";
-  if (value.includes("STORY")) return "STORY";
-  if (value.includes("STATIC") || value.includes("IMAGE") || value.includes("PHOTO")) return "STATIC";
-  return "REEL";
+async function saveCalendarClipFromForm() {
+  const result = buildClipPayloadFromModal();
+  if (result.error === "title") {
+    const errorEl = document.getElementById("calendarClipTitleError");
+    if (errorEl) {
+      errorEl.textContent = t("calendarTitleRequired");
+      errorEl.hidden = false;
+    }
+    document.getElementById("calendarClipTitleInput")?.focus();
+    return;
+  }
+  if (result.error) return;
+  const saveBtn = document.getElementById("calendarClipSaveBtn");
+  if (saveBtn) saveBtn.disabled = true;
+  try {
+    if (calendarEditingClipId) {
+      const updated = await updateClipApi(calendarEditingClipId, result.payload);
+      if (updated) {
+        const idx = calendarClips.findIndex((c) => String(c.id) === String(updated.id));
+        if (idx >= 0) calendarClips[idx] = updated;
+        else calendarClips.push(updated);
+      }
+    } else {
+      const created = await createClipApi(result.payload);
+      if (created) calendarClips.push(created);
+    }
+    closeCalendarClipModal();
+    renderCalendarView();
+  } catch (err) {
+    showToast(`${t("calendarSaveError")} (${err.message || err})`);
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+  }
+}
+
+async function deleteCalendarClipFromModal() {
+  if (!calendarEditingClipId) return;
+  if (!window.confirm(t("calendarDeleteClipConfirm"))) return;
+  const id = calendarEditingClipId;
+  try {
+    await deleteClipApi(id);
+    calendarClips = calendarClips.filter((c) => String(c.id) !== String(id));
+    closeCalendarClipModal();
+    renderCalendarView();
+    showToast(t("calendarDeleteClipSuccess"));
+  } catch (err) {
+    showToast(`${t("calendarSaveError")} (${err.message || err})`);
+  }
+}
+
+async function moveClipToDay(clipId, dayIso) {
+  const clip = getClipById(clipId);
+  if (!clip) return;
+  const dt = new Date(clip.scheduledAt);
+  const hh = Number.isNaN(dt.getTime()) ? 19 : dt.getHours();
+  const mm = Number.isNaN(dt.getTime()) ? 30 : dt.getMinutes();
+  const newScheduled = `${dayIso}T${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00`;
+  if (newScheduled === clip.scheduledAt) return;
+  const original = clip.scheduledAt;
+  clip.scheduledAt = newScheduled;
+  renderCalendarView();
+  try {
+    const updated = await updateClipApi(clip.id, { ...clip, scheduledAt: newScheduled });
+    if (updated) {
+      const idx = calendarClips.findIndex((c) => String(c.id) === String(updated.id));
+      if (idx >= 0) calendarClips[idx] = updated;
+    }
+    showToast(t("calendarMoveSuccess"));
+  } catch (err) {
+    clip.scheduledAt = original;
+    renderCalendarView();
+    showToast(`${t("calendarMoveError")} (${err.message || err})`);
+  }
 }
 
 function cleanAgentGeneratedTitle(rawTitle) {
@@ -3256,70 +3653,71 @@ function buildAgentAutofillContent(row = {}, rawTopic, cleanTitle) {
   return { caption, script };
 }
 
-function addClipToCalendarState({ title, type, dateKey, time, caption = "", script = "" }) {
-  const weekStart = startOfWeek(new Date(`${dateKey}T12:00:00`));
-  const weekKey = toLocalDateKey(weekStart);
-  const current = calendarCustomClipsByWeek.get(weekKey) || [];
-  const nextClip = {
-    id: `custom-${Date.now()}-${Math.round(Math.random() * 1000)}`,
-    title: String(title || "").trim() || "New clip",
-    type: normalizeClipType(type),
-    status: "Idee",
-    scheduledAt: `${dateKey}T${time}:00`,
-    caption: String(caption || "").trim(),
-    script: String(script || "").trim(),
-    checklist: {},
-  };
-  calendarCustomClipsByWeek.set(weekKey, [...current, nextClip]);
-  return { clip: nextClip, weekStart };
-}
-
-function scheduleDraftInCalendar(draft, { dayOffset = 1, time = "19:30" } = {}) {
+async function scheduleDraftInCalendar(draft, { dayOffset = 1, time = CALENDAR_DEFAULT_TIME } = {}) {
   if (!draft || !draft.title) return null;
   const cleanedTitle = cleanAgentGeneratedTitle(draft.title) || String(draft.title || "").trim() || "New clip";
-  const targetDate = addDays(toStartOfDayLocal(new Date()), dayOffset);
+  const targetDate = addDays(startOfDayLocal(new Date()), dayOffset);
   const dateKey = toLocalDateKey(targetDate);
-  const result = addClipToCalendarState({
+  const payload = {
     title: cleanedTitle,
-    type: draft.type || "REEL",
-    dateKey,
-    time,
+    type: normalizeClipType(draft.type || "REEL"),
+    status: "IDEA",
+    scheduledAt: `${dateKey}T${time}:00`,
     caption: String(draft.caption || "").trim() || cleanedTitle,
     script: String(draft.script || "").trim() || `Hook: ${cleanedTitle}`,
-  });
-  renderCalendarView();
-  return result;
+    checklist: {},
+  };
+  try {
+    const created = await createClipApi(payload);
+    if (created) {
+      calendarClips.push(created);
+      renderCalendarView();
+    }
+    return created;
+  } catch (err) {
+    console.warn("scheduleDraftInCalendar failed", err);
+    return null;
+  }
 }
 
-function scheduleWeekPlanInCalendar(days = []) {
+async function scheduleWeekPlanInCalendar(days = []) {
   if (!Array.isArray(days) || days.length === 0) return 0;
   const rows = days.filter((item) => item && (item.topic || item.title));
   if (!rows.length) return 0;
   const todayRowIndex = rows.findIndex((row) => String(row.status || "").toLowerCase() === "today");
   const baseShift = todayRowIndex >= 0 ? -todayRowIndex : 0;
   let addedCount = 0;
-  rows.forEach((row, idx) => {
+  for (let idx = 0; idx < rows.length; idx += 1) {
+    const row = rows[idx];
     const offset = Math.max(0, idx + baseShift);
     const timeMatch = String(row.time || "").match(/(\d{1,2}):(\d{2})/);
     const hour = Math.max(0, Math.min(23, Number(timeMatch?.[1] ?? 19)));
     const minuteRaw = Number(timeMatch?.[2] ?? 30);
-    const minute = [0, 15, 30, 45].includes(minuteRaw) ? minuteRaw : 30;
+    const minute = Number.isFinite(minuteRaw) ? Math.max(0, Math.min(59, minuteRaw)) : 30;
     const time = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-    const targetDate = addDays(toStartOfDayLocal(new Date()), offset);
+    const targetDate = addDays(startOfDayLocal(new Date()), offset);
     const dateKey = toLocalDateKey(targetDate);
     const rawTopic = String(row.topic || row.title || "").trim();
     const cleanTitle = cleanAgentGeneratedTitle(rawTopic) || rawTopic || "New clip";
     const { caption, script } = buildAgentAutofillContent(row, rawTopic, cleanTitle);
-    const result = addClipToCalendarState({
-      title: cleanTitle,
-      type: row.format || "REEL",
-      dateKey,
-      time,
-      caption,
-      script,
-    });
-    if (result?.clip) addedCount += 1;
-  });
+    try {
+      const created = await createClipApi({
+        title: cleanTitle,
+        type: normalizeClipType(row.format || "REEL"),
+        status: "IDEA",
+        scheduledAt: `${dateKey}T${time}:00`,
+        caption,
+        script,
+        checklist: {},
+      });
+      if (created) {
+        calendarClips.push(created);
+        addedCount += 1;
+      }
+    } catch (err) {
+      console.warn("scheduleWeekPlanInCalendar row failed", err);
+    }
+  }
   if (addedCount > 0) renderCalendarView();
   return addedCount;
 }
@@ -3332,7 +3730,7 @@ function parseScheduleCommand(message) {
   const timeMatch = text.match(/(?:at|la)\s+(\d{1,2})(?::(\d{2}))?/);
   const hour = Math.max(0, Math.min(23, Number(timeMatch?.[1] ?? 19)));
   const minuteRaw = Number(timeMatch?.[2] ?? 30);
-  const minute = [0, 15, 30, 45].includes(minuteRaw) ? minuteRaw : 30;
+  const minute = Number.isFinite(minuteRaw) ? Math.max(0, Math.min(59, minuteRaw)) : 30;
   const time = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
   let dayOffset = 1;
   if (/(today|azi)/.test(text)) dayOffset = 0;
@@ -3394,21 +3792,7 @@ function extractWeekPlanFromAssistantContent(content) {
 }
 
 function initializeCalendarTimePicker() {
-  const hourInput = document.getElementById("calendarClipHourInput");
-  const minuteInput = document.getElementById("calendarClipMinuteInput");
-  if (hourInput && hourInput.options.length === 0) {
-    for (let hour = 0; hour < 24; hour += 1) {
-      const value = String(hour).padStart(2, "0");
-      hourInput.insertAdjacentHTML("beforeend", `<option value="${value}">${value}</option>`);
-    }
-    hourInput.value = "19";
-  }
-  if (minuteInput && minuteInput.options.length === 0) {
-    ["00", "15", "30", "45"].forEach((value) => {
-      minuteInput.insertAdjacentHTML("beforeend", `<option value="${value}">${value}</option>`);
-    });
-    minuteInput.value = "30";
-  }
+  // Native <input type="time"> handles the picker; nothing to populate here.
 }
 
 function setActiveView(view) {
@@ -3435,6 +3819,10 @@ function setActiveView(view) {
         : t("agentView");
   setTextIfExists("activeViewLabel", activeViewLabel);
   refreshAgentEmptyState();
+  if (view === "calendar") {
+    renderCalendarView();
+    ensureCalendarLoaded();
+  }
   try {
     localStorage.setItem(ACTIVE_VIEW_KEY, view);
   } catch (_err) {
@@ -4273,24 +4661,21 @@ dashboardViewBtn?.addEventListener("click", async () => {
   await loadDashboardView();
 });
 
-calendarViewBtn?.addEventListener("click", () => {
+calendarViewBtn?.addEventListener("click", async () => {
   setActiveView("calendar");
   renderCalendarView();
+  await ensureCalendarLoaded();
 });
 
-document.getElementById("calendarPrevWeekBtn")?.addEventListener("click", () => {
-  calendarWeekOffset -= 1;
-  renderCalendarView();
+document.getElementById("calendarPrevBtn")?.addEventListener("click", () => navigateCalendar(-1));
+document.getElementById("calendarNextBtn")?.addEventListener("click", () => navigateCalendar(1));
+document.getElementById("calendarTodayBtn")?.addEventListener("click", () => gotoToday());
+document.getElementById("calendarNewClipBtn")?.addEventListener("click", () => {
+  openCalendarClipModal({ dayIso: toLocalDateKey(new Date()) });
 });
 
-document.getElementById("calendarNextWeekBtn")?.addEventListener("click", () => {
-  calendarWeekOffset += 1;
-  renderCalendarView();
-});
-
-document.getElementById("calendarTodayBtn")?.addEventListener("click", () => {
-  calendarWeekOffset = 0;
-  renderCalendarView();
+document.querySelectorAll("[data-calendar-mode]").forEach((btn) => {
+  btn.addEventListener("click", () => setCalendarMode(btn.getAttribute("data-calendar-mode")));
 });
 
 document.getElementById("calendarClipModalClose")?.addEventListener("click", closeCalendarClipModal);
@@ -4298,36 +4683,31 @@ document.getElementById("calendarClipCancelBtn")?.addEventListener("click", clos
 document.getElementById("calendarClipModal")?.addEventListener("click", (event) => {
   if (event.target?.id === "calendarClipModal") closeCalendarClipModal();
 });
-document.getElementById("calendarClipDetailsClose")?.addEventListener("click", closeCalendarClipDetailsModal);
-document.getElementById("calendarClipDetailsModal")?.addEventListener("click", (event) => {
-  if (event.target?.id === "calendarClipDetailsModal") closeCalendarClipDetailsModal();
-});
 document.getElementById("calendarClipForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
   saveCalendarClipFromForm();
 });
 
-document.getElementById("calendarClipChecklist")?.addEventListener("change", (event) => {
-  const target = event.target;
-  if (!target?.matches?.("input[data-clip-checklist-key]")) return;
-  if (!activeCalendarClipDetails) return;
-  const key = target.getAttribute("data-clip-checklist-key");
-  if (!key) return;
-  if (!activeCalendarClipDetails.checklist || typeof activeCalendarClipDetails.checklist !== "object") {
-    activeCalendarClipDetails.checklist = {};
-  }
-  activeCalendarClipDetails.checklist[key] = Boolean(target.checked);
+["calendarClipCaptionInput", "calendarClipScriptInput"].forEach((id) => {
+  document.getElementById(id)?.addEventListener("input", setModalCounters);
+});
+
+document.getElementById("calendarClipTitleInput")?.addEventListener("input", () => {
+  const errorEl = document.getElementById("calendarClipTitleError");
+  if (errorEl) errorEl.hidden = true;
 });
 
 document.getElementById("calendarClipDeleteBtn")?.addEventListener("click", () => {
-  if (!activeCalendarClipDetails?.id) return;
-  const shouldDelete = window.confirm(t("calendarDeleteClipConfirm"));
-  if (!shouldDelete) return;
-  const deleted = deleteCalendarClipById(activeCalendarClipDetails.id);
-  if (!deleted) return;
-  closeCalendarClipDetailsModal();
-  renderCalendarView();
-  showToast(t("calendarDeleteClipSuccess"));
+  deleteCalendarClipFromModal();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    const modal = document.getElementById("calendarClipModal");
+    if (modal && !modal.classList.contains("hidden")) {
+      closeCalendarClipModal();
+    }
+  }
 });
 
 document.addEventListener("click", (event) => {
@@ -4340,20 +4720,75 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  const dayJump = event.target.closest("[data-calendar-day-jump]");
+  if (dayJump) {
+    event.preventDefault();
+    focusOnDay(dayJump.getAttribute("data-calendar-day-jump"));
+    return;
+  }
+
   const addDayButton = event.target.closest("[data-calendar-add-day]");
   if (addDayButton) {
+    event.preventDefault();
+    event.stopPropagation();
     const dayIso = addDayButton.getAttribute("data-calendar-add-day");
-    if (dayIso) openCalendarClipModal(dayIso);
+    if (dayIso) openCalendarClipModal({ dayIso });
     return;
   }
 
   const clipCard = event.target.closest("[data-calendar-clip-id]");
   if (clipCard) {
     const clipId = clipCard.getAttribute("data-calendar-clip-id");
-    if (!clipId) return;
-    const clip = calendarClipIndex.get(clipId);
-    if (clip) openCalendarClipDetailsModal(clip);
+    if (clipId) openCalendarClipModal({ clipId });
   }
+});
+
+document.addEventListener("dragstart", (event) => {
+  const card = event.target.closest?.("[data-calendar-clip-id]");
+  if (!card) return;
+  calendarDragId = card.getAttribute("data-calendar-clip-id");
+  card.classList.add("is-dragging");
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    try { event.dataTransfer.setData("text/plain", calendarDragId); } catch (_e) { /* ignore */ }
+  }
+});
+
+document.addEventListener("dragend", (event) => {
+  const card = event.target.closest?.("[data-calendar-clip-id]");
+  if (card) card.classList.remove("is-dragging");
+  document.querySelectorAll(".is-drop-target").forEach((el) => el.classList.remove("is-drop-target"));
+  calendarDragId = null;
+});
+
+document.addEventListener("dragover", (event) => {
+  if (!calendarDragId) return;
+  const dropTarget = event.target.closest?.("[data-calendar-drop-day]");
+  if (!dropTarget) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+  document.querySelectorAll(".is-drop-target").forEach((el) => {
+    if (el !== dropTarget) el.classList.remove("is-drop-target");
+  });
+  dropTarget.classList.add("is-drop-target");
+});
+
+document.addEventListener("dragleave", (event) => {
+  const dropTarget = event.target.closest?.("[data-calendar-drop-day]");
+  if (dropTarget && !dropTarget.contains(event.relatedTarget)) {
+    dropTarget.classList.remove("is-drop-target");
+  }
+});
+
+document.addEventListener("drop", (event) => {
+  const dropTarget = event.target.closest?.("[data-calendar-drop-day]");
+  if (!dropTarget || !calendarDragId) return;
+  event.preventDefault();
+  const dayIso = dropTarget.getAttribute("data-calendar-drop-day");
+  const id = calendarDragId;
+  document.querySelectorAll(".is-drop-target").forEach((el) => el.classList.remove("is-drop-target"));
+  calendarDragId = null;
+  if (dayIso && id) moveClipToDay(id, dayIso);
 });
 
 document.getElementById("obConnectInstagramBtn")?.addEventListener("click", () => {

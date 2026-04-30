@@ -812,6 +812,50 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+const VALID_CLIP_TYPES = new Set(["REEL", "CAROUSEL", "STORY", "STATIC"]);
+const VALID_CLIP_STATUSES = new Set(["IDEA", "SCRIPTED", "FILMING", "EDITING", "READY", "POSTED"]);
+
+function clipString(value, max) {
+  const str = String(value == null ? "" : value);
+  return max && str.length > max ? str.slice(0, max) : str;
+}
+
+function sanitizeCalendarClip(input, { isNew }) {
+  if (!input || typeof input !== "object") return null;
+  const title = clipString(input.title, 200).trim();
+  if (!title) return null;
+  const scheduledAt = String(input.scheduledAt || "").trim();
+  if (!scheduledAt || Number.isNaN(new Date(scheduledAt).getTime())) return null;
+  const rawType = String(input.type || "REEL").toUpperCase();
+  const type = VALID_CLIP_TYPES.has(rawType) ? rawType : "REEL";
+  const rawStatus = String(input.status || "IDEA").toUpperCase();
+  const status = VALID_CLIP_STATUSES.has(rawStatus) ? rawStatus : "IDEA";
+  const checklist =
+    input.checklist && typeof input.checklist === "object" && !Array.isArray(input.checklist)
+      ? Object.fromEntries(
+          Object.entries(input.checklist)
+            .slice(0, 30)
+            .map(([k, v]) => [String(k).slice(0, 50), Boolean(v)]),
+        )
+      : {};
+  const id = isNew
+    ? `clip-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`
+    : String(input.id || "").trim() || `clip-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+  const now = nowIso();
+  return {
+    id,
+    title,
+    type,
+    status,
+    scheduledAt,
+    caption: clipString(input.caption, 2000),
+    script: clipString(input.script, 8000),
+    checklist,
+    createdAt: isNew ? now : (input.createdAt || now),
+    updatedAt: now,
+  };
+}
+
 function parseCookies(req) {
   const cookieHeader = req.headers.cookie || "";
   const out = {};
@@ -2373,6 +2417,79 @@ const server = http.createServer(async (req, res) => {
       await saveStateForUser(user.id, state);
     }
     sendJson(res, 200, { voiceProfile: state.voiceProfile });
+    return;
+  }
+
+  if (pathname === "/api/calendar/clips" || pathname.startsWith("/api/calendar/clips/")) {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+    const state = bindStateToUser(await getStateForUser(user.id), user);
+    if (!Array.isArray(state.calendarClips)) state.calendarClips = [];
+
+    if (req.method === "GET" && pathname === "/api/calendar/clips") {
+      sendJson(res, 200, { clips: state.calendarClips });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/calendar/clips") {
+      try {
+        const body = await readBody(req);
+        const clip = sanitizeCalendarClip(body, { isNew: true });
+        if (!clip) {
+          sendJson(res, 400, { error: "Invalid clip payload" });
+          return;
+        }
+        state.calendarClips.push(clip);
+        await saveStateForUser(user.id, state);
+        sendJson(res, 200, { clip });
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    const idMatch = pathname.match(/^\/api\/calendar\/clips\/([^/]+)$/);
+    if (idMatch) {
+      const clipId = decodeURIComponent(idMatch[1]);
+      const idx = state.calendarClips.findIndex((c) => String(c.id) === clipId);
+
+      if (req.method === "PUT" || req.method === "PATCH") {
+        if (idx < 0) {
+          sendJson(res, 404, { error: "Clip not found" });
+          return;
+        }
+        try {
+          const body = await readBody(req);
+          const merged = sanitizeCalendarClip(
+            { ...state.calendarClips[idx], ...body, id: state.calendarClips[idx].id },
+            { isNew: false },
+          );
+          if (!merged) {
+            sendJson(res, 400, { error: "Invalid clip payload" });
+            return;
+          }
+          state.calendarClips[idx] = merged;
+          await saveStateForUser(user.id, state);
+          sendJson(res, 200, { clip: merged });
+        } catch (err) {
+          sendJson(res, 400, { error: err.message });
+        }
+        return;
+      }
+
+      if (req.method === "DELETE") {
+        if (idx < 0) {
+          sendJson(res, 404, { error: "Clip not found" });
+          return;
+        }
+        state.calendarClips.splice(idx, 1);
+        await saveStateForUser(user.id, state);
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+    }
+
+    sendJson(res, 405, { error: "Method not allowed" });
     return;
   }
 
