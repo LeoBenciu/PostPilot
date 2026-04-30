@@ -373,7 +373,31 @@
         <span aria-hidden="true" class="btn-icon">⏻</span>
         <span id="disconnectBtnLabel">Disconnect</span>
       </button>
+      <button id="mobileMoreBtn" class="secondary sidebar-more-btn" aria-label="More options">
+        <span aria-hidden="true" class="btn-icon">···</span>
+        <span>More</span>
+      </button>
     </aside>
+
+    <div id="mobileMoreSheet" class="mobile-more-backdrop" hidden>
+      <div class="mobile-more-sheet" role="dialog" aria-modal="true" aria-label="More options">
+        <div class="mobile-more-handle"></div>
+        <button id="mobileSheetReferralBtn" class="mobile-sheet-item referral-cta-btn">
+          <span aria-hidden="true" class="mobile-sheet-icon">
+            <img src="/reffer.png" alt="" class="referral-cta-icon" style="width:22px;height:22px;" />
+          </span>
+          <span id="mobileSheetReferralLabel">Earn a free month</span>
+        </button>
+        <button id="mobileSheetSettingsBtn" class="mobile-sheet-item">
+          <span aria-hidden="true" class="mobile-sheet-icon">⚙</span>
+          <span id="mobileSheetSettingsLabel">Settings</span>
+        </button>
+        <button id="mobileSheetDisconnectBtn" class="mobile-sheet-item disconnect-btn">
+          <span aria-hidden="true" class="mobile-sheet-icon">⏻</span>
+          <span id="mobileSheetDisconnectLabel">Disconnect</span>
+        </button>
+      </div>
+    </div>
 
     <main class="chat-layout">
       <header class="chat-header">
@@ -433,25 +457,35 @@
           <p id="dashboardHealthSummary" class="dashboard-muted">-</p>
         </article>
       </section>
-      <section id="agentView" class="app-view agent-view">
-        <div class="agent-scores" id="agentScores">
+      <section id="agentView" class="app-view agent-view agent-v2">
+
+        <div class="agent-stats" id="agentScores">
           <button type="button" class="score-chip" data-score="momentum" aria-label="Momentum score details">
+            <div class="score-chip-top">
+              <span class="score-ring-icon" aria-hidden="true">⚡</span>
+              <span class="score-chip-name" id="agentScoreMomentumLabel">Momentum</span>
+            </div>
             <span class="score-ring" style="--pct: 0">
               <span class="score-ring-value" data-score-value="momentum">0</span>
             </span>
-            <span class="score-ring-icon" aria-hidden="true">⚡</span>
           </button>
           <button type="button" class="score-chip" data-score="consistency" aria-label="Consistency score details">
+            <div class="score-chip-top">
+              <span class="score-ring-icon" aria-hidden="true">🗓</span>
+              <span class="score-chip-name" id="agentScoreConsistencyLabel">Consistency</span>
+            </div>
             <span class="score-ring" style="--pct: 0">
               <span class="score-ring-value" data-score-value="consistency">0</span>
             </span>
-            <span class="score-ring-icon" aria-hidden="true">🗓</span>
           </button>
           <button type="button" class="score-chip" data-score="growth" aria-label="Growth score details">
+            <div class="score-chip-top">
+              <span class="score-ring-icon" aria-hidden="true">📈</span>
+              <span class="score-chip-name" id="agentScoreGrowthLabel">Growth</span>
+            </div>
             <span class="score-ring" style="--pct: 0">
               <span class="score-ring-value" data-score-value="growth">0</span>
             </span>
-            <span class="score-ring-icon" aria-hidden="true">📈</span>
           </button>
         </div>
 
@@ -492,18 +526,22 @@
 
         <section id="messages" class="messages"></section>
 
-        <form id="composer" class="composer" autocomplete="off">
-          <div class="composer-suggestions-wrap">
-            <button type="button" id="suggestionsBtn" class="suggestions-toggle" title="Suggestions">
-              <span class="suggestions-icon">💡</span>
+        <div class="agent-composer-wrap">
+          <form id="composer" class="composer" autocomplete="off">
+            <div class="composer-suggestions-wrap">
+              <button type="button" id="suggestionsBtn" class="suggestions-toggle" title="Suggestions">
+                <span class="suggestions-icon">💡</span>
+              </button>
+              <div id="suggestionsPopup" class="suggestions-popup hidden"></div>
+            </div>
+            <input id="messageInput" type="text" name="postpilot-chat-message" enterkeyhint="send"
+              placeholder="Message PostPilot Agent" autocomplete="off" autocorrect="off" autocapitalize="none"
+              spellcheck="false" aria-autocomplete="none" />
+            <button type="submit" id="sendBtn">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="18" height="18"><line x1="4" y1="10" x2="16" y2="10"/><polyline points="11 5 16 10 11 15"/></svg>
             </button>
-            <div id="suggestionsPopup" class="suggestions-popup hidden"></div>
-          </div>
-          <input id="messageInput" type="text" name="postpilot-chat-message" enterkeyhint="send"
-            placeholder="Message PostPilot Agent" autocomplete="off" autocorrect="off" autocapitalize="none"
-            spellcheck="false" aria-autocomplete="none" />
-          <button type="submit" id="sendBtn">Send</button>
-        </form>
+          </form>
+        </div>
       </section>
 
       <section id="analyticsView" class="app-view analytics-view hidden">
