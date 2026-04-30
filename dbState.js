@@ -31,6 +31,7 @@ const defaultState = Object.freeze({
   posts: [],
   voiceProfile: null,
   conversations: {},
+  calendarClips: [],
 });
 
 function cloneDefaultState() {
@@ -57,6 +58,7 @@ function normalizeState(value) {
       incoming.conversations && typeof incoming.conversations === "object"
         ? incoming.conversations
         : {},
+    calendarClips: Array.isArray(incoming.calendarClips) ? incoming.calendarClips : [],
   };
 }
 
