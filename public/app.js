@@ -195,12 +195,31 @@ const I18N = {
     calendarDetailsCaption: "Caption",
     calendarDetailsScript: "Script",
     calendarChecklistTitle: "Post checklist",
-    calendarChecklistHookOverlay: "Hook overlay added",
-    calendarChecklistCaptions: "Captions on",
-    calendarChecklistBinaryQuestion: "Binary question in caption",
-    calendarChecklistHashtags: "Hashtags added",
-    calendarChecklistCoverFrame: "Cover frame set",
-    calendarChecklistBestTime: "Best time selected",
+    calendarChecklistSectionHook: "Hook",
+    calendarChecklistSectionMessage: "Message",
+    calendarChecklistSectionContent: "Content",
+    calendarChecklistSectionCta: "CTA",
+    calendarChecklistSectionDescription: "Description",
+    calendarChecklistSectionTiming: "Timing",
+    calendarChecklistSectionPostPilot: "PostPilot",
+    calendarChecklistHookStopScroll: "Does the first second stop the scroll?",
+    calendarChecklistHookBoldText: "Do you have visible bold text in the first 3 seconds?",
+    calendarChecklistHookStrongVisual: "Is your face or a strong visual element in the foreground?",
+    calendarChecklistMessageClear5s: "Is the core message clear in the first 5 seconds?",
+    calendarChecklistMessageSingleTopic: "One topic per post - no mixed ideas?",
+    calendarChecklistMessageConsistentTone: "Is the tone consistent with your usual voice?",
+    calendarChecklistContentVideoQuality: "Is video quality good - lighting, sound, stability?",
+    calendarChecklistContentSubtitles: "Are subtitles enabled and correct?",
+    calendarChecklistContentOptimalLength: "Is the length optimal for this content type?",
+    calendarChecklistCtaSingle: "Do you have one clear call-to-action at the end?",
+    calendarChecklistCtaSpecific: "Is the CTA specific - comment, save, follow, link in bio?",
+    calendarChecklistDescriptionFirstLine: "Does the first caption line also stop the scroll?",
+    calendarChecklistDescriptionHashtags: "Are hashtags relevant for your niche?",
+    calendarChecklistDescriptionLinkInBio: "Did you mention the link in bio when needed?",
+    calendarChecklistTimingOptimal: "Are you posting on the best day and time for your audience?",
+    calendarChecklistTimingReplyWindow: "Are you available 30 minutes after posting to reply to comments?",
+    calendarChecklistPostpilotScored: "Did you score the post in PostPilot before publishing?",
+    calendarChecklistPostpilotQuickWin: "Was the quick win from your latest analysis implemented?",
     calendarDeleteClipBtn: "Delete clip",
     calendarDeleteClipConfirm: "Delete this clip from calendar?",
     calendarDeleteClipSuccess: "Clip deleted from calendar.",
@@ -567,12 +586,31 @@ const I18N = {
     calendarDetailsCaption: "Caption",
     calendarDetailsScript: "Script",
     calendarChecklistTitle: "Checklist postare",
-    calendarChecklistHookOverlay: "Hook overlay adaugat",
-    calendarChecklistCaptions: "Caption activ",
-    calendarChecklistBinaryQuestion: "Intrebare binara in caption",
-    calendarChecklistHashtags: "Hashtaguri adaugate",
-    calendarChecklistCoverFrame: "Cover frame setat",
-    calendarChecklistBestTime: "Ora optima selectata",
+    calendarChecklistSectionHook: "Hook",
+    calendarChecklistSectionMessage: "Mesaj",
+    calendarChecklistSectionContent: "Continut",
+    calendarChecklistSectionCta: "CTA",
+    calendarChecklistSectionDescription: "Descriere",
+    calendarChecklistSectionTiming: "Timing",
+    calendarChecklistSectionPostPilot: "PostPilot",
+    calendarChecklistHookStopScroll: "Prima secunda opreste scroll-ul?",
+    calendarChecklistHookBoldText: "Ai text bold vizibil in primele 3 secunde?",
+    calendarChecklistHookStrongVisual: "Fata ta sau un element vizual puternic e in prim plan?",
+    calendarChecklistMessageClear5s: "Mesajul principal e clar in primele 5 secunde?",
+    calendarChecklistMessageSingleTopic: "Un singur subiect per postare - nu mai multe idei amestecate?",
+    calendarChecklistMessageConsistentTone: "Tonul e consistent cu vocea ta obisnuita?",
+    calendarChecklistContentVideoQuality: "Calitatea video e buna - lumina, sunet, stabilitate?",
+    calendarChecklistContentSubtitles: "Subtitlurile sunt activate si corecte?",
+    calendarChecklistContentOptimalLength: "Lungimea e optima pentru tipul de continut?",
+    calendarChecklistCtaSingle: "Ai un singur call-to-action clar la final?",
+    calendarChecklistCtaSpecific: "CTA-ul cere ceva specific - comentariu, save, follow, link in bio?",
+    calendarChecklistDescriptionFirstLine: "Prima linie a descrierii opreste si ea scroll-ul?",
+    calendarChecklistDescriptionHashtags: "Hashtag-urile sunt relevante pentru nisa ta?",
+    calendarChecklistDescriptionLinkInBio: "Ai mentionat linkul in bio daca e cazul?",
+    calendarChecklistTimingOptimal: "Postezi in ziua si ora optima pentru audienta ta?",
+    calendarChecklistTimingReplyWindow: "Esti disponibil 30 de minute dupa postare sa raspunzi la comentarii?",
+    calendarChecklistPostpilotScored: "Ai scorat postarea in PostPilot inainte sa o publici?",
+    calendarChecklistPostpilotQuickWin: "Quick win-ul de la ultima analiza a fost implementat?",
     calendarDeleteClipBtn: "Sterge clipul",
     calendarDeleteClipConfirm: "Stergi acest clip din calendar?",
     calendarDeleteClipSuccess: "Clipul a fost sters din calendar.",
@@ -3100,12 +3138,59 @@ const CALENDAR_STATUSES = ["IDEA", "SCRIPTED", "FILMING", "EDITING", "READY", "P
 const CALENDAR_TYPES = ["REEL", "CAROUSEL", "STORY", "STATIC"];
 const CALENDAR_DEFAULT_TIME = "19:30";
 const CALENDAR_CHECKLIST_ITEMS = [
-  { key: "hookOverlay", labelKey: "calendarChecklistHookOverlay" },
-  { key: "captions", labelKey: "calendarChecklistCaptions" },
-  { key: "binaryQuestion", labelKey: "calendarChecklistBinaryQuestion" },
-  { key: "hashtags", labelKey: "calendarChecklistHashtags" },
-  { key: "coverFrame", labelKey: "calendarChecklistCoverFrame" },
-  { key: "bestTime", labelKey: "calendarChecklistBestTime" },
+  {
+    sectionLabelKey: "calendarChecklistSectionHook",
+    items: [
+      { key: "hookStopScroll", labelKey: "calendarChecklistHookStopScroll" },
+      { key: "hookBoldText", labelKey: "calendarChecklistHookBoldText" },
+      { key: "hookStrongVisual", labelKey: "calendarChecklistHookStrongVisual" },
+    ],
+  },
+  {
+    sectionLabelKey: "calendarChecklistSectionMessage",
+    items: [
+      { key: "messageClear5s", labelKey: "calendarChecklistMessageClear5s" },
+      { key: "messageSingleTopic", labelKey: "calendarChecklistMessageSingleTopic" },
+      { key: "messageConsistentTone", labelKey: "calendarChecklistMessageConsistentTone" },
+    ],
+  },
+  {
+    sectionLabelKey: "calendarChecklistSectionContent",
+    items: [
+      { key: "contentVideoQuality", labelKey: "calendarChecklistContentVideoQuality" },
+      { key: "contentSubtitles", labelKey: "calendarChecklistContentSubtitles" },
+      { key: "contentOptimalLength", labelKey: "calendarChecklistContentOptimalLength" },
+    ],
+  },
+  {
+    sectionLabelKey: "calendarChecklistSectionCta",
+    items: [
+      { key: "ctaSingle", labelKey: "calendarChecklistCtaSingle" },
+      { key: "ctaSpecific", labelKey: "calendarChecklistCtaSpecific" },
+    ],
+  },
+  {
+    sectionLabelKey: "calendarChecklistSectionDescription",
+    items: [
+      { key: "descriptionFirstLine", labelKey: "calendarChecklistDescriptionFirstLine" },
+      { key: "descriptionHashtags", labelKey: "calendarChecklistDescriptionHashtags" },
+      { key: "descriptionLinkInBio", labelKey: "calendarChecklistDescriptionLinkInBio" },
+    ],
+  },
+  {
+    sectionLabelKey: "calendarChecklistSectionTiming",
+    items: [
+      { key: "timingOptimal", labelKey: "calendarChecklistTimingOptimal" },
+      { key: "timingReplyWindow", labelKey: "calendarChecklistTimingReplyWindow" },
+    ],
+  },
+  {
+    sectionLabelKey: "calendarChecklistSectionPostPilot",
+    items: [
+      { key: "postpilotScored", labelKey: "calendarChecklistPostpilotScored" },
+      { key: "postpilotQuickWin", labelKey: "calendarChecklistPostpilotQuickWin" },
+    ],
+  },
 ];
 
 let calendarMode = "week";
@@ -3545,11 +3630,18 @@ function renderModalChecklist(clip) {
   const el = document.getElementById("calendarClipChecklist");
   if (!el) return;
   const checklist = (clip && typeof clip.checklist === "object" && !Array.isArray(clip.checklist)) ? clip.checklist : {};
-  el.innerHTML = CALENDAR_CHECKLIST_ITEMS.map((item) => `
-    <label class="cm-check">
-      <input type="checkbox" data-clip-checklist-key="${item.key}" ${checklist[item.key] ? "checked" : ""} />
-      <span>${escapeHtml(t(item.labelKey))}</span>
-    </label>
+  el.innerHTML = CALENDAR_CHECKLIST_ITEMS.map((group) => `
+    <section class="cm-check-section">
+      <h4 class="cm-check-section-title">${escapeHtml(t(group.sectionLabelKey))}</h4>
+      <div class="cm-check-section-items">
+        ${group.items.map((item) => `
+          <label class="cm-check">
+            <input type="checkbox" data-clip-checklist-key="${item.key}" ${checklist[item.key] ? "checked" : ""} />
+            <span>${escapeHtml(t(item.labelKey))}</span>
+          </label>
+        `).join("")}
+      </div>
+    </section>
   `).join("");
 }
 

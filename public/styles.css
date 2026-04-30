@@ -2428,7 +2428,28 @@ button:active {
 
 .cm-checklist {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.cm-check-section {
+  border: 1px solid var(--cal-border, #ecd6dd);
+  border-radius: 12px;
+  background: var(--cal-soft, #fffafb);
+  padding: 10px;
+}
+
+.cm-check-section-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cal-muted, #7b4f5e);
+}
+
+.cm-check-section-items {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 
