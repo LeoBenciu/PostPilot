@@ -1954,6 +1954,22 @@ function setHidden(id, hidden) {
   document.getElementById(id).classList.toggle("hidden", hidden);
 }
 
+function syncLandingVideoPlayback() {
+  const frame = document.querySelector(".hero-video-frame");
+  if (!frame) return;
+  const isLandingVisible = authGate && !authGate.classList.contains("hidden");
+  const currentSrc = frame.getAttribute("src") || "";
+  if (!frame.dataset.activeSrc && currentSrc) {
+    frame.dataset.activeSrc = currentSrc;
+  }
+  const activeSrc = frame.dataset.activeSrc || "";
+  if (isLandingVisible) {
+    if (activeSrc && currentSrc !== activeSrc) frame.setAttribute("src", activeSrc);
+    return;
+  }
+  if (currentSrc) frame.setAttribute("src", "");
+}
+
 const ONBOARD_STEPS = ["connect", "scan", "edge", "payment"];
 
 function showOnboardStep(step) {
@@ -4380,6 +4396,7 @@ async function ensureOnboardingForChat() {
 async function unlockChat(toastMessage) {
   authGate.classList.add("hidden");
   chatApp.classList.remove("hidden");
+  syncLandingVideoPlayback();
   if (!signinModal.classList.contains("hidden")) signinModal.classList.add("hidden");
   clearFeedback();
   showToast(toastMessage);
@@ -4527,6 +4544,7 @@ async function performDisconnect() {
   hideOnboardingModal();
   chatApp.classList.add("hidden");
   authGate.classList.remove("hidden");
+  syncLandingVideoPlayback();
   clearFeedback();
   showToast(t("disconnectToast"));
 }
@@ -5493,6 +5511,7 @@ if (initialView === "dashboard") {
   renderCalendarView();
 }
 registerLogoDevToggle();
+syncLandingVideoPlayback();
 
 const authQueryState = getAuthQueryState();
 let handledFreshGoogleAuth = false;
