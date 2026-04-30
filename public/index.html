@@ -628,7 +628,13 @@
               <textarea id="calendarClipCaptionInput" rows="3" maxlength="500" placeholder="Write the caption..."></textarea>
             </label>
             <label>
-              <span id="calendarClipScriptLabel">Script</span>
+              <div class="calendar-clip-details-script-head">
+                <span id="calendarClipScriptLabel">Script</span>
+                <button type="button" id="openTeleprompterFromFormBtn" class="teleprompter-launch-btn">
+                  <span aria-hidden="true" class="teleprompter-launch-icon">▶</span>
+                  <span id="openTeleprompterFromFormBtnLabel">Teleprompter</span>
+                </button>
+              </div>
               <textarea id="calendarClipScriptInput" rows="5" maxlength="2000" placeholder="Write the script..."></textarea>
             </label>
             <div class="calendar-clip-form-actions">
