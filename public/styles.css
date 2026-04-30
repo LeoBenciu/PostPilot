@@ -5591,3 +5591,305 @@ pre {
     align-items: flex-start;
   }
 }
+
+.calendar-clip-details-script-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.calendar-clip-details-script-head h3 {
+  margin: 0;
+}
+
+.teleprompter-launch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #d50032;
+  background: #fff;
+  color: #d50032;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.teleprompter-launch-btn:hover {
+  background: #d50032;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.teleprompter-launch-icon {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.teleprompter-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #050505;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  font-family: "Poppins", sans-serif;
+}
+
+.teleprompter-overlay.hidden {
+  display: none;
+}
+
+.teleprompter-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(15, 15, 15, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  flex: 0 0 auto;
+}
+
+.teleprompter-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.teleprompter-icon-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+.teleprompter-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.teleprompter-icon-btn[aria-pressed="true"] {
+  background: #d50032;
+  border-color: #d50032;
+}
+
+.teleprompter-stage {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.teleprompter-stage::before,
+.teleprompter-stage::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.teleprompter-stage::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(5, 5, 5, 0.95), rgba(5, 5, 5, 0));
+}
+
+.teleprompter-stage::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(5, 5, 5, 0.95), rgba(5, 5, 5, 0));
+}
+
+.teleprompter-reticle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to right, transparent, rgba(213, 0, 50, 0.55), transparent);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.teleprompter-scroller {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.teleprompter-content {
+  padding: 50vh 6vw;
+  font-size: 42px;
+  line-height: 1.45;
+  font-weight: 600;
+  text-align: center;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #fff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+  transition: transform 60ms linear;
+}
+
+.teleprompter-content.is-mirrored {
+  transform: scaleX(-1);
+}
+
+.teleprompter-controls {
+  flex: 0 0 auto;
+  padding: 16px 20px 24px;
+  background: rgba(15, 15, 15, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.teleprompter-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.teleprompter-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.teleprompter-secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.teleprompter-play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  background: #d50032;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 130px;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(213, 0, 50, 0.4);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.teleprompter-play-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(213, 0, 50, 0.5);
+}
+
+.teleprompter-slider-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.teleprompter-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.teleprompter-slider-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.teleprompter-slider-value {
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.teleprompter-slider input[type="range"] {
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  outline: none;
+  cursor: pointer;
+}
+
+.teleprompter-slider input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d50032;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(213, 0, 50, 0.5);
+  cursor: pointer;
+}
+
+.teleprompter-slider input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d50032;
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .teleprompter-content {
+    font-size: 36px;
+    padding: 50vh 5vw;
+  }
+
+  .teleprompter-slider-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .teleprompter-topbar {
+    padding: 10px 14px;
+  }
+
+  .teleprompter-controls {
+    padding: 12px 14px 18px;
+  }
+}
