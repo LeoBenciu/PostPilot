@@ -2263,12 +2263,20 @@ function renderCardHookPicker(data) {
 function renderCardScript(data) {
   const title = data.title || "Script";
   const beats = Array.isArray(data.beats) ? data.beats : [];
+  const normalizedBeats = beats
+    .map((beat, index) => ({
+      label: String(beat?.label || `Beat ${index + 1}`).trim(),
+      time: String(beat?.time || beat?.timestamp || "").trim(),
+      text: String(beat?.text || beat?.content || "").trim(),
+      note: String(beat?.note || beat?.production || "").trim(),
+    }))
+    .filter((beat) => beat.text);
 
   let html = `<div class="pp-card pp-card--script">`;
   html += `<div class="pp-card-header"><span class="pp-card-header-icon">🎬</span>${escapeHtml(title)}</div>`;
   html += `<div class="pp-script-beats">`;
-  for (let i = 0; i < beats.length; i++) {
-    const beat = beats[i];
+  for (let i = 0; i < normalizedBeats.length; i++) {
+    const beat = normalizedBeats[i];
     const num = i + 1;
     const beatLabel = beat.label || `Beat ${num}`;
     const time = beat.time || beat.timestamp || "";
@@ -2285,8 +2293,8 @@ function renderCardScript(data) {
   }
   html += `</div>`;
   const addCalendarText = currentLanguage === "ro" ? "Adauga in Calendar" : "Add to Calendar";
-  const scriptText = beats
-    .map((beat) => String(beat.text || beat.content || "").trim())
+  const scriptText = normalizedBeats
+    .map((beat) => beat.text)
     .filter(Boolean)
     .join("\n");
   const schedulePayload = encodeURIComponent(
@@ -2295,6 +2303,7 @@ function renderCardScript(data) {
       type: "REEL",
       caption: data.caption || "",
       script: scriptText,
+      scriptBeats: normalizedBeats,
     }),
   );
   html += `<div class="pp-card-actions">`;
@@ -2396,6 +2405,7 @@ document.addEventListener("click", (e) => {
         type: normalizeClipType(payload.type || "REEL"),
         caption: String(payload.caption || "").trim(),
         script: String(payload.script || "").trim(),
+        scriptBeats: normalizeScriptBeats(payload.scriptBeats),
       };
       lastAgentCalendarDraft = draft;
       const scheduled = scheduleDraftInCalendar(draft, { dayOffset: 1, time: "19:30" });
@@ -3200,6 +3210,46 @@ function calendarStatusClass(status) {
   return `is-status-${String(status || "IDEA").toLowerCase()}`;
 }
 
+function normalizeScriptBeats(rawBeats) {
+  if (!Array.isArray(rawBeats)) return [];
+  return rawBeats
+    .slice(0, 20)
+    .map((beat, index) => ({
+      label: String(beat?.label || `Beat ${index + 1}`).trim().slice(0, 60),
+      time: String(beat?.time || beat?.timestamp || "").trim().slice(0, 20),
+      text: String(beat?.text || beat?.content || "").trim().slice(0, 1000),
+      note: String(beat?.note || beat?.production || "").trim().slice(0, 300),
+    }))
+    .filter((beat) => beat.text);
+}
+
+function scriptTextFromBeats(beats) {
+  return normalizeScriptBeats(beats)
+    .map((beat) => beat.text)
+    .join("\n");
+}
+
+function renderStructuredScriptHtml(beats) {
+  const normalized = normalizeScriptBeats(beats);
+  if (!normalized.length) return "";
+  return `
+    <div class="pp-script-beats calendar-script-beats">
+      ${normalized
+        .map((beat, index) => `
+          <div class="pp-script-beat pp-script-beat--${Math.min(index + 1, 3)}">
+            <div class="pp-script-beat-header">
+              <span class="pp-script-beat-label">${escapeHtml(beat.label || `Beat ${index + 1}`)}</span>
+              ${beat.time ? `<span class="pp-script-beat-time">${escapeHtml(beat.time)}</span>` : ""}
+            </div>
+            <div class="pp-script-beat-text">${escapeHtml(beat.text)}</div>
+            ${beat.note ? `<div class="pp-script-beat-note">${escapeHtml(beat.note)}</div>` : ""}
+          </div>
+        `)
+        .join("")}
+    </div>
+  `;
+}
+
 function calendarVisibleRange() {
   if (calendarMode === "month") {
     const start = startOfMonth(calendarAnchor);
@@ -3512,6 +3562,7 @@ function fillModalForClip(clip, defaultDateIso) {
   const statusInput = document.getElementById("calendarClipStatusInput");
   const captionInput = document.getElementById("calendarClipCaptionInput");
   const scriptInput = document.getElementById("calendarClipScriptInput");
+  const scriptStructured = document.getElementById("calendarClipScriptStructured");
   const errorEl = document.getElementById("calendarClipTitleError");
   const deleteBtn = document.getElementById("calendarClipDeleteBtn");
   const subtitle = document.getElementById("calendarClipModalSubtitle");
@@ -3529,7 +3580,13 @@ function fillModalForClip(clip, defaultDateIso) {
     if (typeInput) typeInput.value = CALENDAR_TYPES.includes(clip.type) ? clip.type : "REEL";
     if (statusInput) statusInput.value = CALENDAR_STATUSES.includes(clip.status) ? clip.status : "IDEA";
     if (captionInput) captionInput.value = clip.caption || "";
-    if (scriptInput) scriptInput.value = clip.script || "";
+    const structuredBeats = normalizeScriptBeats(clip.scriptBeats);
+    if (scriptInput) scriptInput.value = clip.script || scriptTextFromBeats(structuredBeats) || "";
+    if (scriptStructured) {
+      const html = renderStructuredScriptHtml(structuredBeats);
+      scriptStructured.innerHTML = html;
+      scriptStructured.classList.toggle("hidden", !html);
+    }
     if (subtitle) subtitle.textContent = t("calendarSubtitleEdit");
     if (modalTitle) modalTitle.textContent = t("calendarDetailsModalTitle");
     if (deleteBtn) deleteBtn.hidden = false;
@@ -3541,6 +3598,10 @@ function fillModalForClip(clip, defaultDateIso) {
     if (statusInput) statusInput.value = "IDEA";
     if (captionInput) captionInput.value = "";
     if (scriptInput) scriptInput.value = "";
+    if (scriptStructured) {
+      scriptStructured.innerHTML = "";
+      scriptStructured.classList.add("hidden");
+    }
     if (subtitle) subtitle.textContent = t("calendarSubtitleNew");
     if (modalTitle) modalTitle.textContent = t("calendarModalTitle");
     if (deleteBtn) deleteBtn.hidden = true;
@@ -3585,6 +3646,9 @@ function buildClipPayloadFromModal() {
   const status = document.getElementById("calendarClipStatusInput")?.value || "IDEA";
   const caption = document.getElementById("calendarClipCaptionInput")?.value || "";
   const script = document.getElementById("calendarClipScriptInput")?.value || "";
+  const existingClip = calendarEditingClipId ? getClipById(calendarEditingClipId) : null;
+  const existingScriptBeats = normalizeScriptBeats(existingClip?.scriptBeats);
+  const scriptLooksEdited = String(script || "").trim() !== scriptTextFromBeats(existingScriptBeats).trim();
   if (!title) return { error: "title" };
   if (!dateValue) return { error: "date" };
   const scheduledAt = `${dateValue}T${timeValue.length === 5 ? `${timeValue}:00` : timeValue}`;
@@ -3596,6 +3660,7 @@ function buildClipPayloadFromModal() {
       scheduledAt,
       caption,
       script,
+      scriptBeats: scriptLooksEdited ? [] : existingScriptBeats,
       checklist: readChecklistFromModal(),
     },
   };
@@ -3725,6 +3790,7 @@ async function scheduleDraftInCalendar(draft, { dayOffset = 1, time = CALENDAR_D
     scheduledAt: `${dateKey}T${time}:00`,
     caption: String(draft.caption || "").trim() || cleanedTitle,
     script: String(draft.script || "").trim() || `Hook: ${cleanedTitle}`,
+    scriptBeats: normalizeScriptBeats(draft.scriptBeats),
     checklist: {},
   };
   try {
@@ -3826,6 +3892,7 @@ function extractDraftFromAssistantContent(content) {
         type: normalizeClipType(data.type || "REEL"),
         caption: String(data.caption || "").trim(),
         script: beats.map((beat) => String(beat.text || beat.content || "").trim()).filter(Boolean).join("\n"),
+        scriptBeats: normalizeScriptBeats(beats),
       };
     }
   }
@@ -4752,6 +4819,15 @@ document.getElementById("calendarClipForm")?.addEventListener("submit", (event) 
 
 ["calendarClipCaptionInput", "calendarClipScriptInput"].forEach((id) => {
   document.getElementById(id)?.addEventListener("input", setModalCounters);
+});
+
+document.getElementById("calendarClipScriptInput")?.addEventListener("input", () => {
+  const preview = document.getElementById("calendarClipScriptStructured");
+  if (!preview) return;
+  if (!preview.classList.contains("hidden")) {
+    preview.classList.add("hidden");
+    preview.innerHTML = "";
+  }
 });
 
 document.getElementById("calendarClipTitleInput")?.addEventListener("input", () => {

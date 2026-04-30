@@ -838,6 +838,17 @@ function sanitizeCalendarClip(input, { isNew }) {
             .map(([k, v]) => [String(k).slice(0, 50), Boolean(v)]),
         )
       : {};
+  const scriptBeats = Array.isArray(input.scriptBeats)
+    ? input.scriptBeats
+        .slice(0, 20)
+        .map((beat, index) => ({
+          label: clipString(beat?.label || `Beat ${index + 1}`, 60).trim() || `Beat ${index + 1}`,
+          time: clipString(beat?.time || beat?.timestamp || "", 20).trim(),
+          text: clipString(beat?.text || beat?.content || "", 1000).trim(),
+          note: clipString(beat?.note || beat?.production || "", 300).trim(),
+        }))
+        .filter((beat) => beat.text)
+    : [];
   const id = isNew
     ? `clip-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`
     : String(input.id || "").trim() || `clip-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
@@ -850,6 +861,7 @@ function sanitizeCalendarClip(input, { isNew }) {
     scheduledAt,
     caption: clipString(input.caption, 2000),
     script: clipString(input.script, 8000),
+    scriptBeats,
     checklist,
     createdAt: isNew ? now : (input.createdAt || now),
     updatedAt: now,
