@@ -3643,6 +3643,24 @@ pre {
   .dashboard-hero-card h2 { font-size: 20px; }
   .dashboard-card { padding: 16px 16px; }
 
+  .calendar-view {
+    padding: 14px 12px 24px;
+  }
+
+  .calendar-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .calendar-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-stat-value { font-size: 22px; }
+  .dashboard-hero-card { padding: 18px 18px; }
+  .dashboard-hero-card h2 { font-size: 20px; }
+  .dashboard-card { padding: 16px 16px; }
+
   .analytics-stat-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
