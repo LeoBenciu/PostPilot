@@ -3250,6 +3250,13 @@ function renderStructuredScriptHtml(beats) {
   `;
 }
 
+function setScriptInputVisibility(hidden) {
+  const scriptInput = document.getElementById("calendarClipScriptInput");
+  const scriptCounter = document.getElementById("calendarClipScriptCount")?.parentElement || null;
+  if (scriptInput) scriptInput.classList.toggle("hidden", Boolean(hidden));
+  if (scriptCounter) scriptCounter.classList.toggle("hidden", Boolean(hidden));
+}
+
 function calendarVisibleRange() {
   if (calendarMode === "month") {
     const start = startOfMonth(calendarAnchor);
@@ -3586,6 +3593,7 @@ function fillModalForClip(clip, defaultDateIso) {
       const html = renderStructuredScriptHtml(structuredBeats);
       scriptStructured.innerHTML = html;
       scriptStructured.classList.toggle("hidden", !html);
+      setScriptInputVisibility(Boolean(html));
     }
     if (subtitle) subtitle.textContent = t("calendarSubtitleEdit");
     if (modalTitle) modalTitle.textContent = t("calendarDetailsModalTitle");
@@ -3602,6 +3610,7 @@ function fillModalForClip(clip, defaultDateIso) {
       scriptStructured.innerHTML = "";
       scriptStructured.classList.add("hidden");
     }
+    setScriptInputVisibility(false);
     if (subtitle) subtitle.textContent = t("calendarSubtitleNew");
     if (modalTitle) modalTitle.textContent = t("calendarModalTitle");
     if (deleteBtn) deleteBtn.hidden = true;
@@ -4828,6 +4837,7 @@ document.getElementById("calendarClipScriptInput")?.addEventListener("input", ()
     preview.classList.add("hidden");
     preview.innerHTML = "";
   }
+  setScriptInputVisibility(false);
 });
 
 document.getElementById("calendarClipTitleInput")?.addEventListener("input", () => {
