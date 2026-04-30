@@ -3198,6 +3198,12 @@ function clipsInRange(start, end) {
   });
 }
 
+function buildCalendarWeekData(weekStart) {
+  const start = startOfWeek(weekStart);
+  const end = addDays(start, 6);
+  return clipsInRange(start, end).sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+}
+
 function clipsForDay(dayDate) {
   const key = toLocalDateKey(dayDate);
   return calendarClips
