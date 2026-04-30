@@ -552,6 +552,10 @@ body {
   display: none;
 }
 
+.sidebar #mobileMoreBtn {
+  display: none;
+}
+
 .mobile-more-backdrop {
   position: fixed;
   inset: 0;

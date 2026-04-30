@@ -1829,7 +1829,11 @@ function applyLanguage() {
   setTextIfExists("titleCaptionLength", t("analyticsCaptionLength"));
   setTextIfExists("titleTopPosts", t("analyticsTopPosts"));
   setTextIfExists("analyticsRefreshingLabel", t("analyticsRefreshing"));
-  setTextIfExists("sendBtn", t("send"));
+  const sendBtn = document.getElementById("sendBtn");
+  if (sendBtn) {
+    sendBtn.setAttribute("aria-label", t("send"));
+    sendBtn.setAttribute("title", t("send"));
+  }
   setTextIfExists("settingsSaveBtn", t("saveSettings"));
 
   const messageInput = document.getElementById("messageInput");
