@@ -5000,7 +5000,10 @@ document.getElementById("openTeleprompterBtn")?.addEventListener("click", () => 
 });
 
 document.getElementById("openTeleprompterFromFormBtn")?.addEventListener("click", () => {
-  const scriptText = document.getElementById("calendarClipScriptInput")?.value || "";
+  const editingClip = calendarEditingClipId ? getClipById(calendarEditingClipId) : null;
+  const beatsText = scriptTextFromBeats(editingClip?.scriptBeats);
+  const formText = document.getElementById("calendarClipScriptInput")?.value || "";
+  const scriptText = String(formText || "").trim() || beatsText;
   const title = document.getElementById("calendarClipTitleInput")?.value || "";
   openTeleprompter(scriptText, title);
 });
