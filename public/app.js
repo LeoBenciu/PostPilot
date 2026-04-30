@@ -1718,6 +1718,7 @@ function applyLanguage() {
   setTextIfExists("calendarDetailsCaptionHeading", t("calendarDetailsCaption"));
   setTextIfExists("calendarDetailsScriptHeading", t("calendarDetailsScript"));
   setTextIfExists("openTeleprompterBtnLabel", t("teleprompterLaunch"));
+  setTextIfExists("openTeleprompterFromFormBtnLabel", t("teleprompterLaunch"));
   setTextIfExists("teleprompterTitle", t("teleprompterTitle"));
   setTextIfExists("teleprompterRestartLabel", t("teleprompterRestart"));
   setTextIfExists("teleprompterPlayLabel", t("teleprompterPlay"));
@@ -4986,6 +4987,12 @@ document.getElementById("openTeleprompterBtn")?.addEventListener("click", () => 
   const clip = activeCalendarClipDetails;
   const scriptText = clip?.script || "";
   openTeleprompter(scriptText, clip?.title || "");
+});
+
+document.getElementById("openTeleprompterFromFormBtn")?.addEventListener("click", () => {
+  const scriptText = document.getElementById("calendarClipScriptInput")?.value || "";
+  const title = document.getElementById("calendarClipTitleInput")?.value || "";
+  openTeleprompter(scriptText, title);
 });
 
 document.getElementById("teleprompterCloseBtn")?.addEventListener("click", closeTeleprompter);
