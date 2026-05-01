@@ -61,28 +61,38 @@ body {
   z-index: 40;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: #fff;
-  border: 1px solid var(--border);
+  gap: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #fff1f5 100%);
+  border: 1px solid #f1b9c7;
   border-radius: 999px;
-  padding: 6px 10px;
-  box-shadow: 0 10px 24px rgba(213, 0, 50, 0.12);
+  padding: 8px 12px;
+  box-shadow: 0 12px 30px rgba(213, 0, 50, 0.18);
 }
 
 .language-switch label {
   margin: 0;
   font-size: 12px;
-  color: #7d5861;
+  font-weight: 600;
+  color: #7a2b40;
+  letter-spacing: 0.01em;
 }
 
 .language-switch select {
-  border: 1px solid #efc2c8;
+  border: 1px solid #e99aae;
   border-radius: 999px;
   background: #fff;
   color: var(--text);
-  padding: 6px 10px;
+  padding: 7px 12px;
   font: inherit;
   font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(213, 0, 50, 0.1);
+}
+
+.language-switch select:focus {
+  outline: none;
+  border-color: #d50032;
+  box-shadow: 0 0 0 3px rgba(213, 0, 50, 0.15);
 }
 
 .container {
