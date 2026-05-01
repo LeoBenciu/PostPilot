@@ -14,6 +14,8 @@ if (referralParamFromUrl) {
 }
 const REFERRAL_CODE_FROM_URL = localStorage.getItem(REFERRAL_CAPTURE_KEY) || "";
 const REFERRAL_LINK_BASE = "https://postpilotcoach.com";
+const LANDING_VIDEO_SRC_RO = "https://www.youtube.com/embed/aUFh_LugsJI?autoplay=1&rel=0&playsinline=1";
+const LANDING_VIDEO_SRC_NON_RO = "https://www.youtube.com/embed/VCs3GdmqHk4?autoplay=1&rel=0&playsinline=1";
 
 const authGate = document.getElementById("authGate");
 const chatApp = document.getElementById("chatApp");
@@ -2056,6 +2058,7 @@ function applyLanguage() {
   setTextIfExists("heroTitleAccent", t("heroTitleAccent"));
   setTextIfExists("heroSubtitle", t("heroSubtitle"));
   setTextIfExists("heroVideoTitle", t("heroVideoTitle"));
+  updateLandingVideoSourceForLanguage();
   setTextIfExists("signal1", t("signal1"));
   setTextIfExists("signal2", t("signal2"));
   setTextIfExists("signal3", t("signal3"));
@@ -2414,14 +2417,18 @@ function setHidden(id, hidden) {
   document.getElementById(id).classList.toggle("hidden", hidden);
 }
 
+function updateLandingVideoSourceForLanguage() {
+  const frame = document.querySelector(".hero-video-frame");
+  if (!frame) return;
+  frame.dataset.activeSrc = currentLanguage === "ro" ? LANDING_VIDEO_SRC_RO : LANDING_VIDEO_SRC_NON_RO;
+}
+
 function syncLandingVideoPlayback() {
   const frame = document.querySelector(".hero-video-frame");
   if (!frame) return;
   const isLandingVisible = authGate && !authGate.classList.contains("hidden");
   const currentSrc = frame.getAttribute("src") || "";
-  if (!frame.dataset.activeSrc && currentSrc) {
-    frame.dataset.activeSrc = currentSrc;
-  }
+  updateLandingVideoSourceForLanguage();
   const activeSrc = frame.dataset.activeSrc || "";
   if (isLandingVisible) {
     if (activeSrc && currentSrc !== activeSrc) frame.setAttribute("src", activeSrc);
