@@ -2,6 +2,7 @@ const LANGUAGE_KEY = "postpilot_language";
 const sessionId = "session-main";
 let accountState = null;
 let isSendingMessage = false;
+let pendingMediaAttachments = [];
 const DEV_AUTH_OVERRIDE_KEY = "postpilot_dev_auth_override";
 const BASE_WAITLIST_MODE = document.body?.dataset?.mode === "waitlist";
 const WAITLIST_MODE = BASE_WAITLIST_MODE && localStorage.getItem(DEV_AUTH_OVERRIDE_KEY) !== "1";
@@ -359,6 +360,15 @@ const I18N = {
     streamErrorFallback: "Something went wrong. Please try again.",
     streamTimeoutFallback: "The AI is taking too long to respond. Please try again.",
     send: "Send",
+    uploadMedia: "Upload media",
+    uploadMaxFiles: "You can upload up to 4 files at once.",
+    uploadUnsupportedFile: "Only images and videos are supported.",
+    uploadImageTooLarge: "Image is too large (max 8MB).",
+    uploadVideoTooLarge: "Video is too large (max 150MB).",
+    uploadVideoFrameFailed: "Could not process this video. Try another file.",
+    uploadAttachmentBadge: "attachment",
+    uploadAttachmentsBadge: "attachments",
+    uploadContextPrefix: "Media context attached",
     saveSettings: "Save settings",
     onboardingRequired: "Complete onboarding when you are ready. I need those details before I can coach your content.",
     disconnectToast: "Disconnected. Sign in again when you are ready.",
@@ -756,6 +766,15 @@ const I18N = {
     streamErrorFallback: "Ceva nu a mers bine. Te rog incearca din nou.",
     streamTimeoutFallback: "Raspunsul dureaza prea mult. Te rog incearca din nou.",
     send: "Trimite",
+    uploadMedia: "Incarca media",
+    uploadMaxFiles: "Poti incarca maximum 4 fisiere odata.",
+    uploadUnsupportedFile: "Sunt acceptate doar imagini si videoclipuri.",
+    uploadImageTooLarge: "Imaginea este prea mare (maxim 8MB).",
+    uploadVideoTooLarge: "Videoclipul este prea mare (maxim 150MB).",
+    uploadVideoFrameFailed: "Nu am putut procesa acest videoclip. Incearca alt fisier.",
+    uploadAttachmentBadge: "atasament",
+    uploadAttachmentsBadge: "atasamente",
+    uploadContextPrefix: "Context media atasat",
     saveSettings: "Salveaza setarile",
     onboardingRequired: "Completeaza onboarding-ul cand esti pregatit. Am nevoie de aceste detalii inainte sa te pot ajuta.",
     disconnectToast: "Deconectat. Autentifica-te din nou cand esti pregatit.",
@@ -1834,6 +1853,11 @@ function applyLanguage() {
     sendBtn.setAttribute("aria-label", t("send"));
     sendBtn.setAttribute("title", t("send"));
   }
+  const mediaUploadBtn = document.getElementById("mediaUploadBtn");
+  if (mediaUploadBtn) {
+    mediaUploadBtn.setAttribute("aria-label", t("uploadMedia"));
+    mediaUploadBtn.setAttribute("title", t("uploadMedia"));
+  }
   setTextIfExists("settingsSaveBtn", t("saveSettings"));
 
   const messageInput = document.getElementById("messageInput");
@@ -2744,7 +2768,7 @@ function addStreamingMessage() {
 // of spinning forever.
 const STREAM_IDLE_TIMEOUT_MS = 90000;
 
-async function streamChat(message, sessionId) {
+async function streamChat(message, sessionId, attachments = []) {
   const controller = new AbortController();
   let res;
   try {
@@ -2752,7 +2776,7 @@ async function streamChat(message, sessionId) {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, message, language: currentLanguage }),
+      body: JSON.stringify({ sessionId, message, language: currentLanguage, attachments }),
       signal: controller.signal,
     });
   } catch (err) {
@@ -2833,14 +2857,130 @@ function setComposerBusy(busy) {
   const input = document.getElementById("messageInput");
   const sendBtn = document.getElementById("sendBtn");
   const suggestionsBtn = document.getElementById("suggestionsBtn");
+  const uploadBtn = document.getElementById("mediaUploadBtn");
   const composer = document.getElementById("composer");
   if (input) input.disabled = busy;
   if (sendBtn) sendBtn.disabled = busy;
   if (suggestionsBtn) suggestionsBtn.disabled = busy;
+  if (uploadBtn) uploadBtn.disabled = busy;
   if (composer) {
     composer.classList.toggle("composer--busy", busy);
     composer.setAttribute("aria-busy", busy ? "true" : "false");
   }
+}
+
+const MAX_ATTACHMENT_COUNT = 4;
+const MAX_IMAGE_ATTACHMENT_BYTES = 8 * 1024 * 1024;
+const MAX_VIDEO_ATTACHMENT_BYTES = 150 * 1024 * 1024;
+
+function renderPendingMediaAttachments() {
+  const list = document.getElementById("composerMediaList");
+  if (!list) return;
+  if (!pendingMediaAttachments.length) {
+    list.classList.add("hidden");
+    list.innerHTML = "";
+    return;
+  }
+  list.classList.remove("hidden");
+  list.innerHTML = pendingMediaAttachments
+    .map(
+      (item, idx) =>
+        `<span class="composer-media-chip">${item.kind === "video" ? "🎬" : "🖼️"} ${item.name}<button type="button" data-media-remove="${idx}" aria-label="Remove">×</button></span>`,
+    )
+    .join("");
+}
+
+function clearPendingMediaAttachments() {
+  pendingMediaAttachments = [];
+  const input = document.getElementById("mediaUploadInput");
+  if (input) input.value = "";
+  renderPendingMediaAttachments();
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("file_read_failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function extractVideoFrameAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    const url = URL.createObjectURL(file);
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      URL.revokeObjectURL(url);
+      video.remove();
+    };
+    const fail = () => {
+      cleanup();
+      reject(new Error("video_frame_failed"));
+    };
+    video.addEventListener("error", fail, { once: true });
+    video.addEventListener(
+      "loadedmetadata",
+      () => {
+        const target = Number.isFinite(video.duration) && video.duration > 0 ? Math.min(1, Math.max(0, video.duration * 0.2)) : 0;
+        video.currentTime = target;
+      },
+      { once: true },
+    );
+    video.addEventListener(
+      "seeked",
+      () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, video.videoWidth || 720);
+          canvas.height = Math.max(1, video.videoHeight || 1280);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("canvas_context_failed");
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          cleanup();
+          resolve(dataUrl);
+        } catch (_err) {
+          fail();
+        }
+      },
+      { once: true },
+    );
+    video.src = url;
+    video.load();
+  });
+}
+
+async function buildAttachmentFromFile(file) {
+  const name = String(file?.name || "media").trim() || "media";
+  const mime = String(file?.type || "").toLowerCase();
+  if (mime.startsWith("image/")) {
+    if (Number(file.size || 0) > MAX_IMAGE_ATTACHMENT_BYTES) throw new Error("image_too_large");
+    return {
+      kind: "image",
+      name,
+      mime,
+      size: Number(file.size || 0),
+      dataUrl: await readFileAsDataUrl(file),
+    };
+  }
+  if (mime.startsWith("video/")) {
+    if (Number(file.size || 0) > MAX_VIDEO_ATTACHMENT_BYTES) throw new Error("video_too_large");
+    return {
+      kind: "video",
+      name,
+      mime,
+      size: Number(file.size || 0),
+      frameDataUrl: await extractVideoFrameAsDataUrl(file),
+    };
+  }
+  throw new Error("unsupported_media");
 }
 
 function sendPrompt(text) {
@@ -4798,20 +4938,70 @@ async function disconnectPlatform(platform) {
 disconnectLinkedinBtn?.addEventListener("click", () => disconnectPlatform("linkedin"));
 disconnectInstagramBtn?.addEventListener("click", () => disconnectPlatform("instagram"));
 
+document.getElementById("mediaUploadBtn")?.addEventListener("click", () => {
+  if (isSendingMessage) return;
+  document.getElementById("mediaUploadInput")?.click();
+});
+
+document.getElementById("mediaUploadInput")?.addEventListener("change", async (event) => {
+  const files = Array.from(event?.target?.files || []);
+  if (!files.length) return;
+  if (files.length + pendingMediaAttachments.length > MAX_ATTACHMENT_COUNT) {
+    showToast(t("uploadMaxFiles"));
+    event.target.value = "";
+    return;
+  }
+
+  for (const file of files) {
+    try {
+      const attachment = await buildAttachmentFromFile(file);
+      pendingMediaAttachments.push(attachment);
+    } catch (err) {
+      const code = String(err?.message || "");
+      if (code === "unsupported_media") showToast(t("uploadUnsupportedFile"));
+      else if (code === "image_too_large") showToast(t("uploadImageTooLarge"));
+      else if (code === "video_too_large") showToast(t("uploadVideoTooLarge"));
+      else showToast(t("uploadVideoFrameFailed"));
+    }
+  }
+
+  event.target.value = "";
+  renderPendingMediaAttachments();
+});
+
+document.getElementById("composerMediaList")?.addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-media-remove]");
+  if (!btn) return;
+  const idx = Number(btn.getAttribute("data-media-remove"));
+  if (!Number.isFinite(idx) || idx < 0 || idx >= pendingMediaAttachments.length) return;
+  pendingMediaAttachments.splice(idx, 1);
+  renderPendingMediaAttachments();
+});
+
 document.getElementById("composer").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (isSendingMessage) return;
   const input = document.getElementById("messageInput");
   const message = input.value.trim();
-  if (!message) return;
+  const attachmentsToSend = pendingMediaAttachments.map((item) => ({ ...item }));
+  if (!message && !attachmentsToSend.length) return;
+
+  const messageForAgent = message || (currentLanguage === "ro" ? "Analizeaza aceste materiale pentru scoring si imbunatatiri." : "Analyze these media files for scoring and improvement suggestions.");
+  const attachmentLabel = attachmentsToSend.length === 1 ? t("uploadAttachmentBadge") : t("uploadAttachmentsBadge");
+  const userBubbleText = attachmentsToSend.length
+    ? `${messageForAgent}
+
+📎 ${t("uploadContextPrefix")}: ${attachmentsToSend.length} ${attachmentLabel}`
+    : messageForAgent;
 
   isSendingMessage = true;
   setComposerBusy(true);
   input.value = "";
+  clearPendingMediaAttachments();
   try {
-    const scheduleIntent = parseScheduleCommand(message);
+    const scheduleIntent = parseScheduleCommand(messageForAgent);
     if (scheduleIntent) {
-      addMessage("user", message);
+      addMessage("user", messageForAgent);
       if (scheduleIntent.scheduleAll && Array.isArray(lastAgentCalendarPlan) && lastAgentCalendarPlan.length > 0) {
         const added = scheduleWeekPlanInCalendar(lastAgentCalendarPlan);
         if (added > 0) {
@@ -4858,14 +5048,14 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
 
     const canChat = await ensureOnboardingForChat();
     if (!canChat) {
-      input.value = message;
+      input.value = messageForAgent;
       addMessage("assistant", t("onboardingRequired"));
       return;
     }
 
-    addMessage("user", message);
+    addMessage("user", userBubbleText);
 
-    const result = await streamChat(message, sessionId);
+    const result = await streamChat(messageForAgent, sessionId, attachmentsToSend);
     const parsedDraft = extractDraftFromAssistantContent(result?.content || "");
     if (parsedDraft) lastAgentCalendarDraft = parsedDraft;
     const parsedPlan = extractWeekPlanFromAssistantContent(result?.content || "");
@@ -4882,6 +5072,10 @@ document.getElementById("composer").addEventListener("submit", async (event) => 
     if (/payment required/i.test(msg)) {
       setOnboardingMode("payment");
       showOnboardingModal();
+    }
+    if (attachmentsToSend.length && pendingMediaAttachments.length === 0) {
+      pendingMediaAttachments = attachmentsToSend.map((item) => ({ ...item }));
+      renderPendingMediaAttachments();
     }
     addMessage("assistant", `Error: ${msg}`);
   } finally {

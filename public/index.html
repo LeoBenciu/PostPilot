@@ -534,6 +534,10 @@
               </button>
               <div id="suggestionsPopup" class="suggestions-popup hidden"></div>
             </div>
+            <button type="button" id="mediaUploadBtn" class="composer-upload-btn" title="Upload media">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="18" height="18"><path d="M10 13V4"/><polyline points="6 8 10 4 14 8"/><path d="M4 13v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/></svg>
+            </button>
+            <input id="mediaUploadInput" type="file" accept="image/*,video/*" multiple hidden />
             <input id="messageInput" type="text" name="postpilot-chat-message" enterkeyhint="send"
               placeholder="Message PostPilot Agent" autocomplete="off" autocorrect="off" autocapitalize="none"
               spellcheck="false" aria-autocomplete="none" />
@@ -541,6 +545,7 @@
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="18" height="18"><line x1="4" y1="10" x2="16" y2="10"/><polyline points="11 5 16 10 11 15"/></svg>
             </button>
           </form>
+          <div id="composerMediaList" class="composer-media-list hidden" aria-live="polite"></div>
         </div>
       </section>
 

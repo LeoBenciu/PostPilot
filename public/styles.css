@@ -6916,6 +6916,61 @@ pre {
   border-color: var(--av-border-strong);
 }
 
+.agent-v2 .composer-upload-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--av-border);
+  background: #fff;
+  color: #7a3046;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.agent-v2 .composer-upload-btn:hover {
+  background: var(--av-pink-soft);
+  border-color: var(--av-border-strong);
+  color: #5c1f32;
+}
+
+.composer-media-list {
+  max-width: 760px;
+  margin: 8px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.composer-media-list.hidden {
+  display: none;
+}
+
+.composer-media-chip {
+  border: 1px solid var(--av-border);
+  background: #fff;
+  color: #5d2b3b;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.composer-media-chip button {
+  border: 0;
+  background: transparent;
+  color: #8b3a4a;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
 .agent-v2 .composer.composer--busy {
   opacity: 0.7;
 }

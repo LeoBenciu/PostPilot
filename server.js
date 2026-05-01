@@ -1501,7 +1501,42 @@ function agentGuardReply(state) {
   return null;
 }
 
-async function agentRespond(state, { message, userId, sessionId, language }) {
+function sanitizeMediaAttachments(rawAttachments) {
+  if (!Array.isArray(rawAttachments)) return [];
+  return rawAttachments
+    .slice(0, 4)
+    .map((item) => {
+      const kind = String(item?.kind || "").toLowerCase();
+      const name = String(item?.name || "").slice(0, 160).trim() || "media";
+      const mime = String(item?.mime || "").toLowerCase().slice(0, 80);
+      const size = Number(item?.size || 0);
+      if (kind === "image") {
+        const dataUrl = String(item?.dataUrl || "");
+        if (!/^data:image\/[a-z0-9.+-]+;base64,/i.test(dataUrl)) return null;
+        return { kind, name, mime, size, dataUrl };
+      }
+      if (kind === "video") {
+        const frameDataUrl = String(item?.frameDataUrl || "");
+        if (!/^data:image\/[a-z0-9.+-]+;base64,/i.test(frameDataUrl)) return null;
+        return { kind, name, mime, size, frameDataUrl };
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
+
+function buildUserMessageForHistory(message, attachments) {
+  const base = String(message || "").trim();
+  if (!attachments || attachments.length === 0) return base;
+  const summary = attachments
+    .map((item) => `${item.kind === "video" ? "video" : "image"}:${item.name}`)
+    .join(", ");
+  return `${base}
+
+[Media context attached: ${summary}]`;
+}
+
+async function agentRespond(state, { message, userId, sessionId, language, attachments = [] }) {
   const guard = agentGuardReply(state);
   if (guard) {
     return { role: "assistant", ...guard };
@@ -1521,6 +1556,7 @@ async function agentRespond(state, { message, userId, sessionId, language }) {
       userId,
       sessionId,
       language,
+      attachments,
     });
     return {
       role: "assistant",
@@ -2606,6 +2642,7 @@ const server = http.createServer(async (req, res) => {
       const state = bindStateToUser(await getStateForUser(user.id), user);
       const body = await readBody(req);
       const message = body.message || "";
+      const attachments = sanitizeMediaAttachments(body.attachments);
       const sessionId = body.sessionId || "default";
       const language = typeof body.language === "string" ? body.language : "";
       if (!isPaymentComplete(state)) {
@@ -2616,8 +2653,9 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const convo = getConversation(state, sessionId);
-      convo.push({ role: "user", content: message, at: nowIso() });
-      const reply = await agentRespond(state, { message, userId: user.id, sessionId, language });
+      const userMessageForHistory = buildUserMessageForHistory(message, attachments);
+      convo.push({ role: "user", content: userMessageForHistory, at: nowIso() });
+      const reply = await agentRespond(state, { message, userId: user.id, sessionId, language, attachments });
       convo.push({ role: "assistant", content: reply.content, at: nowIso(), action: reply.action });
       await saveStateForUser(user.id, state);
       sendJson(res, 200, { reply, conversation: convo.slice(-20) });
@@ -2665,6 +2703,7 @@ const server = http.createServer(async (req, res) => {
       const state = bindStateToUser(await getStateForUser(user.id), user);
       const body = await readBody(req);
       const message = body.message || "";
+      const attachments = sanitizeMediaAttachments(body.attachments);
       const sessionId = body.sessionId || "default";
       const language = typeof body.language === "string" ? body.language : "";
       if (!isPaymentComplete(state)) {
@@ -2716,7 +2755,8 @@ const server = http.createServer(async (req, res) => {
         voiceProfile = state.voiceProfile || buildVoiceProfile(state.posts);
         state.voiceProfile = voiceProfile;
         convo = getConversation(state, sessionId);
-        convo.push({ role: "user", content: message, at: nowIso() });
+        const userMessageForHistory = buildUserMessageForHistory(message, attachments);
+        convo.push({ role: "user", content: userMessageForHistory, at: nowIso() });
       } catch (prepErr) {
         console.error("[PostPilot][AI] prep error:", prepErr?.message);
         safeEnd("provider_error", "I hit a snag preparing your profile data. Try again in a moment.");
@@ -2732,6 +2772,7 @@ const server = http.createServer(async (req, res) => {
           userId: user.id,
           sessionId,
           language,
+          attachments,
         })) {
           // streamAgentReply yields typed events so we can surface live
           // agent status ("searching the internet", "analyzing posts", …)

@@ -670,18 +670,55 @@ async function collectPostImages(posts, limit = 5) {
  * Builds a multimodal user message with text + image_url content blocks.
  * Uses detail:"low" (85 tokens/image) to keep cost minimal.
  */
-function buildVisionUserMessage(text, postImages) {
-  if (!postImages.length) return text;
+function normalizeUploadedMedia(attachments) {
+  if (!Array.isArray(attachments)) return [];
+  return attachments
+    .slice(0, 4)
+    .map((item) => {
+      const kind = String(item?.kind || "").toLowerCase();
+      const name = String(item?.name || "").slice(0, 160).trim() || "media";
+      if (kind === "image") {
+        const dataUrl = String(item?.dataUrl || "");
+        if (!/^data:image\/[a-z0-9.+-]+;base64,/i.test(dataUrl)) return null;
+        return { kind: "image", name, dataUrl };
+      }
+      if (kind === "video") {
+        const frameDataUrl = String(item?.frameDataUrl || "");
+        if (!/^data:image\/[a-z0-9.+-]+;base64,/i.test(frameDataUrl)) return null;
+        return { kind: "video", name, frameDataUrl };
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
+
+function buildVisionUserMessage(text, postImages, uploadedMedia = []) {
+  const hasUploaded = Array.isArray(uploadedMedia) && uploadedMedia.length > 0;
+  if (!postImages.length && !hasUploaded) return text;
   const content = [];
   let imageContext = "I'm attaching your most recent post images for reference:\n";
   postImages.forEach((img, i) => {
     imageContext += `\nImage ${i + 1}: [${img.type}] ${img.date} — likes: ${img.likes}, comments: ${img.comments}\nCaption: "${img.caption}"`;
   });
+  if (hasUploaded) {
+    imageContext += "\n\nI'm also attaching user-uploaded media context:\n";
+    uploadedMedia.forEach((item, i) => {
+      imageContext += `\nUpload ${i + 1}: [${item.kind}] ${item.name}`;
+    });
+  }
   content.push({ type: "text", text: `${imageContext}\n\nUser message: ${text}` });
   for (const img of postImages) {
     content.push({
       type: "image_url",
       image_url: { url: img.url, detail: "low" },
+    });
+  }
+  for (const item of uploadedMedia) {
+    const url = item.kind === "video" ? item.frameDataUrl : item.dataUrl;
+    if (!url) continue;
+    content.push({
+      type: "image_url",
+      image_url: { url, detail: "low" },
     });
   }
   return content;
@@ -940,7 +977,7 @@ function buildCrewContext({ state, connectedPlatforms, language, message }) {
   };
 }
 
-async function callOpenAI({ message, history, state, connectedPlatforms, language, marketContext }) {
+async function callOpenAI({ message, history, state, connectedPlatforms, language, marketContext, attachments = [] }) {
   const apiKey = process.env.OPENAI_API_KEY || "";
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   if (!apiKey) {
@@ -952,8 +989,9 @@ async function callOpenAI({ message, history, state, connectedPlatforms, languag
   state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
   const postImages = useVision ? await collectPostImages(state.posts) : [];
-  aiLog("log", "Vision routing", { useVision, count: postImages.length });
-  const userContent = buildVisionUserMessage(inputText, postImages);
+  const uploadedMedia = normalizeUploadedMedia(attachments);
+  aiLog("log", "Vision routing", { useVision, count: postImages.length, uploads: uploadedMedia.length });
+  const userContent = buildVisionUserMessage(inputText, postImages, uploadedMedia);
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -986,7 +1024,7 @@ async function callOpenAI({ message, history, state, connectedPlatforms, languag
   };
 }
 
-async function callAnthropic({ message, history, state, connectedPlatforms, language, marketContext }) {
+async function callAnthropic({ message, history, state, connectedPlatforms, language, marketContext, attachments = [] }) {
   const apiKey = process.env.ANTHROPIC_API_KEY || "";
   const model = resolveDirectModel();
   if (!apiKey) {
@@ -998,8 +1036,9 @@ async function callAnthropic({ message, history, state, connectedPlatforms, lang
   state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
   const postImages = useVision ? await collectPostImages(state.posts) : [];
-  aiLog("log", "Anthropic vision routing", { useVision, count: postImages.length });
-  const openaiStyleUserContent = buildVisionUserMessage(inputText, postImages);
+  const uploadedMedia = normalizeUploadedMedia(attachments);
+  aiLog("log", "Anthropic vision routing", { useVision, count: postImages.length, uploads: uploadedMedia.length });
+  const openaiStyleUserContent = buildVisionUserMessage(inputText, postImages, uploadedMedia);
   const userContent = Array.isArray(openaiStyleUserContent)
     ? convertVisionContentToAnthropic(openaiStyleUserContent)
     : [{ type: "text", text: openaiStyleUserContent }];
@@ -1041,7 +1080,7 @@ async function callAnthropic({ message, history, state, connectedPlatforms, lang
   };
 }
 
-async function* streamAnthropic({ message, history, state, connectedPlatforms, language, marketContext }) {
+async function* streamAnthropic({ message, history, state, connectedPlatforms, language, marketContext, attachments = [] }) {
   const apiKey = process.env.ANTHROPIC_API_KEY || "";
   const model = resolveDirectModel();
   if (!apiKey) throw new Error("anthropic_not_configured");
@@ -1051,8 +1090,9 @@ async function* streamAnthropic({ message, history, state, connectedPlatforms, l
   const useVision = shouldUseVisionForMessage(inputText);
   if (useVision) yield statusEvent("analyzing_posts");
   const postImages = useVision ? await collectPostImages(state.posts) : [];
-  aiLog("log", "Anthropic vision routing for stream", { useVision, count: postImages.length });
-  const openaiStyleUserContent = buildVisionUserMessage(inputText, postImages);
+  const uploadedMedia = normalizeUploadedMedia(attachments);
+  aiLog("log", "Anthropic vision routing for stream", { useVision, count: postImages.length, uploads: uploadedMedia.length });
+  const openaiStyleUserContent = buildVisionUserMessage(inputText, postImages, uploadedMedia);
   const userContent = Array.isArray(openaiStyleUserContent)
     ? convertVisionContentToAnthropic(openaiStyleUserContent)
     : [{ type: "text", text: openaiStyleUserContent }];
@@ -1153,7 +1193,7 @@ async function* streamDirectLLM(params) {
   yield* streamOpenAI(enriched);
 }
 
-async function callCrewAI({ message, history, state, connectedPlatforms, userId, sessionId, language }) {
+async function callCrewAI({ message, history, state, connectedPlatforms, userId, sessionId, language, attachments = [] }) {
   const baseUrl = process.env.CREWAI_API_URL || "";
   if (!baseUrl) {
     aiLog("error", "CrewAI skipped: CREWAI_API_URL not set");
@@ -1179,7 +1219,8 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
   state._lastUserMessageForPrompt = inputText;
   const useVision = shouldUseVisionForMessage(inputText);
   const postImages = useVision ? await collectPostImages(state.posts) : [];
-  aiLog("log", "Vision routing for CrewAI", { useVision, count: postImages.length });
+  const uploadedMedia = normalizeUploadedMedia(attachments);
+  aiLog("log", "Vision routing for CrewAI", { useVision, count: postImages.length, uploads: uploadedMedia.length });
   let res;
   try {
     res = await fetch(endpoint, {
@@ -1196,6 +1237,7 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
         context: buildCrewContext({ state, connectedPlatforms, language, message: inputText }),
         systemPrompt: "",
         postImages,
+        uploadedMedia,
       }),
     });
   } catch (err) {
@@ -1230,7 +1272,7 @@ async function callCrewAI({ message, history, state, connectedPlatforms, userId,
   };
 }
 
-async function generateAgentReply({ message, history, state, userId, sessionId, language }) {
+async function generateAgentReply({ message, history, state, userId, sessionId, language, attachments = [] }) {
   const provider = (process.env.AI_PROVIDER || "crewai").toLowerCase();
   aiLog("log", "generateAgentReply", {
     provider,
@@ -1249,6 +1291,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId, 
       state,
       connectedPlatforms,
       language,
+      attachments,
     });
   }
 
@@ -1262,6 +1305,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId, 
         userId,
         sessionId,
         language,
+        attachments,
       });
     } catch (err) {
       const directModel = resolveDirectModel();
@@ -1285,6 +1329,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId, 
         state,
         connectedPlatforms,
         language,
+        attachments,
       });
     }
   }
@@ -1293,7 +1338,7 @@ async function generateAgentReply({ message, history, state, userId, sessionId, 
   throw new Error(`unsupported_ai_provider_${provider}`);
 }
 
-async function* streamOpenAI({ message, history, state, connectedPlatforms, language, marketContext }) {
+async function* streamOpenAI({ message, history, state, connectedPlatforms, language, marketContext, attachments = [] }) {
   const apiKey = process.env.OPENAI_API_KEY || "";
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   if (!apiKey) throw new Error("openai_not_configured");
@@ -1303,8 +1348,9 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms, lang
   const useVision = shouldUseVisionForMessage(inputText);
   if (useVision) yield statusEvent("analyzing_posts");
   const postImages = useVision ? await collectPostImages(state.posts) : [];
-  aiLog("log", "Vision routing for stream", { useVision, count: postImages.length });
-  const userContent = buildVisionUserMessage(inputText, postImages);
+  const uploadedMedia = normalizeUploadedMedia(attachments);
+  aiLog("log", "Vision routing for stream", { useVision, count: postImages.length, uploads: uploadedMedia.length });
+  const userContent = buildVisionUserMessage(inputText, postImages, uploadedMedia);
   yield statusEvent("writing");
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -1350,7 +1396,7 @@ async function* streamOpenAI({ message, history, state, connectedPlatforms, lang
   }
 }
 
-async function* streamCrewAI({ message, history, state, connectedPlatforms, userId, sessionId, language }) {
+async function* streamCrewAI({ message, history, state, connectedPlatforms, userId, sessionId, language, attachments = [] }) {
   const baseUrl = process.env.CREWAI_API_URL || "";
   if (!baseUrl) throw new Error("crewai_not_configured");
   const apiKey = process.env.CREWAI_API_KEY || "";
@@ -1361,7 +1407,8 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
   const useVision = shouldUseVisionForMessage(inputText);
   if (useVision) yield statusEvent("analyzing_posts");
   const postImages = useVision ? await collectPostImages(state.posts) : [];
-  aiLog("log", "Vision routing for CrewAI stream", { useVision, count: postImages.length });
+  const uploadedMedia = normalizeUploadedMedia(attachments);
+  aiLog("log", "Vision routing for CrewAI stream", { useVision, count: postImages.length, uploads: uploadedMedia.length });
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -1376,6 +1423,7 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
       context: buildCrewContext({ state, connectedPlatforms, language, message: inputText }),
       systemPrompt: "",
       postImages,
+      uploadedMedia,
     }),
   });
 
@@ -1420,7 +1468,7 @@ async function* streamCrewAI({ message, history, state, connectedPlatforms, user
   }
 }
 
-async function* streamAgentReply({ message, history, state, userId, sessionId, language }) {
+async function* streamAgentReply({ message, history, state, userId, sessionId, language, attachments = [] }) {
   const provider = (process.env.AI_PROVIDER || "crewai").toLowerCase();
   aiLog("log", "streamAgentReply", { provider, language });
   const connectedPlatforms = Object.entries(state.integrations || {})
@@ -1429,7 +1477,7 @@ async function* streamAgentReply({ message, history, state, userId, sessionId, l
   const normalizedHistory = normalizeHistory(history);
 
   if (provider === "openai") {
-    yield* streamDirectLLM({ message, history: normalizedHistory, state, connectedPlatforms, language });
+    yield* streamDirectLLM({ message, history: normalizedHistory, state, connectedPlatforms, language, attachments });
     return;
   }
 
@@ -1443,6 +1491,7 @@ async function* streamAgentReply({ message, history, state, userId, sessionId, l
         userId,
         sessionId,
         language,
+        attachments,
       });
       return;
     } catch (err) {
@@ -1461,7 +1510,7 @@ async function* streamAgentReply({ message, history, state, userId, sessionId, l
             : `${directProvider.toUpperCase()}_API_KEY missing — stream will fail.`),
       );
       if (!hasDirectKey) throw err;
-      yield* streamDirectLLM({ message, history: normalizedHistory, state, connectedPlatforms, language });
+      yield* streamDirectLLM({ message, history: normalizedHistory, state, connectedPlatforms, language, attachments });
       return;
     }
   }
