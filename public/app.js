@@ -4064,6 +4064,13 @@ function setActiveView(view) {
         : t("agentView");
   setTextIfExists("activeViewLabel", activeViewLabel);
   refreshAgentEmptyState();
+  if (view === "agent") {
+    const messagesEl = document.getElementById("messages");
+    // Ensure we land on the latest message whenever Agent is opened, even
+    // when the conversation was rendered while the view was hidden.
+    scrollMessagesToBottom(messagesEl);
+    requestAnimationFrame(() => scrollMessagesToBottom(messagesEl));
+  }
   if (view === "calendar") {
     renderCalendarView();
     ensureCalendarLoaded();

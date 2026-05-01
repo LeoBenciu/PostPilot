@@ -3653,6 +3653,10 @@ pre {
     text-align: center;
   }
 
+  .sidebar #mobileMoreBtn {
+    display: inline-flex;
+  }
+
   .sidebar-more-btn .btn-icon {
     border: none;
     background: transparent;
