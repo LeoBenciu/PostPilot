@@ -706,6 +706,7 @@ function buildCreatorProfile(state, language = "en") {
     user: {
       name: user.name || "",
       firstName: (user.name || "").split(" ")[0] || "",
+      businessProfile: user.businessProfile || null,
     },
     primary: {
       platform: primaryPlatform,
@@ -2050,6 +2051,14 @@ const server = http.createServer(async (req, res) => {
         const v = body.instagramUsername.trim();
         state.integrations.instagram.username = v || null;
         if (!v && !state.integrations.instagram.connected) state.integrations.instagram.token = null;
+      }
+
+      if (body.businessProfile && typeof body.businessProfile === "object") {
+        state.user.businessProfile = {
+          serviceType: String(body.businessProfile.serviceType || "").slice(0, 100),
+          clientResult: String(body.businessProfile.clientResult || "").slice(0, 500),
+          pricePoint: String(body.businessProfile.pricePoint || "").slice(0, 50),
+        };
       }
 
       updateOnboardingCompletion(state);

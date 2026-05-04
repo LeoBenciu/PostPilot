@@ -437,6 +437,13 @@ function formatProfileSection(ctx) {
   const firstName = ctx.firstName || "";
   if (firstName) lines.push(`First name (use when greeting): ${firstName}`);
   lines.push(`Connected platforms: ${platforms.length ? platforms.join(", ") : "none"}`);
+  const bp = ctx.businessProfile;
+  if (bp) {
+    lines.push("--- Business context (use this to make every recommendation client-specific) ---");
+    if (bp.serviceType) lines.push(`What they sell: ${bp.serviceType}`);
+    if (bp.clientResult) lines.push(`Client result they create: ${bp.clientResult}`);
+    if (bp.pricePoint) lines.push(`Price point: ${bp.pricePoint}`);
+  }
   return lines.join("\n");
 }
 
@@ -931,6 +938,7 @@ function buildCrewContext({ state, connectedPlatforms, language, message }) {
       niche: effectiveNiche || (state.user && state.user.niche) || "",
     },
     firstName: extractFirstName(state),
+    businessProfile: (state.user && state.user.businessProfile) || null,
     integrations: state.integrations || {},
     connectedPlatforms,
     voiceProfile: state.voiceProfile || {},

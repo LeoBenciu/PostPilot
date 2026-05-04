@@ -904,6 +904,47 @@
       </div>
     </section>
 
+    <section id="obProfileView" class="onboard-view onboard-profile hidden">
+      <div class="onboard-profile-inner">
+        <img src="/logo.png" alt="PostPilot" class="onboard-logo" />
+        <h1 class="onboard-profile-title" id="obProfileTitle">One last step before we start</h1>
+        <p class="onboard-profile-sub" id="obProfileSub">Help PostPilot coach you on getting clients—not just growing followers.</p>
+        <form id="obProfileForm" class="onboard-profile-form" autocomplete="off">
+          <div class="ob-profile-field">
+            <label for="obProfileServiceInput" id="obProfileServiceLabel">What do you sell?</label>
+            <select id="obProfileServiceInput" class="ob-profile-select">
+              <option value="">Choose...</option>
+              <option value="coaching">1-on-1 coaching</option>
+              <option value="consulting">Consulting / strategy</option>
+              <option value="freelancing">Freelancing / done-for-you</option>
+              <option value="course">Online course / digital product</option>
+              <option value="agency">Agency services</option>
+            </select>
+          </div>
+          <div class="ob-profile-field">
+            <label for="obProfileResultInput" id="obProfileResultLabel">What result do you create for clients?</label>
+            <input id="obProfileResultInput" type="text" class="ob-profile-input" placeholder="e.g. I help coaches get 3 clients/month from Instagram" maxlength="200" />
+          </div>
+          <div class="ob-profile-field">
+            <label for="obProfilePriceInput" id="obProfilePriceLabel">Average price point</label>
+            <select id="obProfilePriceInput" class="ob-profile-select">
+              <option value="">Choose...</option>
+              <option value="under500">Under €500</option>
+              <option value="500-2k">€500 – €2,000</option>
+              <option value="2k-5k">€2,000 – €5,000</option>
+              <option value="5k+">€5,000+</option>
+            </select>
+          </div>
+          <button type="submit" class="onboard-profile-cta">
+            <span id="obProfileCtaLabel">Continue</span>
+          </button>
+        </form>
+        <button type="button" id="obProfileSkipBtn" class="onboard-profile-skip">
+          <span id="obProfileSkipLabel">Skip for now</span>
+        </button>
+      </div>
+    </section>
+
     <section id="obPaymentView" class="onboard-view onboard-payment hidden">
       <div class="onboard-payment-inner">
         <img src="/logo.png" alt="PostPilot" class="onboard-payment-logo" />

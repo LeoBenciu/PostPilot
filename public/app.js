@@ -62,35 +62,35 @@ const I18N = {
   en: {
     language: "Language",
     heroBadge: "Founding Access - Intro Offer",
-    heroTitleMain: "Build Your Audience Faster.",
-    heroTitleAccent: "With an AI Coach in Your Corner.",
-    heroSubtitle: "Connect Instagram and get exactly what to post, when to post, and why - based on your real data.",
+    heroTitleMain: "Stop posting for likes.",
+    heroTitleAccent: "Start posting for clients.",
+    heroSubtitle: "PostPilot connects to your Instagram, reads your real data, and tells you exactly what to post to get clients—not just followers.",
     heroVideoTitle: "Watch PostPilot in action",
-    signal1: "Tailored prompts every day",
-    signal2: "Feedback matched to your tone",
-    signal3: "Straight advice. No filler.",
-    socialProofTitle: "Creators Trust PostPilot",
-    socialProofSubtitle: "Thousands are creating with more clarity and confidence",
-    testimonial1Quote: "\"It reviewed my Instagram and explained exactly what my audience responds to.\"",
-    testimonial1Role: "Freedom & Purpose Coach",
-    testimonial2Quote: "\"It brought back confidence in my voice - I finally knew what to post.\"",
-    testimonial2Role: "Life & Fitness Glow-Up Coach",
-    testimonial3Quote: "\"It was honest and specific - no fake hype. Exactly what I needed.\"",
-    testimonial3Role: "Health & Wellness Coach",
-    achieveTitle: "How PostPilot Works",
-    achieveSubtitle: "It doesn't just give you ideas. It's an all-in-one content strategist, copywriter, and data analyst.",
-    feature1Title: "Data-Driven Content Planning",
-    feature1Text: "Connect Instagram and receive tailored weekly schedules that turn random ideas into a clear strategy.",
-    feature2Title: "Ready-to-Shoot Video Scripts",
-    feature2Text: "From scroll-stopping hooks to call-to-actions, we generate beat-by-beat video scripts.",
-    feature3Title: "Viral Hook Options",
-    feature3Text: "Never run out of ideas. Let your AI coach pitch you proven concepts with selectable custom hooks.",
-    feature4Title: "Instant Performance Feedback",
-    feature4Text: "Get a 1-10 grade on your post's clarity and visual appeal before publishing it to the world.",
-    feature5Title: "Deep Profile Analysis",
-    feature5Text: "We scan your past content to figure out your true superpower.",
-    feature6Title: "Captions & Hashtags",
-    feature6Text: "No more wasting time thinking of descriptions. You get ready-to-copy text.",
+    signal1: "Client-focused content plan",
+    signal2: "Conversion signal tracking",
+    signal3: "Your data. Real results.",
+    socialProofTitle: "Coaches & Consultants Are Getting Results",
+    socialProofSubtitle: "Service sellers turning their Instagram into a consistent lead source.",
+    testimonial1Quote: "\"It showed me exactly which posts were attracting potential clients. I had no idea saves mattered so much.\"",
+    testimonial1Role: "Business Coach",
+    testimonial2Quote: "\"I got my first DM inquiry within a week of changing my content strategy. PostPilot showed me what was missing.\"",
+    testimonial2Role: "Fitness & Mindset Coach",
+    testimonial3Quote: "\"Finally understood why I was getting likes but no clients. Now I know exactly what to fix.\"",
+    testimonial3Role: "Wellness Consultant",
+    achieveTitle: "From Followers to Clients",
+    achieveSubtitle: "PostPilot reads your real Instagram data and tells you what's missing between your posts and your next client.",
+    feature1Title: "Know Which Posts Attract Clients",
+    feature1Text: "See which content generates saves, DMs, and real interest—not just likes.",
+    feature2Title: "Post with a Clear Strategy",
+    feature2Text: "Attract new people, build trust, and convert—every week in the right balance.",
+    feature3Title: "Your AI Client Acquisition Coach",
+    feature3Text: "Ask PostPilot anything: why no clients this month, what to post this week, how to fix your CTA.",
+    feature4Title: "CTAs That Drive DMs",
+    feature4Text: "PostPilot flags posts without a clear call-to-action and suggests ones that match your offer.",
+    feature5Title: "Your Real Conversion Data",
+    feature5Text: "We analyze saves, comments, and reach to show which posts move people toward buying.",
+    feature6Title: "Scripts & Captions Built to Convert",
+    feature6Text: "Ready-to-use copy tailored to your voice and your service—not a generic template.",
     comingSoonBadge: "Up Next",
     comingSoonTitle: "More Powerful Features Are Coming",
     comingSoonSubtitle: "We are actively building the next layer of creator tools.",
@@ -98,8 +98,8 @@ const I18N = {
     chip3: "Carousel draft builder",
     chip4: "Daily publishing planner",
     chip5: "Evergreen idea library",
-    finalCtaTitle: "You do not need another noisy platform.",
-    finalCtaSubtitle: "You need a coach that helps you act on your best ideas.",
+    finalCtaTitle: "You don't need another content tool.",
+    finalCtaSubtitle: "You need a system that tells you what to post to get clients—based on your own data.",
     finalCtaClosing: "That is PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Studio 2026 - Designed for independent creators.",
@@ -267,16 +267,16 @@ const I18N = {
     chatSubtitle: "Your creator growth assistant",
     agentEmptyGreetingWithName: "Welcome back {name}, let's slay the day 💪",
     agentEmptyGreetingGeneric: "Welcome back, let's slay the day 💪",
-    chipViralIdea: "Viral idea of the day",
-    chipWeeklyPlan: "Weekly content plan",
+    chipViralIdea: "Review my CTA",
+    chipWeeklyPlan: "Client content plan",
     chipMotivate: "Motivate me",
-    chipPostIdeas: "Post ideas",
+    chipPostIdeas: "Get clients from content",
     chipFindVoice: "Find my voice",
-    homePromptWeeklyPlan: "Build me a weekly content plan for this week based on my latest posts.",
-    homePromptMotivate: "Give me a quick motivation boost as a creator who's feeling stuck today.",
-    homePromptPostIdeas: "Give me 5 post ideas tailored to my niche and recent performance.",
-    homePromptFindVoice: "Help me find my voice. What's my edge as a creator?",
-    homePromptViralIdea: "Give me one viral content idea for today, tailored to my niche and audience.",
+    homePromptWeeklyPlan: "Build me a weekly client content plan—posts that attract new people, build trust, and convert followers into inquiries.",
+    homePromptMotivate: "Give me a quick motivation boost as a service seller who's feeling stuck with content today.",
+    homePromptPostIdeas: "Which types of posts could drive DMs and client inquiries for my service, based on my real data?",
+    homePromptFindVoice: "Help me find my voice. What's my edge as a service seller on Instagram?",
+    homePromptViralIdea: "Review my last caption or post idea and tell me if the CTA is strong enough to drive DMs.",
     scoreModalSectionWhat: "What is it?",
     scoreModalSectionDrivers: "What's driving your score?",
     scoreMetaMomentumName: "Momentum",
@@ -312,6 +312,25 @@ const I18N = {
     onboardEdgeUnlockLine1: "Your untapped",
     onboardEdgeUnlockLine2: "potential",
     onboardEdgeCta: "Continue",
+    onboardProfileTitle: "One last step before we start",
+    onboardProfileSub: "Help PostPilot coach you on getting clients—not just growing followers.",
+    onboardProfileServiceLabel: "What do you sell?",
+    onboardProfileServicePlaceholder: "Choose...",
+    onboardProfileService1: "1-on-1 coaching",
+    onboardProfileService2: "Consulting / strategy",
+    onboardProfileService3: "Freelancing / done-for-you",
+    onboardProfileService4: "Online course / digital product",
+    onboardProfileService5: "Agency services",
+    onboardProfileResultLabel: "What result do you create for clients?",
+    onboardProfileResultPlaceholder: "e.g. I help coaches get 3 clients/month from Instagram",
+    onboardProfilePriceLabel: "Average price point",
+    onboardProfilePricePlaceholder: "Choose...",
+    onboardProfilePrice1: "Under €500",
+    onboardProfilePrice2: "€500 – €2,000",
+    onboardProfilePrice3: "€2,000 – €5,000",
+    onboardProfilePrice4: "€5,000+",
+    onboardProfileCta: "Continue",
+    onboardProfileSkip: "Skip for now",
     onboardPaymentTitle: "Activate your plan",
     onboardPaymentSubtitle: "Subscribe to unlock the AI coach and analytics.",
     onboardPaymentPlanName: "Monthly",
@@ -453,35 +472,35 @@ const I18N = {
   ro: {
     language: "Limba",
     heroBadge: "Acces Timpuriu - Oferta Limitata",
-    heroTitleMain: "De ce nu crești pe Instagram?",
-    heroTitleAccent: "PostPilot îți răspunde.",
-    heroSubtitle: "Conectezi Instagram-ul și primești exact ce să postezi, când și de ce — bazat pe datele tale reale.",
+    heroTitleMain: "Postezi constant, dar nu vin clienți.",
+    heroTitleAccent: "PostPilot îți spune exact de ce.",
+    heroSubtitle: "PostPilot se conectează la Instagramul tău, îți analizează datele reale și îți spune exact ce să postezi ca să aduci clienți — nu doar followeri.",
     heroVideoTitle: "Vezi PostPilot in actiune",
-    signal1: "Prompturi personalizate zilnic",
-    signal2: "Feedback adaptat vocii tale",
-    signal3: "Fara fluff. Doar claritate.",
-    socialProofTitle: "Creatorii iubesc PostPilot",
-    socialProofSubtitle: "Alatura-te miilor care si-au gasit increderea creativa",
-    testimonial1Quote: "\"Mi-a analizat Instagramul si mi-a spus exact ce vede audienta mea.\"",
-    testimonial1Role: "Coach de libertate si scop",
-    testimonial2Quote: "\"Mi-a redat increderea in vocea mea - de parca in sfarsit stiam ce sa spun.\"",
-    testimonial2Role: "Coach de viata si fitness",
-    testimonial3Quote: "\"Mi-a spus adevarul - fara vorbe goale, fara laude false. Exact ce aveam nevoie.\"",
-    testimonial3Role: "Coach de sanatate si wellness",
-    achieveTitle: "Cum Funcționează",
-    achieveSubtitle: "PostPilot nu îți oferă doar idei vagi. Funcționează ca un strateg, copywriter și analist de date complet.",
-    feature1Title: "Planificare Sub Măsură",
-    feature1Text: "Conectezi Instagramul și primești instant calendarul săptămânal pentru a ști clar ce trebuie să publici.",
-    feature2Title: "Scenarii Video Gata de Filmat",
-    feature2Text: "De la cârligul video până la mesajul de final, îți scriem scripturi video detaliate, pas cu pas.",
-    feature3Title: "Idei și Opțiuni de Hook",
-    feature3Text: "Alege dintre variantele clare de titlu și primești idei de conținut personalizate fix pe audiența ta.",
-    feature4Title: "Scor și Evaluare Instantă",
-    feature4Text: "Primești note de la 1 la 10 pe claritatea mesajului și forța vizuală înainte să postezi ceva online.",
-    feature5Title: "Analiză Profundă a Profilului",
-    feature5Text: "Îți scanăm postările anterioare și îți spunem exact de ce anumite clipuri au funcționat.",
-    feature6Title: "Descrieri și Hashtag-uri",
-    feature6Text: "Gata cu timpul pierdut. Primești textul postării complet formulat.",
+    signal1: "Plan de conținut orientat spre clienți",
+    signal2: "Urmărirea semnalelor de conversie",
+    signal3: "Datele tale. Rezultate reale.",
+    socialProofTitle: "Coaches și consultanți obțin rezultate",
+    socialProofSubtitle: "Creatori care vând servicii și transformă Instagramul într-o sursă constantă de clienți.",
+    testimonial1Quote: "\"Mi-a arătat exact care postări atrăgeau potențiali clienți. Nu știam că save-urile contează atât de mult.\"",
+    testimonial1Role: "Business Coach",
+    testimonial2Quote: "\"Am primit primul DM de la un potențial client la o săptămână după ce mi-am schimbat strategia. PostPilot mi-a arătat ce lipsea.\"",
+    testimonial2Role: "Coach de fitness și mindset",
+    testimonial3Quote: "\"Am înțeles în sfârșit de ce primeam like-uri dar nu veneau clienți. Acum știu exact ce să schimb.\"",
+    testimonial3Role: "Consultant de wellness",
+    achieveTitle: "De la followeri la clienți",
+    achieveSubtitle: "PostPilot îți citește datele reale de pe Instagram și îți spune ce lipsește între postările tale și următorul client.",
+    feature1Title: "Știi care postări atrag clienți",
+    feature1Text: "Vezi ce conținut generează save-uri, DM-uri și interes real — nu doar like-uri.",
+    feature2Title: "Postezi cu o strategie clară",
+    feature2Text: "Atrage oameni noi, construiește încredere și convertește — în proporția potrivită în fiecare săptămână.",
+    feature3Title: "Coach AI de client acquisition",
+    feature3Text: "Întreabă-l orice: de ce nu a venit niciun client luna asta, ce să postezi săptămâna asta, cum să îți îmbunătățești CTA-ul.",
+    feature4Title: "CTA-uri care aduc DM-uri",
+    feature4Text: "PostPilot identifică postările fără un call-to-action clar și îți sugerează unele care se potrivesc cu oferta ta.",
+    feature5Title: "Datele tale reale de conversie",
+    feature5Text: "Analizăm save-urile, comentariile și reach-ul ca să îți arătăm ce postări îi mișcă pe oameni spre decizia de cumpărare.",
+    feature6Title: "Scripturi și descrieri care convertesc",
+    feature6Text: "Text gata de folosit, adaptat vocii tale și serviciului tău — nu un template generic.",
     comingSoonBadge: "In curand",
     comingSoonTitle: "Acesta este doar inceputul",
     comingSoonSubtitle: "Pregatim functii noi si interesante.",
@@ -489,8 +508,8 @@ const I18N = {
     chip3: "Generator de carusele",
     chip4: "Programator zilnic de continut",
     chip5: "Banca de idei de continut",
-    finalCtaTitle: "Nu ai nevoie de inca un tool de continut.",
-    finalCtaSubtitle: "Ai nevoie de un coach care te ajuta sa crezi in ideile tale.",
+    finalCtaTitle: "Nu ai nevoie de încă un tool de conținut.",
+    finalCtaSubtitle: "Ai nevoie de un sistem care îți spune ce să postezi ca să aduci clienți — bazat pe datele tale.",
     finalCtaClosing: "Acesta este PostPilot.",
     finalCtaGuarantee: "",
     finalLegalNote: "PostPilot Labs 2026 - Construit pentru creatorii independenti.",
@@ -711,6 +730,25 @@ const I18N = {
     onboardEdgeUnlockLine1: "Potentialul",
     onboardEdgeUnlockLine2: "nefolosit",
     onboardEdgeCta: "Continua",
+    onboardProfileTitle: "Un ultim pas înainte să începem",
+    onboardProfileSub: "Ajută PostPilot să te coacheze specific pe aducerea de clienți — nu doar pe creșterea de followeri.",
+    onboardProfileServiceLabel: "Ce vinzi?",
+    onboardProfileServicePlaceholder: "Alege...",
+    onboardProfileService1: "Coaching 1-la-1",
+    onboardProfileService2: "Consultanță / strategie",
+    onboardProfileService3: "Freelancing / done-for-you",
+    onboardProfileService4: "Curs online / produs digital",
+    onboardProfileService5: "Servicii de agenție",
+    onboardProfileResultLabel: "Ce rezultat creezi pentru clienți?",
+    onboardProfileResultPlaceholder: "ex: Îi ajut pe coaches să atragă 3 clienți/lună de pe Instagram",
+    onboardProfilePriceLabel: "Prețul mediu al serviciului tău",
+    onboardProfilePricePlaceholder: "Alege...",
+    onboardProfilePrice1: "Sub €500",
+    onboardProfilePrice2: "€500 – €2.000",
+    onboardProfilePrice3: "€2.000 – €5.000",
+    onboardProfilePrice4: "€5.000+",
+    onboardProfileCta: "Continuă",
+    onboardProfileSkip: "Treci mai departe",
     onboardPaymentTitle: "Activeaza-ti planul",
     onboardPaymentSubtitle: "Aboneaza-te ca sa deblochezi coach-ul AI si analizele complete.",
     onboardPaymentPlanName: "Lunar",
@@ -1809,6 +1847,16 @@ function applyLanguage() {
   setTextIfExists("edgeUnlockTitle1", t("onboardEdgeUnlockLine1"));
   setTextIfExists("edgeUnlockTitle2", t("onboardEdgeUnlockLine2"));
   setTextIfExists("edgeStartBtnLabel", t("onboardEdgeCta"));
+  setTextIfExists("obProfileTitle", t("onboardProfileTitle"));
+  setTextIfExists("obProfileSub", t("onboardProfileSub"));
+  setTextIfExists("obProfileServiceLabel", t("onboardProfileServiceLabel"));
+  setTextIfExists("obProfileResultLabel", t("onboardProfileResultLabel"));
+  setTextIfExists("obProfilePriceLabel", t("onboardProfilePriceLabel"));
+  setTextIfExists("obProfileCtaLabel", t("onboardProfileCta"));
+  setTextIfExists("obProfileSkipLabel", t("onboardProfileSkip"));
+  setPlaceholderIfExists("obProfileServiceInput", t("onboardProfileServicePlaceholder"));
+  setPlaceholderIfExists("obProfileResultInput", t("onboardProfileResultPlaceholder"));
+  setPlaceholderIfExists("obProfilePriceInput", t("onboardProfilePricePlaceholder"));
   setTextIfExists("obPaymentTitle", t("onboardPaymentTitle"));
   setTextIfExists("obPaymentSubtitle", t("onboardPaymentSubtitle"));
   setTextIfExists("obPaymentPlanName", t("onboardPaymentPlanName"));
@@ -2009,7 +2057,7 @@ function syncLandingVideoPlayback() {
   if (currentSrc) frame.setAttribute("src", "");
 }
 
-const ONBOARD_STEPS = ["connect", "scan", "edge", "payment"];
+const ONBOARD_STEPS = ["connect", "scan", "edge", "profile", "payment"];
 
 function showOnboardStep(step) {
   if (!onboardingModal) return;
@@ -2026,6 +2074,7 @@ function showOnboardStep(step) {
     connect: "obConnectView",
     scan: "obScanView",
     edge: "obEdgeView",
+    profile: "obProfileView",
     payment: "obPaymentView",
   };
   ONBOARD_STEPS.forEach((key) => {
@@ -5677,12 +5726,28 @@ async function startScanFlow() {
 
 document.getElementById("edgeStartBtn")?.addEventListener("click", () => {
   if (!paymentCompleted()) {
-    showOnboardStep("payment");
-    renderPaymentStep();
+    showOnboardStep("profile");
   } else {
     hideOnboardingModal();
     setActiveView("agent");
   }
+});
+
+document.getElementById("obProfileForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const serviceType = document.getElementById("obProfileServiceInput")?.value || "";
+  const clientResult = document.getElementById("obProfileResultInput")?.value?.trim() || "";
+  const pricePoint = document.getElementById("obProfilePriceInput")?.value || "";
+  try {
+    await api("/api/settings/save", "POST", { businessProfile: { serviceType, clientResult, pricePoint } });
+  } catch (_) {}
+  showOnboardStep("payment");
+  renderPaymentStep();
+});
+
+document.getElementById("obProfileSkipBtn")?.addEventListener("click", () => {
+  showOnboardStep("payment");
+  renderPaymentStep();
 });
 
 renderConversation([]);
