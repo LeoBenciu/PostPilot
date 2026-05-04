@@ -18,7 +18,7 @@ const defaultState = Object.freeze({
     billing: {
       status: "unpaid",
       plan: "monthly",
-      amountEur: 30,
+      amountEur: 29,
       currency: "EUR",
       interval: "month",
       paidAt: null,
