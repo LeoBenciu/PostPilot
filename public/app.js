@@ -15,7 +15,7 @@ if (referralParamFromUrl) {
 const REFERRAL_CODE_FROM_URL = localStorage.getItem(REFERRAL_CAPTURE_KEY) || "";
 const REFERRAL_LINK_BASE = "https://postpilotcoach.com";
 const LANDING_VIDEO_SRC_RO = "https://www.youtube.com/embed/2hyUw_gF2gI?autoplay=1&rel=0&playsinline=1";
-const LANDING_VIDEO_SRC_NON_RO = "https://www.youtube.com/embed/VCs3GdmqHk4?autoplay=1&rel=0&playsinline=1";
+const LANDING_VIDEO_SRC_NON_RO = "https://www.youtube.com/embed/K7ogFBY7T0c?autoplay=1&rel=0&playsinline=1";
 
 const authGate = document.getElementById("authGate");
 const chatApp = document.getElementById("chatApp");
