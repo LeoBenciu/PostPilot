@@ -131,10 +131,10 @@ const I18N = {
     dashboardViewsLabel: "Total views",
     dashboardCommentsLabel: "Comments",
     dashboardTodayPostLabel: "Today's post",
-    dashboardTopPostsHeading: "Top posts (last 30 days)",
-    dashboardFunnelHeading: "Funnel insights",
+    dashboardTopPostsHeading: "Your Best Converting Posts (last 30 days)",
+    dashboardFunnelHeading: "Client journey funnel",
     dashboardAiInsightsHeading: "AI insights",
-    dashboardHealthHeading: "Content health score",
+    dashboardHealthHeading: "Client Attraction Score",
     dashboardFollowerDeltaUnavailable: "Follower delta unavailable from current history",
     dashboardVsLastWeek: "vs last week",
     dashboardCriticalZeroCommentsWeek: "Critical: zero comments this week",
@@ -146,9 +146,9 @@ const I18N = {
     dashboardViewsUnit: "views",
     dashboardLikesUnit: "likes",
     dashboardErUnit: "ER",
-    dashboardFunnelDiscovery: "Discovery",
-    dashboardFunnelProfileVisit: "Profile Visit",
-    dashboardFunnelFollow: "Urmarire",
+    dashboardFunnelDiscovery: "Reach",
+    dashboardFunnelProfileVisit: "Trust",
+    dashboardFunnelFollow: "Convert",
     dashboardFixDiscoveryCritical: "Post more short-form hooks with stronger first 2 seconds.",
     dashboardFixDiscoveryModerate: "Double down on your best media type this week.",
     dashboardFixDiscoveryGood: "Keep posting in your top-performing format and time slot.",
@@ -550,10 +550,10 @@ const I18N = {
     dashboardViewsLabel: "Vizualizari totale",
     dashboardCommentsLabel: "Comentarii",
     dashboardTodayPostLabel: "Postarea de azi",
-    dashboardTopPostsHeading: "Top postari (ultimele 30 zile)",
-    dashboardFunnelHeading: "Insight-uri funnel",
+    dashboardTopPostsHeading: "Postările care aduc clienți (ultimele 30 zile)",
+    dashboardFunnelHeading: "Funnel-ul către client",
     dashboardAiInsightsHeading: "Insight-uri AI",
-    dashboardHealthHeading: "Scor sanatate continut",
+    dashboardHealthHeading: "Scor de atracție clienți",
     dashboardFollowerDeltaUnavailable: "Delta followers indisponibil din istoricul curent",
     dashboardVsLastWeek: "vs saptamana trecuta",
     dashboardCriticalZeroCommentsWeek: "Critic: zero comentarii saptamana asta",
@@ -565,9 +565,9 @@ const I18N = {
     dashboardViewsUnit: "vizualizari",
     dashboardLikesUnit: "like-uri",
     dashboardErUnit: "ER",
-    dashboardFunnelDiscovery: "Descoperire",
-    dashboardFunnelProfileVisit: "Vizita profil",
-    dashboardFunnelFollow: "Follow",
+    dashboardFunnelDiscovery: "Reach",
+    dashboardFunnelProfileVisit: "Încredere",
+    dashboardFunnelFollow: "Conversie",
     dashboardFixDiscoveryCritical: "Posteaza mai multe hook-uri scurte cu primele 2 secunde mai puternice.",
     dashboardFixDiscoveryModerate: "Concentreaza-te pe formatul tau cu performanta cea mai buna saptamana asta.",
     dashboardFixDiscoveryGood: "Continua sa postezi in formatul si intervalul orar care performeaza cel mai bine.",
@@ -3466,6 +3466,14 @@ function engagementForPost(post) {
   return Number(post?.likes || 0) + Number(post?.comments || 0) + Number(post?.shares || 0) + Number(post?.saved || 0);
 }
 
+function conversionScoreForPost(post) {
+  const saves = Number(post?.saved || 0);
+  const comments = Number(post?.comments || 0);
+  const shares = Number(post?.shares || 0);
+  const likes = Number(post?.likes || 0);
+  return saves * 3 + comments * 2 + shares * 2 + likes * 0.25;
+}
+
 function reachForPost(post) {
   return Number(post?.reach || 0) || Number(post?.impressions || 0) || Number(post?.videoViews || 0) || 0;
 }
@@ -3628,12 +3636,14 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
   const topWrap = document.getElementById("dashboardTopPosts");
   if (topWrap) {
     const topPosts = [...recentPosts]
-      .sort((a, b) => engagementForPost(b) - engagementForPost(a))
+      .sort((a, b) => conversionScoreForPost(b) - conversionScoreForPost(a))
       .slice(0, 3);
     topWrap.innerHTML = topPosts
       .map((post, idx) => {
         const reach = Math.max(1, reachForPost(post));
-        const er = ((engagementForPost(post) / reach) * 100).toFixed(1);
+        const saves = Number(post?.saved || 0);
+        const comments = Number(post?.comments || 0);
+        const convPct = (((saves + comments) / reach) * 100).toFixed(1);
         const title = (getPostText(post).split(/\n|\./)[0] || `${formatMediaType(post.mediaType)} post`).slice(0, 80);
         const previewUrl = String(post?.imageUrl || post?.thumbnailUrl || post?.mediaUrl || "").trim();
         return `
@@ -3644,9 +3654,9 @@ function renderDashboardViewFromData({ creator, bundle, posts }) {
           <div>
             <div class="dashboard-top-post-head">
               <h4 class="dashboard-top-post-title">#${idx + 1} ${title}</h4>
-              <span class="dashboard-er-badge">${er}% ${t("dashboardErUnit")}</span>
+              <span class="dashboard-er-badge">${convPct}% conv</span>
             </div>
-            <p class="dashboard-top-post-meta">${formatCompactNumber(reachForPost(post))} ${t("dashboardViewsUnit")} - ${formatCompactNumber(post.likes || 0)} ${t("dashboardLikesUnit")}</p>
+            <p class="dashboard-top-post-meta">${formatCompactNumber(saves)} saves · ${formatCompactNumber(comments)} comments · ${formatCompactNumber(reachForPost(post))} ${t("dashboardViewsUnit")}</p>
           </div>
         </article>
       `;
