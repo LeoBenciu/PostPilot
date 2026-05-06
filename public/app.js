@@ -2852,6 +2852,84 @@ function renderCardScript(data) {
   return html;
 }
 
+function renderCardCarousel(data) {
+  const title = data.title || "Carousel";
+  const slides = Array.isArray(data.slides) ? data.slides : [];
+  const normalizedSlides = slides
+    .map((slide, index) => ({
+      label: String(slide?.label || `Slide ${index + 1}`).trim(),
+      text: String(slide?.text || slide?.headline || slide?.onScreen || "").trim(),
+      visual: String(slide?.visual || slide?.image || slide?.description || "").trim(),
+      note: String(slide?.note || slide?.styling || "").trim(),
+    }))
+    .filter((slide) => slide.text || slide.visual);
+
+  const captionText = String(data.caption || "").trim();
+  const ctaText = String(data.cta || "").trim();
+
+  let html = `<div class="pp-card pp-card--carousel">`;
+  html += `<div class="pp-card-header"><span class="pp-card-header-icon">🎞️</span>${escapeHtml(title)}</div>`;
+  html += `<div class="pp-carousel-slides">`;
+  for (let i = 0; i < normalizedSlides.length; i++) {
+    const slide = normalizedSlides[i];
+    const num = i + 1;
+    html += `<div class="pp-carousel-slide pp-carousel-slide--${Math.min(num, 3)}">`;
+    html += `<div class="pp-carousel-slide-header">`;
+    html += `<span class="pp-carousel-slide-num">${num}</span>`;
+    html += `<span class="pp-carousel-slide-label">${escapeHtml(slide.label)}</span>`;
+    html += `</div>`;
+    if (slide.text) {
+      html += `<div class="pp-carousel-slide-text">${escapeHtml(slide.text)}</div>`;
+    }
+    if (slide.visual) {
+      html += `<div class="pp-carousel-slide-visual"><span class="pp-carousel-slide-visual-kicker">Visual:</span> ${escapeHtml(slide.visual)}</div>`;
+    }
+    if (slide.note) {
+      html += `<div class="pp-carousel-slide-note">${escapeHtml(slide.note)}</div>`;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  if (captionText) {
+    const captionLabel = currentLanguage === "ro" ? "Descriere postare" : "Caption";
+    html += `<div class="pp-carousel-caption-block">`;
+    html += `<div class="pp-carousel-caption-label">${escapeHtml(captionLabel)}</div>`;
+    html += `<div class="pp-carousel-caption-text">${escapeHtml(captionText)}</div>`;
+    html += `</div>`;
+  }
+  if (ctaText) {
+    const ctaLabel = currentLanguage === "ro" ? "Call-to-action" : "CTA";
+    html += `<div class="pp-carousel-cta-block">`;
+    html += `<div class="pp-carousel-cta-label">${escapeHtml(ctaLabel)}</div>`;
+    html += `<div class="pp-carousel-cta-text">${escapeHtml(ctaText)}</div>`;
+    html += `</div>`;
+  }
+
+  const addCalendarText = currentLanguage === "ro" ? "Adauga in Calendar" : "Add to Calendar";
+  const scriptText = normalizedSlides
+    .map((slide, idx) => {
+      const lines = [`Slide ${idx + 1} — ${slide.label}`];
+      if (slide.text) lines.push(`Text: ${slide.text}`);
+      if (slide.visual) lines.push(`Visual: ${slide.visual}`);
+      if (slide.note) lines.push(`Note: ${slide.note}`);
+      return lines.join("\n");
+    })
+    .join("\n\n");
+  const schedulePayload = encodeURIComponent(
+    JSON.stringify({
+      title: title || "Carousel post",
+      type: "CAROUSEL",
+      caption: captionText,
+      script: scriptText,
+    }),
+  );
+  html += `<div class="pp-card-actions">`;
+  html += `<button class="pp-card-btn pp-card-btn--secondary" data-card-action="schedule-from-card" data-card-clip="${schedulePayload}">${addCalendarText}</button>`;
+  html += `</div></div>`;
+  return html;
+}
+
 function renderCardCaption(data) {
   const caption = data.caption || data.text || "";
   const hashtags = data.hashtags || "";
@@ -2878,6 +2956,7 @@ function renderCard(type, data) {
       case "week_plan": return renderCardWeekPlan(data);
       case "hook_picker": return renderCardHookPicker(data);
       case "script": return renderCardScript(data);
+      case "carousel": return renderCardCarousel(data);
       case "caption": return renderCardCaption(data);
       default: return null;
     }
