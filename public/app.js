@@ -270,16 +270,16 @@ const I18N = {
     chatSubtitle: "Your creator growth assistant",
     agentEmptyGreetingWithName: "Welcome back {name}, let's slay the day 💪",
     agentEmptyGreetingGeneric: "Welcome back, let's slay the day 💪",
-    chipViralIdea: "Review my CTA",
+    chipViralIdea: "Steal what works",
     chipWeeklyPlan: "Client content plan",
-    chipMotivate: "Motivate me",
+    chipMotivate: "Review my CTA",
     chipPostIdeas: "Get clients from content",
-    chipFindVoice: "Find my voice",
+    chipFindVoice: "Content mix audit",
     homePromptWeeklyPlan: "Build me a weekly client content plan—posts that attract new people, build trust, and convert followers into inquiries.",
-    homePromptMotivate: "Give me a quick motivation boost as a service seller who's feeling stuck with content today.",
+    homePromptMotivate: "Review the CTA on my last post or one I'm about to publish. Is it strong enough to drive a DM? Suggest 3 alternative CTAs tied to my service.",
     homePromptPostIdeas: "Which types of posts could drive DMs and client inquiries for my service, based on my real data?",
-    homePromptFindVoice: "Help me find my voice. What's my edge as a service seller on Instagram?",
-    homePromptViralIdea: "Review my last caption or post idea and tell me if the CTA is strong enough to drive DMs.",
+    homePromptFindVoice: "Audit my last 30 days of content. How many posts were attract (reach new people), nurture (build trust), or convert (drive DMs)? Tell me where I'm imbalanced and what to add this week.",
+    homePromptViralIdea: "I want to steal what's working from competitors selling something similar to my service. Search the web for recent Instagram content from these accounts: @handle1, @handle2, @handle3 (replace with real handles). Identify the hooks, formats, and angles that worked. Give me 5 content ideas adapted to my offer and my voice—each with a hook, format suggestion, and the conversion goal (attract / nurture / convert).",
     scoreModalSectionWhat: "What is it?",
     scoreModalSectionDrivers: "What's driving your score?",
     scoreMetaMomentumName: "Momentum",
@@ -343,6 +343,14 @@ const I18N = {
     onboardPaymentCta: "Continue to checkout",
     onboardPaymentLoggedInAs: "Logged in as:",
     chatInputPlaceholder: "Message PostPilot Agent",
+    competitorModalTitle: "Steal what works",
+    competitorModalSub: "Enter up to 3 Instagram accounts that sell something similar to your service. PostPilot will research what's working for them and adapt 5 ideas to your offer and voice.",
+    competitorHandle1Label: "Competitor 1",
+    competitorHandle2Label: "Competitor 2 (optional)",
+    competitorHandle3Label: "Competitor 3 (optional)",
+    competitorAngleLabel: "What angle do you want to study? (optional)",
+    competitorAnglePlaceholder: "e.g. how they pitch their offer in Reels",
+    competitorSubmitLabel: "Get 5 adapted ideas",
     suggestionsLabel: "Suggestions",
     suggestions: [
       { icon: "📊", label: "Analyze performance", prompt: "Analyze my latest performance and tell me what to improve" },
@@ -689,21 +697,21 @@ const I18N = {
     chatSubtitle: "Asistentul tau pentru crestere",
     agentEmptyGreetingWithName: "Bine ai revenit, {name}, hai sa rupem ziua asta 💪",
     agentEmptyGreetingGeneric: "Bine ai revenit, hai sa rupem ziua asta 💪",
-    chipViralIdea: "Ideea virala a zilei",
-    chipWeeklyPlan: "Plan de continut saptamanal",
-    chipMotivate: "Motivaza-ma",
-    chipPostIdeas: "Idei de postari",
-    chipFindVoice: "Gaseste-mi vocea",
+    chipViralIdea: "Fură ce funcționează",
+    chipWeeklyPlan: "Plan de conținut clienți",
+    chipMotivate: "Verifică CTA-ul",
+    chipPostIdeas: "Adu clienți din conținut",
+    chipFindVoice: "Audit content mix",
     homePromptWeeklyPlan:
-      "Fa-mi un plan de continut pentru saptamana asta, pe baza ultimelor mele postari.",
+      "Fă-mi un plan săptămânal de conținut orientat spre clienți — postări care atrag oameni noi, construiesc încredere și convertesc followeri în întrebări.",
     homePromptMotivate:
-      "Da-mi un boost rapid de motivatie ca un creator care se simte blocat azi.",
+      "Verifică CTA-ul de la ultima mea postare sau de la una pe care urmează să o public. E suficient de puternic ca să aducă un DM? Propune 3 alternative de CTA legate de serviciul meu.",
     homePromptPostIdeas:
-      "Da-mi 5 idei de postari adaptate nisei mele si performantei recente.",
+      "Ce tipuri de postări ar putea să aducă DM-uri și întrebări de la potențiali clienți pentru serviciul meu, pe baza datelor mele reale?",
     homePromptFindVoice:
-      "Ajuta-ma sa imi gasesc vocea. Care e atuul meu ca si creator?",
+      "Auditează ultimele 30 de zile de conținut. Câte postări au fost de tip atragere (reach nou), încredere (nurture) sau conversie (drive DM)? Spune-mi unde sunt dezechilibrat și ce să adaug săptămâna asta.",
     homePromptViralIdea:
-      "Da-mi o idee virala de continut pentru azi, adaptata nisei si audientei mele.",
+      "Vreau să fur ce funcționează de la competitori care vând ceva similar cu serviciul meu. Caută pe web conținut Instagram recent de la aceste conturi: @handle1, @handle2, @handle3 (înlocuiește cu handle-uri reale). Identifică hook-urile, formatele și unghiurile care au funcționat. Dă-mi 5 idei de conținut adaptate ofertei mele și vocii mele — fiecare cu un hook, sugestie de format și obiectivul de conversie (atragere / încredere / conversie).",
     scoreModalSectionWhat: "Ce inseamna?",
     scoreModalSectionDrivers: "Ce influenteaza scorul tau?",
     scoreMetaMomentumName: "Momentum",
@@ -770,6 +778,14 @@ const I18N = {
     onboardPaymentCta: "Continua catre plata",
     onboardPaymentLoggedInAs: "Autentificat ca:",
     chatInputPlaceholder: "Mesaj catre PostPilot Agent",
+    competitorModalTitle: "Fură ce funcționează",
+    competitorModalSub: "Introdu până la 3 conturi de Instagram care vând ceva similar cu serviciul tău. PostPilot analizează ce funcționează pentru ei și adaptează 5 idei la oferta și vocea ta.",
+    competitorHandle1Label: "Competitor 1",
+    competitorHandle2Label: "Competitor 2 (opțional)",
+    competitorHandle3Label: "Competitor 3 (opțional)",
+    competitorAngleLabel: "Ce unghi vrei să studiezi? (opțional)",
+    competitorAnglePlaceholder: "ex. cum își prezintă oferta în Reels",
+    competitorSubmitLabel: "Generează 5 idei adaptate",
     suggestionsLabel: "Sugestii",
     suggestions: [
       { icon: "📊", label: "Analizeaza performanta", prompt: "Analizeaza-mi ultima performanta si spune-mi ce sa imbunatatesc" },
@@ -2240,6 +2256,14 @@ function applyLanguage() {
   setTextIfExists("disconnectConfirmBtn", t("disconnectConfirmCta"));
   setTextIfExists("chatHeaderSubtitle", t("chatSubtitle"));
   setTextIfExists("viralIdeaChipLabel", t("chipViralIdea"));
+  setTextIfExists("competitorModalTitle", t("competitorModalTitle"));
+  setTextIfExists("competitorModalSub", t("competitorModalSub"));
+  setTextIfExists("competitorHandle1Label", t("competitorHandle1Label"));
+  setTextIfExists("competitorHandle2Label", t("competitorHandle2Label"));
+  setTextIfExists("competitorHandle3Label", t("competitorHandle3Label"));
+  setTextIfExists("competitorAngleLabel", t("competitorAngleLabel"));
+  setTextIfExists("competitorSubmitLabel", t("competitorSubmitLabel"));
+  setPlaceholderIfExists("competitorAngle", t("competitorAnglePlaceholder"));
   setTextIfExists("homeChipWeeklyPlanLabel", t("chipWeeklyPlan"));
   setTextIfExists("homeChipMotivateLabel", t("chipMotivate"));
   setTextIfExists("homeChipPostIdeasLabel", t("chipPostIdeas"));
@@ -6210,7 +6234,60 @@ document.querySelectorAll(".suggest-chip[data-prompt]").forEach((btn) => {
   btn.addEventListener("click", () => sendHomePrompt(btn.getAttribute("data-prompt")));
 });
 
-document.getElementById("viralIdeaChip")?.addEventListener("click", () => sendHomePrompt("viral-idea"));
+document.getElementById("viralIdeaChip")?.addEventListener("click", () => openCompetitorModal());
+
+function openCompetitorModal() {
+  const modal = document.getElementById("competitorModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => document.getElementById("competitorHandle1")?.focus(), 50);
+}
+
+function closeCompetitorModal() {
+  const modal = document.getElementById("competitorModal");
+  if (!modal) return;
+  modal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function normalizeHandle(raw) {
+  let h = String(raw || "").trim();
+  if (!h) return "";
+  h = h.replace(/^https?:\/\/(www\.)?instagram\.com\//i, "");
+  h = h.replace(/[\/?#].*$/, "");
+  h = h.replace(/^@+/, "");
+  return h ? `@${h}` : "";
+}
+
+document.getElementById("closeCompetitorBtn")?.addEventListener("click", closeCompetitorModal);
+document.getElementById("competitorModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "competitorModal") closeCompetitorModal();
+});
+
+document.getElementById("competitorForm")?.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const handles = [
+    normalizeHandle(document.getElementById("competitorHandle1")?.value),
+    normalizeHandle(document.getElementById("competitorHandle2")?.value),
+    normalizeHandle(document.getElementById("competitorHandle3")?.value),
+  ].filter(Boolean);
+  if (handles.length === 0) {
+    document.getElementById("competitorHandle1")?.focus();
+    return;
+  }
+  const angle = String(document.getElementById("competitorAngle")?.value || "").trim();
+  const handlesList = handles.join(", ");
+  const angleClause = angle
+    ? ` Focus specifically on this angle: "${angle}".`
+    : "";
+  const prompt = `I want to steal what's working from competitors selling something similar to my service. Use web research to study recent Instagram content from these accounts: ${handlesList}.${angleClause} Identify the hooks, formats, topics and angles that worked recently. Then give me 5 content ideas adapted to MY offer and MY voice — do not copy theirs verbatim. For each idea: a hook line, format suggestion (Reel/Carousel/Story), and the conversion goal (attract / nurture / convert). Tie each idea back to my service so it actually drives DMs, not just engagement.`;
+  closeCompetitorModal();
+  setActiveView("agent");
+  const input = document.getElementById("messageInput");
+  if (input) input.value = prompt;
+  document.getElementById("composer")?.requestSubmit();
+});
 
 /* ============================================================
    Scan + Edge results flow (post-connect onboarding)

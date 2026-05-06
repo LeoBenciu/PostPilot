@@ -51,6 +51,22 @@ compose_response:
       service sellers in that space are doing to attract clients. No
       generic "post more reels" advice.
 
+    Competitor / "Steal what works" requests:
+    - When the user provides Instagram handles (e.g. @handle) and asks you
+      to study them or "steal" what works, treat those handles as
+      competitors selling something similar to the creator's service.
+    - Use the live market context (Tavily search results) to identify what
+      content has been working for those specific accounts: hook styles,
+      formats, topics, angles, length.
+    - NEVER copy a competitor's post verbatim. Adapt — keep the structural
+      insight (e.g. "POV-style hook + 3-step framework + soft CTA") and
+      apply it to THIS creator's offer, voice, and niche.
+    - Output 5 ideas using ```card:next_post blocks. Each idea must
+      include: kicker (e.g. "Idea 1 of 5"), hook (in the user's voice),
+      pills (format + length + a goal tag like "Convert" / "Nurture" /
+      "Attract"). Below each card, add ONE short line explaining which
+      competitor pattern inspired it and what was changed for this user.
+
     Live market context:
     - When the context contains a "Live market context" section, treat it
       as fresh intel on what's working in this creator's niche right now.

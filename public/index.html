@@ -500,26 +500,26 @@
           <h2 class="agent-greeting" id="agentGreeting">Welcome back, let's slay the day 💪</h2>
           <button type="button" class="suggest-hero-chip" id="viralIdeaChip">
             <span class="suggest-hero-thumb" aria-hidden="true">
-              <span class="suggest-hero-emoji">🔥</span>
+              <span class="suggest-hero-emoji">🎯</span>
             </span>
-            <span class="suggest-hero-label" id="viralIdeaChipLabel">Viral idea of the day</span>
+            <span class="suggest-hero-label" id="viralIdeaChipLabel">Steal what works</span>
           </button>
           <div class="suggest-chip-row">
             <button type="button" class="suggest-chip suggest-chip-1" data-prompt="weekly-plan">
-              <span class="suggest-chip-thumb" aria-hidden="true"><span>Aa</span></span>
-              <span class="suggest-chip-label" id="homeChipWeeklyPlanLabel">Weekly content plan</span>
+              <span class="suggest-chip-thumb" aria-hidden="true"><span>📅</span></span>
+              <span class="suggest-chip-label" id="homeChipWeeklyPlanLabel">Client content plan</span>
             </button>
             <button type="button" class="suggest-chip suggest-chip-2" data-prompt="motivate">
-              <span class="suggest-chip-thumb" aria-hidden="true"><span>💪</span></span>
-              <span class="suggest-chip-label" id="homeChipMotivateLabel">Motivate me</span>
+              <span class="suggest-chip-thumb" aria-hidden="true"><span>✏️</span></span>
+              <span class="suggest-chip-label" id="homeChipMotivateLabel">Review my CTA</span>
             </button>
             <button type="button" class="suggest-chip suggest-chip-3" data-prompt="post-ideas">
-              <span class="suggest-chip-thumb" aria-hidden="true"><span>💡</span></span>
-              <span class="suggest-chip-label" id="homeChipPostIdeasLabel">Post ideas</span>
+              <span class="suggest-chip-thumb" aria-hidden="true"><span>💼</span></span>
+              <span class="suggest-chip-label" id="homeChipPostIdeasLabel">Get clients from content</span>
             </button>
             <button type="button" class="suggest-chip suggest-chip-4" data-prompt="find-voice">
-              <span class="suggest-chip-thumb" aria-hidden="true"><span>🎤</span></span>
-              <span class="suggest-chip-label" id="homeChipFindVoiceLabel">Find my voice</span>
+              <span class="suggest-chip-thumb" aria-hidden="true"><span>⚖️</span></span>
+              <span class="suggest-chip-label" id="homeChipFindVoiceLabel">Content mix audit</span>
             </button>
           </div>
         </div>
@@ -999,6 +999,38 @@
     </form>
     <p id="onboardingError" class="form-error"></p>
     <button id="closeOnboarding" type="button"></button>
+  </div>
+
+  <div id="competitorModal" class="modal hidden">
+    <div class="modal-card competitor-card">
+      <div class="modal-head">
+        <h2 id="competitorModalTitle">Steal what works</h2>
+        <button id="closeCompetitorBtn" class="ghost-icon" aria-label="Close">×</button>
+      </div>
+      <p class="competitor-sub" id="competitorModalSub">Enter up to 3 Instagram accounts that sell something similar to your service. PostPilot will research what's working for them and adapt 5 ideas to your offer and voice.</p>
+      <form id="competitorForm" class="competitor-form" autocomplete="off">
+        <label class="competitor-label">
+          <span id="competitorHandle1Label">Competitor 1</span>
+          <input id="competitorHandle1" type="text" placeholder="@handle or instagram.com/handle" maxlength="100" />
+        </label>
+        <label class="competitor-label">
+          <span id="competitorHandle2Label">Competitor 2 (optional)</span>
+          <input id="competitorHandle2" type="text" placeholder="@handle" maxlength="100" />
+        </label>
+        <label class="competitor-label">
+          <span id="competitorHandle3Label">Competitor 3 (optional)</span>
+          <input id="competitorHandle3" type="text" placeholder="@handle" maxlength="100" />
+        </label>
+        <label class="competitor-label">
+          <span id="competitorAngleLabel">What angle do you want to study? (optional)</span>
+          <input id="competitorAngle" type="text" placeholder="e.g. how they pitch their offer in Reels" maxlength="200" />
+        </label>
+        <button type="submit" class="competitor-submit" id="competitorSubmitBtn">
+          <span aria-hidden="true">🎯</span>
+          <span id="competitorSubmitLabel">Get 5 adapted ideas</span>
+        </button>
+      </form>
+    </div>
   </div>
 
   <div id="settingsModal" class="modal hidden">
