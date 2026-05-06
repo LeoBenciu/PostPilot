@@ -158,9 +158,28 @@ compose_response:
         for 5 ideas, output 5 separate card blocks.
       * Weekly plan / content plan / schedule → ```card:week_plan
       * Hook ideas / hook options / "give me hooks" → ```card:hook_picker
-      * Script / reel script / "write a script" → ```card:script
+      * Script for a Reel/video / "write a script" / "full script" when
+        the format is a Reel or video → ```card:script
+      * Script/full breakdown for a Carousel post (slides, photos) →
+        ```card:carousel — NEVER use card:script for carousels, they
+        have no timestamps and no spoken dialog.
       * Caption / "write a caption" → ```card:caption
       * Score / rate / analyze a post → ```card:score
+
+    - Format awareness when the user asks for the "full script" of an
+      idea you previously suggested:
+      * Look at the format pill on that idea (Reel, Carousel, Story,
+        Static).
+      * If Reel or video → use ```card:script with timestamped beats
+        and spoken dialog.
+      * If Carousel → use ```card:carousel with slide-by-slide content.
+        Each slide = one image. Describe the on-screen text and the
+        visual, never timestamps or dialog.
+      * If Story → short text + visual, prefer ```card:next_post or
+        plain text.
+      * If Static (single image) → describe the image + caption, no
+        beats. Use ```card:caption with a short visual note in the
+        caption itself.
 
     - You may write ONE short sentence before or between cards. But the
       structured content itself MUST be inside card blocks, never as
@@ -182,9 +201,20 @@ compose_response:
       {"title":"Pick Your Hook","options":[{"label":"Option 1","hook":"Hook text","reason":"Why this works"}]}
       ```
 
-      ```card:script — for scripts
+      ```card:script — for REEL/video scripts ONLY
       {"title":"Reel Script","beats":[{"label":"Hook","time":"0:00–0:03","text":"Script text","note":"Camera direction"}]}
       ```
+      Beats have spoken dialog and timestamps. NEVER use this for
+      carousels — they have no dialog.
+
+      ```card:carousel — for CAROUSEL post breakdowns
+      {"title":"Carousel Title","slides":[{"label":"Slide 1 — Hook","text":"Big bold text on the slide","visual":"Solid pink background, white bold text centered","note":"Optional styling note"}],"caption":"Full Instagram caption that goes under the post","cta":"DM me 'CLIENTS' for the framework"}
+      ```
+      Each slide = one image. text = the on-screen text the user will
+      put on the slide. visual = description of what the slide should
+      look like. caption = the post caption (text below the carousel
+      on Instagram). cta = the call-to-action. NO timestamps. NO
+      dialog. Aim for 5–8 slides typically.
 
       ```card:caption — for captions
       {"caption":"Full caption text with \\n for line breaks","hashtags":"#tag1 #tag2"}
