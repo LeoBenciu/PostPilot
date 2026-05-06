@@ -182,11 +182,24 @@ function resolveEffectiveNiche(state, message) {
 
 function buildMarketQuery(niche, language, userMessage) {
   const year = new Date().getUTCFullYear();
-  const words = String(userMessage || "")
-    .match(/[\w\u00c0-\u017f']{4,}/g) || [];
-  const extra = words.slice(0, 8).join(" ");
+  const msg = String(userMessage || "");
+  const handleMatches = msg.match(/@[A-Za-z0-9_.]{2,30}/g) || [];
+  const handles = [...new Set(handleMatches)].slice(0, 5);
   const langHint =
     language && language.toLowerCase() !== "english" ? ` in ${language}` : "";
+
+  if (handles.length > 0) {
+    const handlesText = handles.join(", ");
+    return (
+      `What kind of Instagram content has been working recently for ${handlesText}? ` +
+      `Focus on their hooks, formats (Reel/Carousel/Story), topics, and angles ` +
+      `from posts in the last 60 days. They sell to ${String(niche).trim()} audiences${langHint}. ` +
+      `Identify what made specific posts perform well \u2014 hook style, topic, format choice.`
+    );
+  }
+
+  const words = msg.match(/[\w\u00c0-\u017f']{4,}/g) || [];
+  const extra = words.slice(0, 8).join(" ");
   let base =
     `What is currently trending on Instagram for ${String(niche).trim()} creators${langHint} in ${year}? ` +
     "Focus on viral hooks, popular content formats, trending hashtags, and specific " +
