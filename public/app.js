@@ -5354,6 +5354,13 @@ signupForm?.addEventListener("submit", async (event) => {
     return;
   }
 
+  const submitBtn = document.getElementById("signupSubmitBtn");
+  const originalText = submitBtn?.textContent;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "...";
+  }
+
   try {
     if (WAITLIST_MODE) {
       const data = await api("/api/waitlist", "POST", { email });
@@ -5378,6 +5385,11 @@ signupForm?.addEventListener("submit", async (event) => {
     await unlockChat(`Welcome to PostPilot, ${fullName}!`);
   } catch (err) {
     showFeedback(signupFeedback, err.message);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
   }
 });
 
