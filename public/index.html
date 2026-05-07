@@ -349,6 +349,11 @@
           <span aria-hidden="true" class="btn-icon">✦</span>
           <span id="agentViewBtnLabel">Coach</span>
         </button>
+        <button id="viralViewBtn" class="secondary sidebar-view-btn">
+          <span aria-hidden="true" class="btn-icon">🎬</span>
+          <span id="viralViewBtnLabel">Viral Clips</span>
+          <span class="sidebar-badge-new" id="viralViewBadge">NEW</span>
+        </button>
         <button id="analyticsViewBtn" class="secondary sidebar-view-btn">
           <span aria-hidden="true" class="btn-icon">◫</span>
           <span id="analyticsViewBtnLabel">Analytics</span>
@@ -548,6 +553,64 @@
           <div id="composerMediaList" class="composer-media-list hidden" aria-live="polite"></div>
         </div>
       </section>
+
+      <section id="viralView" class="app-view viral-view hidden">
+        <header class="viral-header">
+          <h2 class="viral-title" id="viralTitle">Steal what's working. Make it yours.</h2>
+          <p class="viral-sub" id="viralSub">Viral clips from creators in your niche. Find one you like — your AI coach rewrites it in your voice, with your offer, your shot list, your captions.</p>
+        </header>
+        <div class="viral-filter-row">
+          <div class="viral-niche-chips" id="viralNicheChips"></div>
+          <div class="viral-platform-row">
+            <div class="viral-platform-chips" id="viralPlatformChips"></div>
+            <select id="viralSortSelect" class="viral-sort-select">
+              <option value="trending">Trending now</option>
+              <option value="performance">Top performance</option>
+              <option value="recent">Most recent</option>
+            </select>
+          </div>
+        </div>
+        <div id="viralGrid" class="viral-grid"></div>
+        <p id="viralEmpty" class="viral-empty hidden">No clips match these filters yet. Try a different niche.</p>
+      </section>
+
+      <div id="viralDetailModal" class="modal hidden">
+        <div class="modal-card viral-detail-card">
+          <button id="viralDetailCloseBtn" class="ghost-icon viral-detail-close" aria-label="Close">×</button>
+          <div class="viral-detail-grid">
+            <div class="viral-detail-media" id="viralDetailMedia">
+              <div class="viral-detail-thumb" id="viralDetailThumb"></div>
+              <div class="viral-detail-platform-tag" id="viralDetailPlatform"></div>
+              <div class="viral-detail-perf" id="viralDetailPerf"></div>
+              <div class="viral-detail-duration" id="viralDetailDuration"></div>
+            </div>
+            <div class="viral-detail-body">
+              <h3 class="viral-detail-hook" id="viralDetailHook"></h3>
+              <div class="viral-detail-meta">
+                <div class="viral-detail-creator" id="viralDetailCreator"></div>
+                <div class="viral-detail-stats" id="viralDetailStats"></div>
+              </div>
+              <div class="viral-detail-pattern">
+                <div class="viral-detail-section-label" id="viralDetailPatternLabel">Why it works</div>
+                <p class="viral-detail-pattern-text" id="viralDetailPatternText"></p>
+              </div>
+              <div class="viral-detail-pattern">
+                <div class="viral-detail-section-label" id="viralDetailAngleLabel">Angle</div>
+                <p class="viral-detail-pattern-text" id="viralDetailAngleText"></p>
+              </div>
+              <div class="viral-detail-actions">
+                <button id="viralAdaptBtn" class="viral-adapt-btn">
+                  <span aria-hidden="true">✨</span>
+                  <span id="viralAdaptBtnLabel">Adapt this for my niche</span>
+                </button>
+                <a id="viralSourceLink" href="#" target="_blank" rel="noopener" class="viral-source-link">
+                  <span id="viralSourceLinkLabel">Watch original</span> ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <section id="analyticsView" class="app-view analytics-view hidden">
         <div id="analyticsRefreshing" class="analytics-refreshing" role="status" aria-live="polite">
