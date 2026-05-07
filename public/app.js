@@ -122,9 +122,20 @@ const I18N = {
     alreadyAccount: "Already have an account?",
     signIn: "Sign in",
     agentView: "Agent",
+    viralView: "Viral Clips",
     analyticsView: "Analytics",
     calendarView: "Calendar",
     dashboardView: "Dashboard",
+    viralPageTitle: "Steal what's working. Make it yours.",
+    viralPageSub: "Viral clips from creators in your niche. Find one you like — your AI coach rewrites it in your voice, with your offer, your shot list, your captions.",
+    viralAdaptCta: "Adapt this for my niche",
+    viralWatchOriginal: "Watch original",
+    viralWhyItWorks: "Why it works",
+    viralAngleLabel: "Angle",
+    viralEmptyText: "No clips match these filters yet. Try a different niche.",
+    viralSortTrending: "Trending now",
+    viralSortPerformance: "Top performance",
+    viralSortRecent: "Most recent",
     dashboardGreetingPrefix: "Hi",
     dashboardFollowersLabel: "Followeri",
     dashboardEngagementLabel: "Average engagement rate",
@@ -549,9 +560,20 @@ const I18N = {
     alreadyAccount: "Ai deja cont?",
     signIn: "Autentificare",
     agentView: "Agent",
+    viralView: "Clipuri Virale",
     analyticsView: "Analize",
     calendarView: "Calendar",
     dashboardView: "Dashboard",
+    viralPageTitle: "Fură ce funcționează. Fă-l al tău.",
+    viralPageSub: "Clipuri virale de la creatori din nișa ta. Găsește unul care îți place — coach-ul AI îl rescrie în vocea ta, cu oferta ta, planul tău de filmare și descrierile tale.",
+    viralAdaptCta: "Adaptează pentru nișa mea",
+    viralWatchOriginal: "Vezi originalul",
+    viralWhyItWorks: "De ce funcționează",
+    viralAngleLabel: "Unghi",
+    viralEmptyText: "Niciun clip nu se potrivește filtrelor. Încearcă o altă nișă.",
+    viralSortTrending: "În trending acum",
+    viralSortPerformance: "Performanță top",
+    viralSortRecent: "Cele mai recente",
     dashboardGreetingPrefix: "Salut",
     dashboardFollowersLabel: "Followers",
     dashboardEngagementLabel: "Rata medie de engagement",
@@ -2180,9 +2202,17 @@ function applyLanguage() {
   setTextIfExists("alreadyAccountText", t("alreadyAccount"));
   setTextIfExists("openSignin", t("signIn"));
   setTextIfExists("agentViewBtnLabel", t("agentView"));
+  setTextIfExists("viralViewBtnLabel", t("viralView"));
   setTextIfExists("analyticsViewBtnLabel", t("analyticsView"));
   setTextIfExists("calendarViewBtnLabel", t("calendarView"));
   setTextIfExists("dashboardViewBtnLabel", t("dashboardView"));
+  setTextIfExists("viralTitle", t("viralPageTitle"));
+  setTextIfExists("viralSub", t("viralPageSub"));
+  setTextIfExists("viralAdaptBtnLabel", t("viralAdaptCta"));
+  setTextIfExists("viralSourceLinkLabel", t("viralWatchOriginal"));
+  setTextIfExists("viralDetailPatternLabel", t("viralWhyItWorks"));
+  setTextIfExists("viralDetailAngleLabel", t("viralAngleLabel"));
+  setTextIfExists("viralEmpty", t("viralEmptyText"));
   setTextIfExists("calendarClipModalTitle", t("calendarModalTitle"));
   setTextIfExists("calendarClipTitleLabel", t("calendarModalTitleLabel"));
   setTextIfExists("calendarClipTypeLabel", t("calendarModalTypeLabel"));
@@ -4746,6 +4776,7 @@ function setActiveView(view) {
   const views = {
     dashboard: document.getElementById("dashboardView"),
     agent: document.getElementById("agentView"),
+    viral: document.getElementById("viralView"),
     analytics: document.getElementById("analyticsView"),
     calendar: document.getElementById("calendarView"),
   };
@@ -4755,6 +4786,7 @@ function setActiveView(view) {
   });
   dashboardViewBtn?.classList.toggle("active", view === "dashboard");
   agentViewBtn?.classList.toggle("active", view === "agent");
+  document.getElementById("viralViewBtn")?.classList.toggle("active", view === "viral");
   analyticsViewBtn?.classList.toggle("active", view === "analytics");
   calendarViewBtn?.classList.toggle("active", view === "calendar");
   const activeViewLabel = view === "dashboard"
@@ -4763,7 +4795,9 @@ function setActiveView(view) {
       ? t("analyticsView")
       : view === "calendar"
         ? t("calendarView")
-        : t("agentView");
+        : view === "viral"
+          ? t("viralView")
+          : t("agentView");
   setTextIfExists("activeViewLabel", activeViewLabel);
   refreshAgentEmptyState();
   if (view === "agent") {
@@ -4777,6 +4811,9 @@ function setActiveView(view) {
     renderCalendarView();
     ensureCalendarLoaded();
   }
+  if (view === "viral") {
+    renderViralView();
+  }
   try {
     localStorage.setItem(ACTIVE_VIEW_KEY, view);
   } catch (_err) {
@@ -4785,7 +4822,7 @@ function setActiveView(view) {
 }
 
 function getInitialActiveView() {
-  const allowed = new Set(["dashboard", "agent", "analytics", "calendar"]);
+  const allowed = new Set(["dashboard", "agent", "viral", "analytics", "calendar"]);
   try {
     const saved = localStorage.getItem(ACTIVE_VIEW_KEY);
     if (saved && allowed.has(saved)) return saved;
@@ -6676,4 +6713,425 @@ if (WAITLIST_MODE) {
     document.getElementById("disconnectBtn")?.click();
   });
 })();
+
+/* ============================================================
+   VIRAL CLIPS VIEW
+   ============================================================ */
+
+const VIRAL_CLIPS = [
+  {
+    id: "v1",
+    platform: "instagram",
+    niche: "coaching",
+    format: "Reel",
+    hook: "POV: you've been posting for 6 months and still no DMs.",
+    duration: "0:23",
+    performance: "+812%",
+    creatorHandle: "@maya.coaches",
+    creatorName: "Maya",
+    creatorRole: "Money Mindset Coach",
+    views: "4.2M", saves: "84.1K", shares: "31.2K",
+    thumbStyle: "linear-gradient(135deg, #fde6ec 0%, #f4c8d4 100%)",
+    pattern: "POV first-person hook + reveal of a counter-intuitive mistake + 3-step fix delivered in 18 seconds. Saves spike because the fix is concrete.",
+    angle: "Why posting consistently isn't enough — show the missing CTA piece. The hook implicates the viewer immediately.",
+    sourceUrl: "https://www.instagram.com/explore/tags/coaching/",
+  },
+  {
+    id: "v2",
+    platform: "instagram",
+    niche: "branding",
+    format: "Carousel",
+    hook: "Stop writing captions like an influencer. Write them like a closer.",
+    duration: "0:31",
+    performance: "+340%",
+    creatorHandle: "@thelaurastudio",
+    creatorName: "Laura",
+    creatorRole: "Brand Strategist",
+    views: "1.8M", saves: "112K", shares: "9.4K",
+    thumbStyle: "linear-gradient(135deg, #ffe8d6 0%, #f5c9a8 100%)",
+    pattern: "Sharp 'stop X / start Y' hook + 6-slide carousel breakdown. Each slide is one rule with one example. Saves are 6% of reach (very high).",
+    angle: "Reframes captions from creative writing to sales copy. Lands hard with service sellers because they recognize themselves in the 'wrong' version.",
+    sourceUrl: "https://www.instagram.com/explore/tags/branding/",
+  },
+  {
+    id: "v3",
+    platform: "tiktok",
+    niche: "coaching",
+    format: "Reel",
+    hook: "What I actually do every Sunday before a 6-day client week.",
+    duration: "0:42",
+    performance: "+210%",
+    creatorHandle: "@runwithben",
+    creatorName: "Ben",
+    creatorRole: "Run Coach",
+    views: "920K", saves: "44.3K", shares: "6.8K",
+    thumbStyle: "linear-gradient(135deg, #d4e7ff 0%, #a8c8ed 100%)",
+    pattern: "Behind-the-scenes 'day in the life' framing + specific time blocks (6:00, 7:30, 9:00) + show the boring operational stuff. Saves explode because it feels like real prep, not curated content.",
+    angle: "Builds trust through process transparency. Viewers feel like they're getting the actual playbook, not a highlight reel.",
+    sourceUrl: "https://www.tiktok.com/discover/run-coach",
+  },
+  {
+    id: "v4",
+    platform: "instagram",
+    niche: "fitness",
+    format: "Reel",
+    hook: "I tracked 100 clients. The ones who got results all did this 1 thing.",
+    duration: "0:28",
+    performance: "+580%",
+    creatorHandle: "@coach.alina",
+    creatorName: "Alina",
+    creatorRole: "Strength & Body Coach",
+    views: "2.1M", saves: "67.5K", shares: "14.2K",
+    thumbStyle: "linear-gradient(135deg, #d6f5d6 0%, #a8d8a8 100%)",
+    pattern: "Authority hook with specific number + binary reveal (the 1 thing) + delivery in 28 seconds. Specific numbers signal real research.",
+    angle: "Plays on FOMO + curiosity. The 'I tracked X' framing positions the creator as a data-driven authority.",
+    sourceUrl: "https://www.instagram.com/explore/tags/fitnesscoach/",
+  },
+  {
+    id: "v5",
+    platform: "tiktok",
+    niche: "copywriting",
+    format: "Reel",
+    hook: "Your bio is the reason you're not getting clients. Fix it in 60 seconds.",
+    duration: "0:58",
+    performance: "+440%",
+    creatorHandle: "@copywithjules",
+    creatorName: "Jules",
+    creatorRole: "Copywriter & Brand Voice Coach",
+    views: "1.4M", saves: "98K", shares: "12.6K",
+    thumbStyle: "linear-gradient(135deg, #fff3c4 0%, #f5d97f 100%)",
+    pattern: "Diagnostic hook (you're losing X because of Y) + immediate fix promise (in 60s) + step-by-step bio rewrite on screen.",
+    angle: "Hits the 'why no clients' anxiety directly. Service sellers feel called out and have to watch.",
+    sourceUrl: "https://www.tiktok.com/discover/copywriting-tips",
+  },
+  {
+    id: "v6",
+    platform: "instagram",
+    niche: "wellness",
+    format: "Carousel",
+    hook: "The 4 client objections I get every week — and exactly what I say.",
+    duration: "0:35",
+    performance: "+295%",
+    creatorHandle: "@dr.zoe.wellness",
+    creatorName: "Dr. Zoe",
+    creatorRole: "Holistic Wellness Practitioner",
+    views: "880K", saves: "76.1K", shares: "5.8K",
+    thumbStyle: "linear-gradient(135deg, #e6e0ff 0%, #c4b8f0 100%)",
+    pattern: "Objection-handling carousel: each slide = one objection + the exact verbal response + why it works. Save rate is 8.6% (top 1%).",
+    angle: "Service sellers steal the actual scripts. The format makes it feel like an instant playbook.",
+    sourceUrl: "https://www.instagram.com/explore/tags/wellness/",
+  },
+  {
+    id: "v7",
+    platform: "instagram",
+    niche: "coaching",
+    format: "Reel",
+    hook: "If I had to get my first 10 paying clients again, here's exactly what I'd do.",
+    duration: "0:50",
+    performance: "+670%",
+    creatorHandle: "@founderclub.co",
+    creatorName: "Sasha",
+    creatorRole: "Business Coach for Solopreneurs",
+    views: "3.4M", saves: "152K", shares: "26.8K",
+    thumbStyle: "linear-gradient(135deg, #fde6ec 0%, #fcb1c2 100%)",
+    pattern: "Hypothetical-restart framing (\"if I had to do it again\") + 3-5 specific moves + each move is concrete and free. Saves crush because it's an actionable list.",
+    angle: "Ideal hook for a service seller's audience. The format converts because every step is replicable.",
+    sourceUrl: "https://www.instagram.com/explore/tags/businesscoach/",
+  },
+  {
+    id: "v8",
+    platform: "tiktok",
+    niche: "branding",
+    format: "Reel",
+    hook: "Nobody talks about this, but it's why your offer doesn't sell.",
+    duration: "0:25",
+    performance: "+380%",
+    creatorHandle: "@brandgina",
+    creatorName: "Gina",
+    creatorRole: "Brand & Offer Strategist",
+    views: "1.1M", saves: "55.4K", shares: "8.9K",
+    thumbStyle: "linear-gradient(135deg, #ffd1dc 0%, #f5a8b8 100%)",
+    pattern: "'Nobody talks about this' curiosity-gap hook + contrarian truth + concrete proof. Works because it positions creator as the rare voice telling the truth.",
+    angle: "Service sellers who feel their offer should work but doesn't will stop scrolling immediately.",
+    sourceUrl: "https://www.tiktok.com/discover/branding",
+  },
+  {
+    id: "v9",
+    platform: "instagram",
+    niche: "fitness",
+    format: "Carousel",
+    hook: "5 questions I ask every new client before I take them on.",
+    duration: "0:22",
+    performance: "+260%",
+    creatorHandle: "@coach.diana.r",
+    creatorName: "Diana",
+    creatorRole: "Mindset & Performance Coach",
+    views: "640K", saves: "41.2K", shares: "3.7K",
+    thumbStyle: "linear-gradient(135deg, #ddf4e8 0%, #a8d8b8 100%)",
+    pattern: "Behind-the-scenes intake script + 5 specific questions on 5 slides + final slide = how they use the answers. Reads like a real consultation.",
+    angle: "Positions the creator as selective and high-trust. Inverts the salesy dynamic — the creator is qualifying THEM.",
+    sourceUrl: "https://www.instagram.com/explore/tags/coaching/",
+  },
+  {
+    id: "v10",
+    platform: "instagram",
+    niche: "copywriting",
+    format: "Carousel",
+    hook: "If your CTA is 'Comment below', no wonder you have no DMs.",
+    duration: "0:34",
+    performance: "+520%",
+    creatorHandle: "@writethatconverts",
+    creatorName: "Marc",
+    creatorRole: "Conversion Copywriter",
+    views: "1.6M", saves: "89.3K", shares: "11.4K",
+    thumbStyle: "linear-gradient(135deg, #ffe8d6 0%, #f5b88a 100%)",
+    pattern: "Roast-style hook + side-by-side comparison: bad CTA vs good CTA + 5 examples on 5 slides. Saves trigger because it's a swipe file.",
+    angle: "Direct attack on a habit most service sellers have. Discomfort + immediate solution = engagement spike.",
+    sourceUrl: "https://www.instagram.com/explore/tags/copywriting/",
+  },
+  {
+    id: "v11",
+    platform: "tiktok",
+    niche: "wellness",
+    format: "Reel",
+    hook: "Watch me write a client-attracting Reel script in 90 seconds.",
+    duration: "1:28",
+    performance: "+310%",
+    creatorHandle: "@hollyhealthco",
+    creatorName: "Holly",
+    creatorRole: "Wellness Brand Coach",
+    views: "780K", saves: "52K", shares: "4.6K",
+    thumbStyle: "linear-gradient(135deg, #c8e0ff 0%, #a8c4ed 100%)",
+    pattern: "Speed-run / live demo format + visible writing on screen + clock element. Watch-time crushes because viewers wait for the finished script.",
+    angle: "Process content. Service sellers learn the methodology by watching it happen, not by being told it.",
+    sourceUrl: "https://www.tiktok.com/discover/wellness-content",
+  },
+  {
+    id: "v12",
+    platform: "instagram",
+    niche: "branding",
+    format: "Reel",
+    hook: "I rewrote my pinned post and got 4 client inquiries in 8 days.",
+    duration: "0:38",
+    performance: "+430%",
+    creatorHandle: "@studio.felix",
+    creatorName: "Felix",
+    creatorRole: "Brand Designer",
+    views: "1.3M", saves: "61.8K", shares: "7.2K",
+    thumbStyle: "linear-gradient(135deg, #d4e7ff 0%, #b0c8e8 100%)",
+    pattern: "Specific result hook (4 inquiries / 8 days) + before/after of the actual post + the rewrite formula. Numbers make the claim feel testable.",
+    angle: "Tactical case study. Lands with service sellers because it's reproducible and fast.",
+    sourceUrl: "https://www.instagram.com/explore/tags/branddesign/",
+  },
+];
+
+const VIRAL_NICHES = [
+  { key: "for-you", label: "For You", auto: true },
+  { key: "coaching", label: "Coaching" },
+  { key: "fitness", label: "Fitness" },
+  { key: "wellness", label: "Wellness" },
+  { key: "branding", label: "Branding" },
+  { key: "copywriting", label: "Copywriting" },
+];
+
+const VIRAL_PLATFORMS = [
+  { key: "all", label: "All" },
+  { key: "tiktok", label: "TikTok" },
+  { key: "instagram", label: "Instagram" },
+];
+
+const viralFilter = {
+  niche: "for-you",
+  platform: "all",
+  sort: "trending",
+};
+
+let viralActiveClipId = null;
+
+function inferUserNiche() {
+  const bp = accountState?.user?.businessProfile;
+  const serviceType = String(bp?.serviceType || "").toLowerCase();
+  if (serviceType.includes("coach")) return "coaching";
+  if (serviceType.includes("freelanc")) return "copywriting";
+  if (serviceType.includes("agency")) return "branding";
+  if (serviceType.includes("consult")) return "branding";
+  return null;
+}
+
+function renderViralFilters() {
+  const nicheWrap = document.getElementById("viralNicheChips");
+  const platformWrap = document.getElementById("viralPlatformChips");
+  if (nicheWrap) {
+    nicheWrap.innerHTML = VIRAL_NICHES.map((n) => {
+      const active = n.key === viralFilter.niche ? "is-active" : "";
+      const auto = n.auto ? '<span class="viral-chip-auto">AUTO</span>' : "";
+      const plus = n.key === "for-you" ? "+ " : "";
+      return `<button class="viral-chip ${active}" data-niche="${n.key}">${plus}${escapeHtml(n.label)}${auto}</button>`;
+    }).join("");
+    nicheWrap.querySelectorAll(".viral-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        viralFilter.niche = btn.getAttribute("data-niche");
+        renderViralView();
+      });
+    });
+  }
+  if (platformWrap) {
+    platformWrap.innerHTML = VIRAL_PLATFORMS.map((p) => {
+      const active = p.key === viralFilter.platform ? "is-active" : "";
+      const plus = p.key === "all" ? "+ " : "";
+      return `<button class="viral-chip ${active}" data-platform="${p.key}">${plus}${escapeHtml(p.label)}</button>`;
+    }).join("");
+    platformWrap.querySelectorAll(".viral-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        viralFilter.platform = btn.getAttribute("data-platform");
+        renderViralView();
+      });
+    });
+  }
+}
+
+function getFilteredViralClips() {
+  let clips = [...VIRAL_CLIPS];
+  const userNiche = inferUserNiche();
+  if (viralFilter.niche === "for-you") {
+    if (userNiche) {
+      clips.sort((a, b) => {
+        const aMatch = a.niche === userNiche ? 1 : 0;
+        const bMatch = b.niche === userNiche ? 1 : 0;
+        return bMatch - aMatch;
+      });
+    }
+  } else {
+    clips = clips.filter((c) => c.niche === viralFilter.niche);
+  }
+  if (viralFilter.platform !== "all") {
+    clips = clips.filter((c) => c.platform === viralFilter.platform);
+  }
+  if (viralFilter.sort === "performance") {
+    clips.sort((a, b) => parseInt(b.performance) - parseInt(a.performance));
+  }
+  return clips;
+}
+
+function renderViralGrid() {
+  const grid = document.getElementById("viralGrid");
+  const empty = document.getElementById("viralEmpty");
+  if (!grid) return;
+  const clips = getFilteredViralClips();
+  if (clips.length === 0) {
+    grid.innerHTML = "";
+    empty?.classList.remove("hidden");
+    return;
+  }
+  empty?.classList.add("hidden");
+  grid.innerHTML = clips.map((c) => {
+    const platformLabel = c.platform === "tiktok" ? "TikTok" : "Instagram";
+    const initial = (c.creatorName || c.creatorHandle || "?").trim().charAt(0).toUpperCase();
+    return `
+      <article class="viral-card" data-clip-id="${escapeHtml(c.id)}">
+        <div class="viral-card-thumb" style="background: ${c.thumbStyle};">
+          <span class="viral-card-platform-tag">${escapeHtml(platformLabel)}</span>
+          <span class="viral-card-perf">${escapeHtml(c.performance)}</span>
+          <span class="viral-card-duration">${escapeHtml(c.duration)}</span>
+          <p class="viral-card-hook">${escapeHtml(c.hook)}</p>
+        </div>
+        <div class="viral-card-body">
+          <div class="viral-card-avatar">${escapeHtml(initial)}</div>
+          <div class="viral-card-creator">
+            <span class="viral-card-handle">${escapeHtml(c.creatorHandle)}</span>
+            <span class="viral-card-role">${escapeHtml(c.creatorName)} · ${escapeHtml(c.creatorRole)}</span>
+          </div>
+        </div>
+        <div class="viral-card-stats">
+          <div class="viral-stat"><span class="viral-stat-value">${escapeHtml(c.views)}</span><span class="viral-stat-label">VIEWS</span></div>
+          <div class="viral-stat"><span class="viral-stat-value">${escapeHtml(c.saves)}</span><span class="viral-stat-label">SAVES</span></div>
+          <div class="viral-stat"><span class="viral-stat-value">${escapeHtml(c.shares)}</span><span class="viral-stat-label">SHARES</span></div>
+        </div>
+      </article>
+    `;
+  }).join("");
+  grid.querySelectorAll(".viral-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const id = card.getAttribute("data-clip-id");
+      openViralDetail(id);
+    });
+  });
+}
+
+function renderViralView() {
+  renderViralFilters();
+  renderViralGrid();
+}
+
+function openViralDetail(clipId) {
+  const clip = VIRAL_CLIPS.find((c) => c.id === clipId);
+  if (!clip) return;
+  viralActiveClipId = clipId;
+  const modal = document.getElementById("viralDetailModal");
+  if (!modal) return;
+
+  const thumb = document.getElementById("viralDetailThumb");
+  if (thumb) thumb.style.background = clip.thumbStyle;
+  setTextIfExists("viralDetailPlatform", clip.platform === "tiktok" ? "TikTok" : "Instagram");
+  setTextIfExists("viralDetailPerf", clip.performance);
+  setTextIfExists("viralDetailDuration", clip.duration);
+  setTextIfExists("viralDetailHook", clip.hook);
+  const creatorEl = document.getElementById("viralDetailCreator");
+  if (creatorEl) {
+    creatorEl.innerHTML = `<strong>${escapeHtml(clip.creatorHandle)}</strong> — ${escapeHtml(clip.creatorName)}, ${escapeHtml(clip.creatorRole)} · ${escapeHtml(clip.format)}`;
+  }
+  const statsEl = document.getElementById("viralDetailStats");
+  if (statsEl) {
+    statsEl.innerHTML = `<span><strong>${escapeHtml(clip.views)}</strong> views</span> <span><strong>${escapeHtml(clip.saves)}</strong> saves</span> <span><strong>${escapeHtml(clip.shares)}</strong> shares</span>`;
+  }
+  setTextIfExists("viralDetailPatternText", clip.pattern);
+  setTextIfExists("viralDetailAngleText", clip.angle);
+  const sourceLink = document.getElementById("viralSourceLink");
+  if (sourceLink) sourceLink.href = clip.sourceUrl || "#";
+
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeViralDetail() {
+  const modal = document.getElementById("viralDetailModal");
+  if (!modal) return;
+  modal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function adaptViralClip() {
+  const clip = VIRAL_CLIPS.find((c) => c.id === viralActiveClipId);
+  if (!clip) return;
+  const cardType = clip.format === "Carousel" ? "card:carousel" : "card:script";
+  const prompt = `I want to adapt this viral ${clip.format} for my niche, in my voice, tied to my offer.
+
+Original viral content:
+- Format: ${clip.format} (${clip.duration})
+- Platform: ${clip.platform === "tiktok" ? "TikTok" : "Instagram"}
+- Hook: "${clip.hook}"
+- Creator: ${clip.creatorHandle} (${clip.creatorRole})
+- Performance: ${clip.performance} vs their average — ${clip.views} views, ${clip.saves} saves, ${clip.shares} shares
+- Why it worked: ${clip.pattern}
+- Angle: ${clip.angle}
+
+Take the structural insight (hook style, pacing, format pattern) but write the FULL ${clip.format.toLowerCase()} for MY service, in MY voice, ending in a CTA that drives a DM about my offer. Do NOT copy the original verbatim — adapt the topic and language to my business profile and niche. Use ${cardType} for the output.`;
+
+  closeViralDetail();
+  setActiveView("agent");
+  const input = document.getElementById("messageInput");
+  if (input) input.value = prompt;
+  document.getElementById("composer")?.requestSubmit();
+}
+
+document.getElementById("viralViewBtn")?.addEventListener("click", () => setActiveView("viral"));
+document.getElementById("viralDetailCloseBtn")?.addEventListener("click", closeViralDetail);
+document.getElementById("viralDetailModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "viralDetailModal") closeViralDetail();
+});
+document.getElementById("viralAdaptBtn")?.addEventListener("click", adaptViralClip);
+document.getElementById("viralSortSelect")?.addEventListener("change", (e) => {
+  viralFilter.sort = e.target.value;
+  renderViralGrid();
+});
 
