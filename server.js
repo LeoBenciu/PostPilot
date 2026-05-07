@@ -1736,7 +1736,9 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 400, { error: "Please enter a valid email address." });
         return;
       }
-      await sendWaitlistEmail({ email, req });
+      sendWaitlistEmail({ email, req }).catch((emailErr) => {
+        console.error("Waitlist notification email failed:", emailErr.message);
+      });
       const waitlistCount = await incrementWaitlistCount();
       sendJson(res, 200, { ok: true, waitlistCount });
     } catch (err) {
